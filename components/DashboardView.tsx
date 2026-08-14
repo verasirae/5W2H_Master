@@ -3,16 +3,13 @@
 import React, { useMemo } from 'react';
 import { Task5W2H, WorkspaceConfig } from '@/types/5w2h';
 import { calculateTaskDeadlineInfo, formatCurrency } from '@/lib/5w2h-utils';
+import { CompetenceBarChart } from '@/components/CompetenceBarChart';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
+  Tooltip,
+  ResponsiveContainer,
 } from 'recharts';
 import {
   List,
@@ -261,24 +258,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               Total vs Concluídas
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[260px]">
-            {competenceData.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-xs text-muted-foreground font-mono-data">
-                Nenhum dado disponível para o filtro selecionado.
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={competenceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="competence" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} allowDecimals={false} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: 'var(--popover)', borderColor: 'var(--border)', borderRadius: '0px', color: 'var(--foreground)', fontSize: '12px' }}
-                  />
-                  <Bar dataKey="total" name="Total Tarefas" fill="var(--info)" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="completed" name="Concluídas" fill="var(--primary)" radius={[0, 0, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
+          <div className="p-4 flex-1 min-h-[260px] flex items-center">
+            <CompetenceBarChart data={competenceData} className="min-h-[240px] w-full" />
           </div>
         </div>
 
