@@ -1,0 +1,6 @@
+{
+  "name": "5W2H Master",
+  "description": "Ferramenta de Gestão 5W2H com Dashboard, Kanban, Matriz de Ação e IA Gemini",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
