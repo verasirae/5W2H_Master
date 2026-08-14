@@ -118,7 +118,7 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
   };
 
   return (
-    <div className="flex-1 p-3 md:p-4 flex flex-col space-y-4 overflow-y-auto w-full bg-[#121414]">
+    <div className="flex-1 pl-2 pr-4 md:py-4 flex flex-col space-y-4 overflow-y-auto w-full bg-[#121414]">
       {/* Header Banner */}
       <div className="bg-[#001423] border border-[#0a84c6] p-4 md:p-5 relative w-full shrink-0">
         <div className="flex items-start gap-3.5">

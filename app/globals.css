@@ -2,7 +2,34 @@
 @import "tw-animate-css";
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
+/* ==========================================================================
+   Shadcn UI Default Theme CSS Variables & Design Tokens
+   ========================================================================== */
+
 :root {
+  /* Shadcn Default Dark Theme (Default Workspace Palette) */
+  --background: #121414;
+  --foreground: #e2e2e2;
+  --card: #1e2020;
+  --card-foreground: #e2e2e2;
+  --popover: #1e2020;
+  --popover-foreground: #e2e2e2;
+  --primary: #4ae183;
+  --primary-foreground: #003919;
+  --secondary: #282a2b;
+  --secondary-foreground: #e2e2e2;
+  --muted: #282a2b;
+  --muted-foreground: #c4c7c7;
+  --accent: #333535;
+  --accent-foreground: #4ae183;
+  --destructive: #93000a;
+  --destructive-foreground: #ffb4ab;
+  --border: #444748;
+  --input: #444748;
+  --ring: #8e9192;
+  --radius: 0.25rem;
+
+  /* 5W2H Surface Tokens */
   --bg-dark: #121414;
   --surface-low: #1a1c1c;
   --surface-container: #1e2020;
@@ -21,25 +48,50 @@
   --error-bg: #93000a;
 }
 
-/* Light Theme Variables & Overrides */
+/* Shadcn Default Light Theme */
 html.light {
-  --bg-dark: #f0f2f5;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #16a34a;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #16a34a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #94a3b8;
+
+  /* 5W2H Light Surface Overrides */
+  --bg-dark: #f8fafc;
   --surface-low: #ffffff;
   --surface-container: #ffffff;
-  --surface-high: #f8fafc;
+  --surface-high: #f1f5f9;
   --surface-highest: #e2e8f0;
   --surface-bright: #cbd5e1;
-  --surface-lowest: #f1f5f9;
+  --surface-lowest: #f8fafc;
   --text-on-surface: #0f172a;
   --text-muted: #475569;
-  --outline-variant: #cbd5e1;
+  --outline-variant: #e2e8f0;
   --outline: #94a3b8;
 }
+
+/* ==========================================================================
+   Harmonious Light Mode Theme Classes & Hover States
+   ========================================================================== */
 
 html.light body,
 html.light .bg-\[\#121414\],
 html.light .bg-\[\#0c0f0f\] {
-  background-color: #f0f2f5 !important;
+  background-color: #f8fafc !important;
   color: #0f172a !important;
 }
 
@@ -57,7 +109,7 @@ html.light .bg-\[\#37393a\] {
 
 html.light .border-\[\#444748\],
 html.light .border-\[\#333535\] {
-  border-color: #cbd5e1 !important;
+  border-color: #e2e8f0 !important;
 }
 
 html.light .text-\[\#e2e2e2\] {
@@ -72,12 +124,13 @@ html.light .text-\[\#8e9192\] {
   color: #64748b !important;
 }
 
+/* Form controls in Light Mode */
 html.light input:not([type="checkbox"]),
 html.light select,
 html.light textarea {
   background-color: #ffffff !important;
   color: #0f172a !important;
-  border-color: #cbd5e1 !important;
+  border-color: #e2e8f0 !important;
 }
 
 html.light input:focus,
@@ -87,9 +140,92 @@ html.light textarea:focus {
   background-color: #ffffff !important;
 }
 
+/* Sidebar in Light Mode: hover matches active background (#f1f5f9) */
+html.light aside#desktop-sidebar {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light aside button:hover,
+html.light aside .hover\:bg-\[\#282a2b\]:hover,
+html.light .hover\:bg-\[\#282a2b\]:hover {
+  background-color: #f1f5f9 !important;
+  color: #16a34a !important;
+}
+
+html.light aside nav button.bg-\[\#333535\] {
+  background-color: #f1f5f9 !important;
+  color: #16a34a !important;
+}
+
+/* Topbar Icons in Light Mode: soft light hover background */
+html.light header {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light header button:hover,
+html.light header .hover\:bg-\[\#282a2b\]:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+html.light header input {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html.light header input:focus {
+  background-color: #ffffff !important;
+  border-color: #16a34a !important;
+}
+
+/* TaskTableView in Light Mode: light row hover and soft inner row borders */
+html.light table {
+  color: #0f172a !important;
+}
+
+html.light thead.bg-\[\#1e2020\],
+html.light thead {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light thead th {
+  color: #475569 !important;
+}
+
+html.light tbody.divide-\[\#444748\] > tr,
+html.light .divide-\[\#444748\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #e2e8f0 !important;
+}
+
+html.light tr.hover\:bg-\[\#1a1c1c\]:hover,
+html.light tbody tr:hover,
+html.light .hover\:bg-\[\#1a1c1c\]:hover {
+  background-color: #f8fafc !important;
+}
+
+html.light div.bg-\[\#001423\] {
+  background-color: #f0f9ff !important;
+  border-color: #bae6fd !important;
+}
+
+html.light div.bg-\[\#001423\] h2,
+html.light div.bg-\[\#001423\] span.text-\[\#92ccff\] {
+  color: #0369a1 !important;
+}
+
+html.light div.bg-\[\#003351\] {
+  background-color: #e0f2fe !important;
+  border-color: #7dd3fc !important;
+}
+
+/* Base Body Styles */
 body {
-  background-color: var(--bg-dark);
-  color: var(--text-on-surface);
+  background-color: var(--background);
+  color: var(--foreground);
   font-family: 'Roboto', sans-serif;
   margin: 0;
   padding: 0;
@@ -105,14 +241,14 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-dark);
+  background: var(--background);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--surface-highest);
+  background: var(--border);
   border-radius: 0px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--outline-variant);
+  background: var(--ring);
 }
 
 /* Print Styles for 5W2H Matrix Inspection */

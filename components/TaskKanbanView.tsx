@@ -46,7 +46,7 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
   };
 
   return (
-    <div className="flex-1 p-3 md:p-4 flex flex-col overflow-x-auto bg-[#121414]">
+    <div className="flex-1 pl-2 pr-4 md:py-4 flex flex-col overflow-x-auto bg-[#121414]">
       {/* View Header */}
       <div className="flex items-center justify-between pb-3 mb-3 flex-wrap gap-2 border-b border-[#444748] shrink-0">
         <div>

@@ -126,7 +126,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   return (
-    <div className="flex-1 p-3 md:p-4 flex flex-col space-y-4 overflow-y-auto w-full bg-[#121414]">
+    <div className="flex-1 pl-2 pr-4 md:py-4 flex flex-col space-y-4 overflow-y-auto w-full bg-[#121414]">
       {/* Title */}
       <div className="flex items-center gap-3 border-b border-[#444748] pb-3 shrink-0">
         <Settings className="w-5 h-5 text-[#4ae183]" />

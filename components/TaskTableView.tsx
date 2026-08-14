@@ -89,7 +89,7 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({
   };
 
   return (
-    <div className="flex-1 p-3 md:p-4 flex flex-col overflow-hidden bg-[#121414]">
+    <div className="flex-1 pl-2 pr-4 md:py-4 flex flex-col overflow-hidden bg-[#121414]">
       {/* View Header with Nova Tarefa Action */}
       <div className="flex items-center justify-between pb-3 mb-2 flex-wrap gap-2 border-b border-[#444748]">
         <div>

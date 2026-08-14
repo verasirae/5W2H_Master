@@ -153,7 +153,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   }, [filteredTasks, workspaceConfig.attentionThresholdDays]);
 
   return (
-    <div className="flex-1 p-4 md:p-6 space-y-6 overflow-y-auto">
+    <div className="flex-1 pl-2 pr-4 md:py-4 space-y-6 overflow-y-auto">
       {/* KPI Cards Grid */}
       <section className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {/* Total Tasks */}
