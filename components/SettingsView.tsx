@@ -126,30 +126,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   return (
-    <div className="flex-1 pl-2 pr-4 md:py-4 flex flex-col space-y-4 overflow-y-auto w-full bg-[#121414]">
+    <div className="flex-1 pl-2 pr-4 md:py-4 flex flex-col space-y-4 overflow-y-auto w-full bg-background">
       {/* Title */}
-      <div className="flex items-center gap-3 border-b border-[#444748] pb-3 shrink-0">
-        <Settings className="w-5 h-5 text-[#4ae183]" />
+      <div className="flex items-center gap-3 border-b border-border pb-3 shrink-0">
+        <Settings className="w-5 h-5 text-primary" />
         <div>
-          <h2 className="text-base md:text-lg font-bold text-[#e2e2e2] uppercase tracking-tight font-mono-data">
+          <h2 className="text-base md:text-lg font-bold text-foreground uppercase tracking-tight font-mono-data">
             Configurações do Workspace 5W2H
           </h2>
-          <p className="text-[11px] text-[#c4c7c7] font-body-md mt-0.5">
+          <p className="text-[11px] text-muted-foreground font-body-md mt-0.5">
             Personalize departamentos, categorias de rotina, símbolo de moeda e parâmetros do SLA de prazo.
           </p>
         </div>
       </div>
 
       {/* General Settings */}
-      <div className="bg-[#1e2020] border border-[#444748] p-4 md:p-5 space-y-4 w-full">
-        <h3 className="text-xs font-bold text-[#e2e2e2] font-mono-data uppercase flex items-center gap-2 border-b border-[#444748] pb-2">
-          <Building className="w-4 h-4 text-[#92ccff]" />
+      <div className="bg-card border border-border p-4 md:p-5 space-y-4 w-full">
+        <h3 className="text-xs font-bold text-foreground font-mono-data uppercase flex items-center gap-2 border-b border-border pb-2">
+          <Building className="w-4 h-4 text-info" />
           <span>Parâmetros Gerais do Espaço de Trabalho</span>
         </h3>
 
         <form onSubmit={handleSaveGeneral} className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-body-md">
           <div>
-            <label className="text-[11px] font-mono-data text-[#c4c7c7] uppercase block mb-1">
+            <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
               Nome do Espaço de Trabalho:
             </label>
             <input
@@ -158,12 +158,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               onChange={(e) =>
                 setWorkspaceConfig((prev) => ({ ...prev, workspaceName: e.target.value }))
               }
-              className="w-full bg-[#121414] border border-[#444748] text-[#e2e2e2] p-2 focus:border-[#4ae183] focus:outline-none"
+              className="w-full bg-background border border-input text-foreground p-2 focus:border-primary focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-mono-data text-[#c4c7c7] uppercase block mb-1">
+            <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
               Departamento Padrão do Usuário:
             </label>
             <select
@@ -171,10 +171,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               onChange={(e) =>
                 setWorkspaceConfig((prev) => ({ ...prev, departmentName: e.target.value }))
               }
-              className="w-full bg-[#121414] border border-[#444748] text-[#e2e2e2] p-2 focus:border-[#4ae183] focus:outline-none cursor-pointer"
+              className="w-full bg-background border border-input text-foreground p-2 focus:border-primary focus:outline-none cursor-pointer"
             >
               {workspaceConfig.departments.map((d) => (
-                <option key={d} value={d}>
+                <option key={d} value={d} className="bg-popover text-foreground">
                   {d}
                 </option>
               ))}
@@ -182,7 +182,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           <div>
-            <label className="text-[11px] font-mono-data text-[#c4c7c7] uppercase block mb-1">
+            <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
               Símbolo de Moeda (Custo &quot;Quanto&quot;):
             </label>
             <input
@@ -192,12 +192,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 setWorkspaceConfig((prev) => ({ ...prev, currencySymbol: e.target.value }))
               }
               placeholder="R$, $, €..."
-              className="w-full bg-[#121414] border border-[#444748] text-[#e2e2e2] p-2 focus:border-[#4ae183] focus:outline-none font-mono-data"
+              className="w-full bg-background border border-input text-foreground p-2 focus:border-primary focus:outline-none font-mono-data"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-mono-data text-[#c4c7c7] uppercase block mb-1">
+            <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
               Dias para Alerta de &quot;Atenção&quot; no Prazo (SLA):
             </label>
             <input
@@ -211,9 +211,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   attentionThresholdDays: Number(e.target.value) || 3,
                 }))
               }
-              className="w-full bg-[#121414] border border-[#444748] text-[#e2e2e2] p-2 focus:border-[#4ae183] focus:outline-none font-mono-data"
+              className="w-full bg-background border border-input text-foreground p-2 focus:border-primary focus:outline-none font-mono-data"
             />
-            <span className="text-[10px] text-[#8e9192] font-mono-data mt-1 block">
+            <span className="text-[10px] text-muted-foreground font-mono-data mt-1 block">
               Tarefas com vencimento em até {workspaceConfig.attentionThresholdDays} dias serão marcadas com status &quot;Atenção&quot;.
             </span>
           </div>
@@ -221,16 +221,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       {/* Departments & Categories Configuration */}
-      <div className="bg-[#1e2020] border border-[#444748] p-5 space-y-4">
-        <h3 className="text-xs font-bold text-[#e2e2e2] font-mono-data uppercase flex items-center gap-2 border-b border-[#444748] pb-2">
-          <Layers className="w-4 h-4 text-[#4ae183]" />
+      <div className="bg-card border border-border p-5 space-y-4">
+        <h3 className="text-xs font-bold text-foreground font-mono-data uppercase flex items-center gap-2 border-b border-border pb-2">
+          <Layers className="w-4 h-4 text-primary" />
           <span>Gestão de Departamentos e Categorias / Rotinas</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Departamentos */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-[#c4c7c7] font-mono-data uppercase">
+            <h4 className="text-xs font-bold text-foreground font-mono-data uppercase">
               Departamentos Cadastrados ({workspaceConfig.departments.length})
             </h4>
 
@@ -240,29 +240,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 placeholder="Novo Departamento..."
                 value={newDepartmentName}
                 onChange={(e) => setNewDepartmentName(e.target.value)}
-                className="flex-1 bg-[#121414] border border-[#444748] text-[#e2e2e2] text-xs p-2 focus:border-[#4ae183] focus:outline-none"
+                className="flex-1 bg-background border border-input text-foreground text-xs p-2 focus:border-primary focus:outline-none"
               />
               <button
                 type="button"
                 onClick={handleAddDepartment}
-                className="px-3 py-2 bg-[#4ae183] text-[#003919] font-bold text-xs uppercase font-mono-data hover:bg-[#6bfe9c]"
+                className="px-3 py-2 bg-primary text-primary-foreground font-bold text-xs uppercase font-mono-data hover:bg-primary/90 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="bg-[#121414] border border-[#444748] divide-y divide-[#444748] max-h-60 overflow-y-auto">
+            <div className="bg-background border border-border divide-y divide-border max-h-60 overflow-y-auto">
               {workspaceConfig.departments.map((d) => (
                 <div
                   key={d}
                   onClick={() => setActiveDeptForCat(d)}
                   className={`p-2.5 flex items-center justify-between text-xs cursor-pointer transition-colors ${
-                    activeDeptForCat === d ? 'bg-[#333535] text-[#4ae183] font-bold' : 'text-[#e2e2e2] hover:bg-[#1a1c1c]'
+                    activeDeptForCat === d ? 'bg-muted text-primary font-bold' : 'text-foreground hover:bg-muted/50'
                   }`}
                 >
                   <span className="truncate">{d}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-[#8e9192] font-mono-data">
+                    <span className="text-[10px] text-muted-foreground font-mono-data">
                       ({(workspaceConfig.categoriesByDepartment[d] || []).length} rotinas)
                     </span>
                     <button
@@ -271,7 +271,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         handleDeleteDepartment(d);
                       }}
                       title="Excluir Departamento"
-                      className="text-[#c4c7c7] hover:text-[#ffb4ab] p-1"
+                      className="text-muted-foreground hover:text-destructive p-1 cursor-pointer transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -283,8 +283,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
           {/* Categorias por Departamento */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-[#c4c7c7] font-mono-data uppercase">
-              Rotinas / Categorias de: <span className="text-[#4ae183]">{activeDeptForCat}</span>
+            <h4 className="text-xs font-bold text-foreground font-mono-data uppercase">
+              Rotinas / Categorias de: <span className="text-primary">{activeDeptForCat}</span>
             </h4>
 
             <div className="flex gap-2">
@@ -293,33 +293,33 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 placeholder={`Nova Categoria para ${activeDeptForCat}...`}
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
-                className="flex-1 bg-[#121414] border border-[#444748] text-[#e2e2e2] text-xs p-2 focus:border-[#4ae183] focus:outline-none"
+                className="flex-1 bg-background border border-input text-foreground text-xs p-2 focus:border-primary focus:outline-none"
               />
               <button
                 type="button"
                 onClick={handleAddCategory}
-                className="px-3 py-2 bg-[#92ccff] text-[#001d31] font-bold text-xs uppercase font-mono-data hover:bg-[#cce5ff]"
+                className="px-3 py-2 bg-info text-info-foreground font-bold text-xs uppercase font-mono-data hover:bg-info/90 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="bg-[#121414] border border-[#444748] divide-y divide-[#444748] max-h-60 overflow-y-auto">
+            <div className="bg-background border border-border divide-y divide-border max-h-60 overflow-y-auto">
               {(workspaceConfig.categoriesByDepartment[activeDeptForCat] || []).length === 0 ? (
-                <div className="p-4 text-center text-[#8e9192] text-xs font-mono-data">
+                <div className="p-4 text-center text-muted-foreground text-xs font-mono-data">
                   Nenhuma categoria cadastrada neste departamento.
                 </div>
               ) : (
                 (workspaceConfig.categoriesByDepartment[activeDeptForCat] || []).map((cat) => (
                   <div
                     key={cat}
-                    className="p-2.5 flex items-center justify-between text-xs text-[#e2e2e2] hover:bg-[#1a1c1c]"
+                    className="p-2.5 flex items-center justify-between text-xs text-foreground hover:bg-muted/50"
                   >
                     <span>{cat}</span>
                     <button
                       onClick={() => handleDeleteCategory(cat)}
                       title="Excluir Categoria"
-                      className="text-[#c4c7c7] hover:text-[#ffb4ab] p-1"
+                      className="text-muted-foreground hover:text-destructive p-1 cursor-pointer transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -332,16 +332,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       {/* Data Management & Resets */}
-      <div className="bg-[#1e2020] border border-[#444748] p-5 space-y-4">
-        <h3 className="text-xs font-bold text-[#e2e2e2] font-mono-data uppercase flex items-center gap-2 border-b border-[#444748] pb-2">
-          <RotateCcw className="w-4 h-4 text-[#ffb4ab]" />
+      <div className="bg-card border border-border p-5 space-y-4">
+        <h3 className="text-xs font-bold text-foreground font-mono-data uppercase flex items-center gap-2 border-b border-border pb-2">
+          <RotateCcw className="w-4 h-4 text-destructive" />
           <span>Gestão de Dados e Restauração</span>
         </h3>
 
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="text-xs text-[#c4c7c7] font-body-md">
-            <p className="font-bold text-[#e2e2e2]">Restaurar Dados de Exemplo ou Limpar Banco:</p>
-            <p className="text-[11px] text-[#8e9192] mt-0.5">
+          <div className="text-xs text-muted-foreground font-body-md">
+            <p className="font-bold text-foreground">Restaurar Dados de Exemplo ou Limpar Banco:</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
               Se desejar redefinir os dados para o estado inicial de demonstração ou limpar todas as tarefas.
             </p>
           </div>
@@ -349,7 +349,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="flex gap-2 shrink-0">
             <button
               onClick={resetToSampleData}
-              className="px-3 py-2 bg-[#121414] border border-[#444748] hover:border-[#4ae183] text-[#e2e2e2] font-bold text-xs uppercase font-mono-data transition-colors"
+              className="px-3 py-2 bg-background border border-border hover:border-primary text-foreground font-bold text-xs uppercase font-mono-data transition-colors cursor-pointer"
             >
               Restaurar Exemplo
             </button>
@@ -359,7 +359,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   clearAllData();
                 }
               }}
-              className="px-3 py-2 bg-[#93000a] text-[#ffb4ab] border border-[#ffb4ab] hover:bg-[#690005] font-bold text-xs uppercase font-mono-data transition-colors"
+              className="px-3 py-2 bg-destructive text-destructive-foreground border border-destructive hover:bg-destructive/90 font-bold text-xs uppercase font-mono-data transition-colors cursor-pointer"
             >
               Limpar Tudo
             </button>

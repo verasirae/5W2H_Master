@@ -124,30 +124,30 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#121414]/80 backdrop-blur-md">
-      <div className="bg-[#1e2020] border border-[#444748] w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
+      <div className="bg-card border border-border w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl animate-in fade-in duration-200">
         {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b border-[#444748] bg-[#1a1c1c] shrink-0">
+        <div className="flex justify-between items-center p-4 border-b border-border bg-card shrink-0">
           <div>
-            <h2 className="text-base md:text-lg font-bold text-[#e2e2e2] uppercase tracking-wide font-mono-data">
+            <h2 className="text-base md:text-lg font-bold text-foreground uppercase tracking-wide font-mono-data">
               {editingTask ? `Editar Ação 5W2H - ${editingTask.id}` : 'Cadastrar Nova Ação 5W2H'}
             </h2>
-            <p className="text-xs text-[#8e9192]">Preencha as variáveis da matriz 5W2H.</p>
+            <p className="text-xs text-muted-foreground">Preencha as variáveis da matriz 5W2H.</p>
           </div>
           <button
             onClick={onClose}
-            className="text-[#c4c7c7] hover:text-[#ffb4ab] transition-colors p-1"
+            className="text-muted-foreground hover:text-destructive transition-colors p-1 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-6 bg-[#121414]">
+        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-6 bg-background">
           {/* Section 1: Department & Category */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-[#1e2020] p-4 border border-[#444748]">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-card p-4 border border-border">
             <div>
-              <label className="text-[11px] font-mono-data text-[#c4c7c7] uppercase block mb-1">
+              <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
                 Departamento *
               </label>
               <select
@@ -161,10 +161,10 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                     category: cats[0] || 'Geral',
                   }));
                 }}
-                className="w-full bg-[#121414] border border-[#444748] text-[#e2e2e2] text-xs p-2 focus:border-[#4ae183] focus:outline-none"
+                className="w-full bg-background border border-input text-foreground text-xs p-2 focus:border-primary focus:outline-none cursor-pointer"
               >
                 {workspaceConfig.departments.map((d) => (
-                  <option key={d} value={d}>
+                  <option key={d} value={d} className="bg-popover text-foreground">
                     {d}
                   </option>
                 ))}
@@ -172,16 +172,16 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             </div>
 
             <div>
-              <label className="text-[11px] font-mono-data text-[#c4c7c7] uppercase block mb-1">
+              <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
                 Categoria / Rotina *
               </label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
-                className="w-full bg-[#121414] border border-[#444748] text-[#e2e2e2] text-xs p-2 focus:border-[#4ae183] focus:outline-none"
+                className="w-full bg-background border border-input text-foreground text-xs p-2 focus:border-primary focus:outline-none cursor-pointer"
               >
                 {currentCategories.map((c) => (
-                  <option key={c} value={c}>
+                  <option key={c} value={c} className="bg-popover text-foreground">
                     {c}
                   </option>
                 ))}
@@ -189,7 +189,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             </div>
 
             <div>
-              <label className="text-[11px] font-mono-data text-[#c4c7c7] uppercase block mb-1">
+              <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
                 Competência (MM/YYYY) *
               </label>
               <input
@@ -197,7 +197,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 value={formData.competence}
                 onChange={(e) => setFormData((prev) => ({ ...prev, competence: e.target.value }))}
                 placeholder="08/2026"
-                className="w-full bg-[#121414] border border-[#444748] text-[#e2e2e2] text-xs p-2 focus:border-[#4ae183] focus:outline-none font-mono-data"
+                className="w-full bg-background border border-input text-foreground text-xs p-2 focus:border-primary focus:outline-none font-mono-data"
               />
             </div>
           </div>
@@ -206,7 +206,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* O QUÊ */}
             <div className="md:col-span-2 space-y-1">
-              <label className="text-[11px] font-mono-data text-[#4ae183] font-bold uppercase block">
+              <label className="text-[11px] font-mono-data text-primary font-bold uppercase block">
                 1. O QUÊ (Título da Ação) *
               </label>
               <input
@@ -214,14 +214,14 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 value={formData.title}
                 onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                 placeholder="Descreva o objetivo principal..."
-                className="w-full bg-[#1e2020] border border-[#444748] text-[#e2e2e2] text-xs p-2.5 focus:border-[#4ae183] focus:outline-none font-body-md"
+                className="w-full bg-card border border-input text-foreground text-xs p-2.5 focus:border-primary focus:outline-none font-body-md"
               />
-              {errors.title && <p className="text-[10px] text-[#ffb4ab] font-mono-data">{errors.title}</p>}
+              {errors.title && <p className="text-[10px] text-destructive font-mono-data">{errors.title}</p>}
             </div>
 
             {/* POR QUÊ */}
             <div className="space-y-1">
-              <label className="text-[11px] font-mono-data text-[#92ccff] font-bold uppercase block">
+              <label className="text-[11px] font-mono-data text-info font-bold uppercase block">
                 2. POR QUÊ (Justificativa) *
               </label>
               <textarea
@@ -229,14 +229,14 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 onChange={(e) => setFormData((prev) => ({ ...prev, why: e.target.value }))}
                 placeholder="Motivação e impacto esperado..."
                 rows={3}
-                className="w-full bg-[#1e2020] border border-[#444748] text-[#e2e2e2] text-xs p-2.5 focus:border-[#4ae183] focus:outline-none font-body-md"
+                className="w-full bg-card border border-input text-foreground text-xs p-2.5 focus:border-primary focus:outline-none font-body-md"
               />
-              {errors.why && <p className="text-[10px] text-[#ffb4ab] font-mono-data">{errors.why}</p>}
+              {errors.why && <p className="text-[10px] text-destructive font-mono-data">{errors.why}</p>}
             </div>
 
             {/* COMO */}
             <div className="space-y-1">
-              <label className="text-[11px] font-mono-data text-[#c8c6c5] font-bold uppercase block">
+              <label className="text-[11px] font-mono-data text-foreground font-bold uppercase block">
                 3. COMO (Metodologia) *
               </label>
               <textarea
@@ -244,14 +244,14 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 onChange={(e) => setFormData((prev) => ({ ...prev, how: e.target.value }))}
                 placeholder="Etapas do processo e procedimentos..."
                 rows={3}
-                className="w-full bg-[#1e2020] border border-[#444748] text-[#e2e2e2] text-xs p-2.5 focus:border-[#4ae183] focus:outline-none font-body-md"
+                className="w-full bg-card border border-input text-foreground text-xs p-2.5 focus:border-primary focus:outline-none font-body-md"
               />
-              {errors.how && <p className="text-[10px] text-[#ffb4ab] font-mono-data">{errors.how}</p>}
+              {errors.how && <p className="text-[10px] text-destructive font-mono-data">{errors.how}</p>}
             </div>
 
             {/* QUEM */}
             <div className="space-y-1">
-              <label className="text-[11px] font-mono-data text-[#c4c7c7] font-bold uppercase block">
+              <label className="text-[11px] font-mono-data text-muted-foreground font-bold uppercase block">
                 4. QUEM (Responsável) *
               </label>
               <input
@@ -259,14 +259,14 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 value={formData.who}
                 onChange={(e) => setFormData((prev) => ({ ...prev, who: e.target.value }))}
                 placeholder="Nome do responsável ou cargo..."
-                className="w-full bg-[#1e2020] border border-[#444748] text-[#e2e2e2] text-xs p-2.5 focus:border-[#4ae183] focus:outline-none font-body-md"
+                className="w-full bg-card border border-input text-foreground text-xs p-2.5 focus:border-primary focus:outline-none font-body-md"
               />
-              {errors.who && <p className="text-[10px] text-[#ffb4ab] font-mono-data">{errors.who}</p>}
+              {errors.who && <p className="text-[10px] text-destructive font-mono-data">{errors.who}</p>}
             </div>
 
             {/* ONDE */}
             <div className="space-y-1">
-              <label className="text-[11px] font-mono-data text-[#c4c7c7] font-bold uppercase block">
+              <label className="text-[11px] font-mono-data text-muted-foreground font-bold uppercase block">
                 5. ONDE (Setor / Local) *
               </label>
               <input
@@ -274,42 +274,42 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 value={formData.where}
                 onChange={(e) => setFormData((prev) => ({ ...prev, where: e.target.value }))}
                 placeholder="Local físico ou sistema..."
-                className="w-full bg-[#1e2020] border border-[#444748] text-[#e2e2e2] text-xs p-2.5 focus:border-[#4ae183] focus:outline-none font-body-md"
+                className="w-full bg-card border border-input text-foreground text-xs p-2.5 focus:border-primary focus:outline-none font-body-md"
               />
-              {errors.where && <p className="text-[10px] text-[#ffb4ab] font-mono-data">{errors.where}</p>}
+              {errors.where && <p className="text-[10px] text-destructive font-mono-data">{errors.where}</p>}
             </div>
 
             {/* QUANDO (Início & Prazo) */}
             <div className="space-y-1">
-              <label className="text-[11px] font-mono-data text-[#ffb4ab] font-bold uppercase block">
+              <label className="text-[11px] font-mono-data text-destructive font-bold uppercase block">
                 6. QUANDO (Cronograma) *
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <span className="text-[9px] text-[#8e9192] block font-mono-data">Data Início</span>
+                  <span className="text-[9px] text-muted-foreground block font-mono-data">Data Início</span>
                   <input
                     type="date"
                     value={formData.startDate}
                     onChange={(e) => setFormData((prev) => ({ ...prev, startDate: e.target.value }))}
-                    className="w-full bg-[#1e2020] border border-[#444748] text-[#e2e2e2] text-xs p-2 focus:border-[#4ae183] focus:outline-none font-mono-data"
+                    className="w-full bg-card border border-input text-foreground text-xs p-2 focus:border-primary focus:outline-none font-mono-data"
                   />
                 </div>
                 <div>
-                  <span className="text-[9px] text-[#8e9192] block font-mono-data">Prazo Final *</span>
+                  <span className="text-[9px] text-muted-foreground block font-mono-data">Prazo Final *</span>
                   <input
                     type="date"
                     value={formData.deadlineDate}
                     onChange={(e) => setFormData((prev) => ({ ...prev, deadlineDate: e.target.value }))}
-                    className="w-full bg-[#1e2020] border border-[#444748] text-[#e2e2e2] text-xs p-2 focus:border-[#4ae183] focus:outline-none font-mono-data"
+                    className="w-full bg-card border border-input text-foreground text-xs p-2 focus:border-primary focus:outline-none font-mono-data"
                   />
                 </div>
               </div>
-              {errors.deadlineDate && <p className="text-[10px] text-[#ffb4ab] font-mono-data">{errors.deadlineDate}</p>}
+              {errors.deadlineDate && <p className="text-[10px] text-destructive font-mono-data">{errors.deadlineDate}</p>}
             </div>
 
             {/* QUANTO */}
             <div className="space-y-1">
-              <label className="text-[11px] font-mono-data text-[#4ae183] font-bold uppercase block">
+              <label className="text-[11px] font-mono-data text-primary font-bold uppercase block">
                 7. QUANTO (Custo Estimado em {workspaceConfig.currencySymbol})
               </label>
               <input
@@ -320,31 +320,31 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, howMuch: parseFloat(e.target.value) || 0 }))
                 }
-                className="w-full bg-[#1e2020] border border-[#444748] text-[#e2e2e2] text-xs p-2.5 focus:border-[#4ae183] focus:outline-none font-mono-data font-bold"
+                className="w-full bg-card border border-input text-foreground text-xs p-2.5 focus:border-primary focus:outline-none font-mono-data font-bold"
               />
             </div>
           </div>
 
           {/* Execution Controls: Priority, Status, Progress */}
-          <div className="bg-[#1e2020] p-4 border border-[#444748] grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono-data">
+          <div className="bg-card p-4 border border-border grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono-data">
             <div>
-              <label className="text-[10px] text-[#c4c7c7] uppercase block mb-1">Prioridade</label>
+              <label className="text-[10px] text-muted-foreground uppercase block mb-1">Prioridade</label>
               <select
                 value={formData.priority}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, priority: e.target.value as TaskPriority }))
                 }
-                className="w-full bg-[#121414] border border-[#444748] text-[#e2e2e2] p-2 focus:border-[#4ae183] focus:outline-none"
+                className="w-full bg-background border border-input text-foreground p-2 focus:border-primary focus:outline-none cursor-pointer"
               >
-                <option value="Baixa">Baixa</option>
-                <option value="Média">Média</option>
-                <option value="Alta">Alta</option>
-                <option value="Urgente">Urgente</option>
+                <option value="Baixa" className="bg-popover text-foreground">Baixa</option>
+                <option value="Média" className="bg-popover text-foreground">Média</option>
+                <option value="Alta" className="bg-popover text-foreground">Alta</option>
+                <option value="Urgente" className="bg-popover text-foreground">Urgente</option>
               </select>
             </div>
 
             <div>
-              <label className="text-[10px] text-[#c4c7c7] uppercase block mb-1">Status</label>
+              <label className="text-[10px] text-muted-foreground uppercase block mb-1">Status</label>
               <select
                 value={formData.status}
                 onChange={(e) => {
@@ -357,19 +357,19 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                     completionDate: st === 'Concluído' ? todayStr : '',
                   }));
                 }}
-                className="w-full bg-[#121414] border border-[#444748] text-[#e2e2e2] p-2 focus:border-[#4ae183] focus:outline-none"
+                className="w-full bg-background border border-input text-foreground p-2 focus:border-primary focus:outline-none cursor-pointer"
               >
-                <option value="Não iniciado">Não iniciado</option>
-                <option value="Em andamento">Em andamento</option>
-                <option value="Concluído">Concluído</option>
-                <option value="Atrasado">Atrasado</option>
-                <option value="Cancelado">Cancelado</option>
+                <option value="Não iniciado" className="bg-popover text-foreground">Não iniciado</option>
+                <option value="Em andamento" className="bg-popover text-foreground">Em andamento</option>
+                <option value="Concluído" className="bg-popover text-foreground">Concluído</option>
+                <option value="Atrasado" className="bg-popover text-foreground">Atrasado</option>
+                <option value="Cancelado" className="bg-popover text-foreground">Cancelado</option>
               </select>
             </div>
 
             <div>
-              <label className="text-[10px] text-[#c4c7c7] uppercase block mb-1">
-                % Concluído: <span className="text-[#4ae183] font-bold">{formData.progressPercent}%</span>
+              <label className="text-[10px] text-muted-foreground uppercase block mb-1">
+                % Concluído: <span className="text-primary font-bold">{formData.progressPercent}%</span>
               </label>
               <input
                 type="range"
@@ -383,14 +383,14 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                     progressPercent: parseInt(e.target.value, 10),
                   }))
                 }
-                className="w-full accent-[#4ae183] cursor-pointer mt-2"
+                className="w-full accent-primary cursor-pointer mt-2"
               />
             </div>
           </div>
 
           {/* Observations */}
           <div>
-            <label className="text-[11px] font-mono-data text-[#c4c7c7] uppercase block mb-1">
+            <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
               Observações Adicionais
             </label>
             <textarea
@@ -398,22 +398,22 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               onChange={(e) => setFormData((prev) => ({ ...prev, observations: e.target.value }))}
               placeholder="Notas, pré-requisitos, restrições..."
               rows={2}
-              className="w-full bg-[#1e2020] border border-[#444748] text-[#e2e2e2] text-xs p-2.5 focus:border-[#4ae183] focus:outline-none font-body-md"
+              className="w-full bg-card border border-input text-foreground text-xs p-2.5 focus:border-primary focus:outline-none font-body-md"
             />
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-[#444748]">
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2 border border-[#444748] bg-[#121414] hover:bg-[#282a2b] text-[#e2e2e2] font-mono-data text-xs uppercase"
+              className="px-5 py-2 border border-border bg-background hover:bg-muted text-foreground font-mono-data text-xs uppercase cursor-pointer transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-6 py-2 border border-[#4ae183] bg-[#4ae183] text-[#003919] font-mono-data font-bold text-xs uppercase hover:bg-[#6bfe9c]"
+              className="px-6 py-2 border border-primary bg-primary text-primary-foreground font-mono-data font-bold text-xs uppercase hover:bg-primary/90 cursor-pointer transition-colors"
             >
               {editingTask ? 'Salvar Alterações' : 'Criar Ação 5W2H'}
             </button>

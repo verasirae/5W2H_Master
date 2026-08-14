@@ -118,18 +118,18 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
   };
 
   return (
-    <div className="flex-1 pl-2 pr-4 md:py-4 flex flex-col space-y-4 overflow-y-auto w-full bg-[#121414]">
+    <div className="flex-1 pl-2 pr-4 md:py-4 flex flex-col space-y-4 overflow-y-auto w-full bg-background">
       {/* Header Banner */}
-      <div className="bg-[#001423] border border-[#0a84c6] p-4 md:p-5 relative w-full shrink-0">
+      <div className="bg-info/10 border border-info/40 p-4 md:p-5 relative w-full shrink-0">
         <div className="flex items-start gap-3.5">
-          <div className="w-9 h-9 bg-[#003351] border border-[#0a84c6] flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4 text-[#92ccff]" />
+          <div className="w-9 h-9 bg-info/20 border border-info/40 flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4 text-info" />
           </div>
           <div>
-            <h2 className="text-base md:text-lg font-bold text-[#92ccff] uppercase tracking-wide font-mono-data">
+            <h2 className="text-base md:text-lg font-bold text-info uppercase tracking-wide font-mono-data">
               Gerador Inteligente 5W2H com Gemini AI
             </h2>
-            <p className="text-[11px] text-[#c4c7c7] font-body-md mt-0.5 leading-relaxed">
+            <p className="text-[11px] text-muted-foreground font-body-md mt-0.5 leading-relaxed">
               Descreva em linguagem natural o problema corporativo, desafio ou meta desejada. A IA
               irá estruturar automaticamente todos os 7 pilares 5W2H (O quê, Por quê, Onde, Quando, Quem, Como e Quanto)
               prontos para conversão em tarefas no seu workspace.
@@ -139,19 +139,19 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
       </div>
 
       {/* Input Box */}
-      <div className="bg-[#1e2020] border border-[#444748] p-4 md:p-5 space-y-4 w-full">
+      <div className="bg-card border border-border p-4 md:p-5 space-y-4 w-full">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-[11px] font-mono-data text-[#c4c7c7] uppercase block mb-1">
+            <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
               Departamento de Destino:
             </label>
             <select
               value={selectedDept}
               onChange={(e) => setSelectedDept(e.target.value)}
-              className="w-full bg-[#121414] border border-[#444748] text-[#e2e2e2] text-xs font-mono-data p-2 focus:border-[#4ae183] focus:outline-none cursor-pointer"
+              className="w-full bg-background border border-input text-foreground text-xs font-mono-data p-2 focus:border-primary focus:outline-none cursor-pointer"
             >
               {workspaceConfig.departments.map((d) => (
-                <option key={d} value={d}>
+                <option key={d} value={d} className="bg-popover text-foreground">
                   {d}
                 </option>
               ))}
@@ -159,7 +159,7 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
           </div>
 
           <div>
-            <label className="text-[11px] font-mono-data text-[#c4c7c7] uppercase block mb-1">
+            <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
               Exemplos Rápidos de Prompts:
             </label>
             <div className="flex flex-wrap gap-1">
@@ -170,7 +170,7 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
                     'Precisamos implantar um sistema de controle de estoque no almoxarifado para evitar perdas de materiais e otimizar compras.'
                   )
                 }
-                className="text-[10px] bg-[#121414] border border-[#444748] px-2 py-1 text-[#c4c7c7] hover:text-[#4ae183]"
+                className="text-[10px] bg-background border border-border px-2 py-1 text-muted-foreground hover:text-primary hover:bg-muted cursor-pointer transition-colors"
               >
                 Controle de Estoque
               </button>
@@ -181,7 +181,7 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
                     'Implementar processo de admissão e onboarding 100% digital para novos colaboradores com integração no eSocial.'
                   )
                 }
-                className="text-[10px] bg-[#121414] border border-[#444748] px-2 py-1 text-[#c4c7c7] hover:text-[#4ae183]"
+                className="text-[10px] bg-background border border-border px-2 py-1 text-muted-foreground hover:text-primary hover:bg-muted cursor-pointer transition-colors"
               >
                 Onboarding Digital
               </button>
@@ -192,7 +192,7 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
                     'Reduzir a taxa de inadimplência de clientes em 20% realizando cobrança preventiva e renegociação de dívidas.'
                   )
                 }
-                className="text-[10px] bg-[#121414] border border-[#444748] px-2 py-1 text-[#c4c7c7] hover:text-[#4ae183]"
+                className="text-[10px] bg-background border border-border px-2 py-1 text-muted-foreground hover:text-primary hover:bg-muted cursor-pointer transition-colors"
               >
                 Cobrança Preventiva
               </button>
@@ -201,7 +201,7 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
         </div>
 
         <div>
-          <label className="text-[11px] font-mono-data text-[#c4c7c7] uppercase block mb-1">
+          <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
             Descrição do Objetivo / Problema:
           </label>
           <textarea
@@ -209,14 +209,14 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
             onChange={(e) => setPromptText(e.target.value)}
             placeholder="Ex.: Precisamos organizar a rotina de treinamento da equipe de vendas em novos produtos para aumentar a taxa de conversão em 15%..."
             rows={4}
-            className="w-full bg-[#121414] border border-[#444748] text-[#e2e2e2] text-xs p-3 focus:border-[#4ae183] focus:outline-none font-body-md"
+            className="w-full bg-background border border-input text-foreground text-xs p-3 focus:border-primary focus:outline-none font-body-md"
           />
         </div>
 
         <button
           onClick={handleGenerate}
           disabled={isLoading || !promptText.trim()}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-[#0a84c6] hover:bg-[#92ccff] hover:text-[#001d31] disabled:opacity-50 text-[#ffffff] font-bold text-xs uppercase tracking-wider font-mono-data transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-3 bg-info/90 hover:bg-info text-info-foreground disabled:opacity-50 font-bold text-xs uppercase tracking-wider font-mono-data transition-colors cursor-pointer"
         >
           {isLoading ? (
             <>
@@ -235,14 +235,14 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
       {/* Generated Results Section */}
       {aiDrafts.length > 0 && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-[#444748] pb-2">
-            <h3 className="text-sm font-bold text-[#e2e2e2] font-mono-data uppercase">
+          <div className="flex items-center justify-between border-b border-border pb-2">
+            <h3 className="text-sm font-bold text-foreground font-mono-data uppercase">
               Rascunhos 5W2H Gerados ({aiDrafts.length})
             </h3>
             {aiDrafts.length > 1 && (
               <button
                 onClick={handleAddAll}
-                className="px-3 py-1 bg-[#4ae183] text-[#003919] font-bold text-xs font-mono-data uppercase hover:bg-[#6bfe9c]"
+                className="px-3 py-1 bg-primary text-primary-foreground font-bold text-xs font-mono-data uppercase hover:bg-primary/90 cursor-pointer"
               >
                 Adicionar Todos ao Plano ({aiDrafts.length})
               </button>
@@ -255,24 +255,24 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
               return (
                 <div
                   key={idx}
-                  className={`bg-[#1a1c1c] border ${
-                    isAdded ? 'border-[#4ae183]' : 'border-[#444748]'
+                  className={`bg-card border ${
+                    isAdded ? 'border-primary' : 'border-border'
                   } p-5 space-y-4 relative transition-colors`}
                 >
-                  <div className="flex flex-col sm:flex-row justify-between items-start gap-2 border-b border-[#444748] pb-3">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-2 border-b border-border pb-3">
                     <div>
-                      <span className="text-[10px] font-mono-data text-[#8e9192] uppercase block">
+                      <span className="text-[10px] font-mono-data text-muted-foreground uppercase block">
                         Ação Sugerida #{idx + 1} • {draft.department || selectedDept}
                       </span>
-                      <h4 className="text-base font-bold text-[#e2e2e2]">{draft.title}</h4>
+                      <h4 className="text-base font-bold text-foreground">{draft.title}</h4>
                     </div>
                     <button
                       onClick={() => handleConvertDraftToTask(draft, idx)}
                       disabled={isAdded}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono-data uppercase font-bold tracking-wider transition-colors shrink-0 ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono-data uppercase font-bold tracking-wider transition-colors shrink-0 cursor-pointer ${
                         isAdded
-                          ? 'bg-[#1e2020] border border-[#4ae183] text-[#4ae183] cursor-default'
-                          : 'bg-[#4ae183] text-[#003919] hover:bg-[#6bfe9c]'
+                          ? 'bg-card border border-primary text-primary cursor-default'
+                          : 'bg-primary text-primary-foreground hover:bg-primary/90'
                       }`}
                     >
                       {isAdded ? (
@@ -291,39 +291,39 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
 
                   {/* 5W2H Matrix Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                    <div className="bg-[#121414] p-3 border border-[#444748]">
-                      <span className="text-[10px] font-mono-data text-[#92ccff] uppercase block font-bold mb-1">
+                    <div className="bg-background p-3 border border-border">
+                      <span className="text-[10px] font-mono-data text-info uppercase block font-bold mb-1">
                         Por quê (Justificativa)
                       </span>
-                      <p className="text-[#c4c7c7]">{draft.why}</p>
+                      <p className="text-muted-foreground">{draft.why}</p>
                     </div>
 
-                    <div className="bg-[#121414] p-3 border border-[#444748]">
-                      <span className="text-[10px] font-mono-data text-[#c8c6c5] uppercase block font-bold mb-1">
+                    <div className="bg-background p-3 border border-border">
+                      <span className="text-[10px] font-mono-data text-foreground uppercase block font-bold mb-1">
                         Como (Metodologia)
                       </span>
-                      <p className="text-[#c4c7c7] whitespace-pre-line">{draft.how}</p>
+                      <p className="text-muted-foreground whitespace-pre-line">{draft.how}</p>
                     </div>
 
-                    <div className="bg-[#121414] p-2.5 border border-[#444748] grid grid-cols-2 gap-2 text-[11px] font-mono-data">
+                    <div className="bg-background p-2.5 border border-border grid grid-cols-2 gap-2 text-[11px] font-mono-data">
                       <div>
-                        <span className="text-[9px] text-[#8e9192] block uppercase">Onde</span>
-                        <span className="text-[#e2e2e2]">{draft.where}</span>
+                        <span className="text-[9px] text-muted-foreground block uppercase">Onde</span>
+                        <span className="text-foreground">{draft.where}</span>
                       </div>
                       <div>
-                        <span className="text-[9px] text-[#8e9192] block uppercase">Quem</span>
-                        <span className="text-[#e2e2e2] font-bold">{draft.who}</span>
+                        <span className="text-[9px] text-muted-foreground block uppercase">Quem</span>
+                        <span className="text-foreground font-bold">{draft.who}</span>
                       </div>
                     </div>
 
-                    <div className="bg-[#121414] p-2.5 border border-[#444748] grid grid-cols-2 gap-2 text-[11px] font-mono-data">
+                    <div className="bg-background p-2.5 border border-border grid grid-cols-2 gap-2 text-[11px] font-mono-data">
                       <div>
-                        <span className="text-[9px] text-[#8e9192] block uppercase">Quando (Prazo)</span>
-                        <span className="text-[#e2e2e2]">{draft.deadlineDate}</span>
+                        <span className="text-[9px] text-muted-foreground block uppercase">Quando (Prazo)</span>
+                        <span className="text-foreground">{draft.deadlineDate}</span>
                       </div>
                       <div>
-                        <span className="text-[9px] text-[#8e9192] block uppercase">Quanto</span>
-                        <span className="text-[#4ae183] font-bold">
+                        <span className="text-[9px] text-muted-foreground block uppercase">Quanto</span>
+                        <span className="text-primary font-bold">
                           {workspaceConfig.currencySymbol} {draft.howMuch || 0}
                         </span>
                       </div>
@@ -331,8 +331,8 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
                   </div>
 
                   {draft.observations && (
-                    <div className="text-[11px] text-[#c4c7c7] font-mono-data bg-[#121414] p-2 border border-[#444748]">
-                      <span className="text-[#8e9192] font-bold uppercase mr-1">Observação IA:</span>
+                    <div className="text-[11px] text-muted-foreground font-mono-data bg-background p-2 border border-border">
+                      <span className="text-muted-foreground font-bold uppercase mr-1">Observação IA:</span>
                       {draft.observations}
                     </div>
                   )}

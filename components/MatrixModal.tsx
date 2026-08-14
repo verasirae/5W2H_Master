@@ -75,22 +75,22 @@ Observações: ${task.observations || 'N/A'}
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#121414]/80 backdrop-blur-md">
-      <div className="bg-[#1e2020] border border-[#444748] w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
+      <div className="bg-card border border-border w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl animate-in fade-in duration-200">
         {/* Modal Top Bar */}
-        <div className="flex justify-between items-center p-4 border-b border-[#444748] bg-[#1a1c1c] no-print shrink-0">
+        <div className="flex justify-between items-center p-4 border-b border-border bg-card no-print shrink-0">
           <div>
-            <span className="text-[10px] font-mono-data text-[#4ae183] uppercase font-bold">
+            <span className="text-[10px] font-mono-data text-primary uppercase font-bold">
               Inspeção de Matriz 5W2H • ID: {task.id}
             </span>
-            <h2 className="text-lg font-bold text-[#e2e2e2] leading-tight">{task.title}</h2>
+            <h2 className="text-lg font-bold text-foreground leading-tight">{task.title}</h2>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopySummary}
               title="Copiar Resumo 5W2H"
-              className="flex items-center gap-1 px-3 py-1.5 bg-[#121414] border border-[#444748] hover:border-[#92ccff] text-[#92ccff] text-xs font-mono-data uppercase transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 bg-background border border-border hover:border-info text-info text-xs font-mono-data uppercase transition-colors cursor-pointer"
             >
               <Copy className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Copiar</span>
@@ -99,7 +99,7 @@ Observações: ${task.observations || 'N/A'}
             <button
               onClick={handlePrint}
               title="Imprimir Matriz 5W2H"
-              className="flex items-center gap-1 px-3 py-1.5 bg-[#121414] border border-[#444748] hover:border-[#4ae183] text-[#4ae183] text-xs font-mono-data uppercase transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 bg-background border border-border hover:border-primary text-primary text-xs font-mono-data uppercase transition-colors cursor-pointer"
             >
               <Printer className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Imprimir</span>
@@ -111,7 +111,7 @@ Observações: ${task.observations || 'N/A'}
                 openEditModal(task);
               }}
               title="Editar"
-              className="p-1.5 bg-[#121414] border border-[#444748] hover:border-[#4ae183] text-[#c4c7c7] hover:text-[#4ae183]"
+              className="p-1.5 bg-background border border-border hover:border-primary text-muted-foreground hover:text-primary cursor-pointer transition-colors"
             >
               <Edit2 className="w-4 h-4" />
             </button>
@@ -124,108 +124,108 @@ Observações: ${task.observations || 'N/A'}
                 }
               }}
               title="Excluir"
-              className="p-1.5 bg-[#121414] border border-[#444748] hover:border-[#ffb4ab] text-[#c4c7c7] hover:text-[#ffb4ab]"
+              className="p-1.5 bg-background border border-border hover:border-destructive text-muted-foreground hover:text-destructive cursor-pointer transition-colors"
             >
               <Trash2 className="w-4 h-4" />
             </button>
 
-            <button onClick={onClose} className="p-1.5 text-[#c4c7c7] hover:text-[#ffb4ab]">
+            <button onClick={onClose} className="p-1.5 text-muted-foreground hover:text-destructive cursor-pointer transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Printable Matrix Content */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-6 bg-[#121414] print-matrix">
+        <div className="p-6 overflow-y-auto flex-1 space-y-6 bg-background print-matrix">
           {/* Status & Execution Header */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#1e2020] p-4 border border-[#444748] font-mono-data text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-card p-4 border border-border font-mono-data text-xs">
             <div>
-              <span className="text-[10px] text-[#8e9192] uppercase block">Departamento</span>
-              <span className="font-bold text-[#e2e2e2]">{task.department}</span>
+              <span className="text-[10px] text-muted-foreground uppercase block">Departamento</span>
+              <span className="font-bold text-foreground">{task.department}</span>
             </div>
             <div>
-              <span className="text-[10px] text-[#8e9192] uppercase block">Categoria</span>
-              <span className="font-bold text-[#e2e2e2]">{task.category}</span>
+              <span className="text-[10px] text-muted-foreground uppercase block">Categoria</span>
+              <span className="font-bold text-foreground">{task.category}</span>
             </div>
             <div>
-              <span className="text-[10px] text-[#8e9192] uppercase block">Competência</span>
-              <span className="font-bold text-[#e2e2e2]">{task.competence}</span>
+              <span className="text-[10px] text-muted-foreground uppercase block">Competência</span>
+              <span className="font-bold text-foreground">{task.competence}</span>
             </div>
             <div>
-              <span className="text-[10px] text-[#8e9192] uppercase block">Prioridade</span>
-              <span className="font-bold text-[#ffb4ab] uppercase">{task.priority}</span>
+              <span className="text-[10px] text-muted-foreground uppercase block">Prioridade</span>
+              <span className="font-bold text-destructive uppercase">{task.priority}</span>
             </div>
           </div>
 
           {/* 5W2H Bento Grid Blocks */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 1. WHAT */}
-            <div className="md:col-span-2 bg-[#1a1c1c] border border-[#444748] p-4">
-              <div className="flex items-center gap-2 border-b border-[#444748] pb-2 mb-3">
-                <HelpCircle className="w-4 h-4 text-[#4ae183]" />
-                <h3 className="font-bold text-xs font-mono-data text-[#e2e2e2] uppercase">
+            <div className="md:col-span-2 bg-card border border-border p-4">
+              <div className="flex items-center gap-2 border-b border-border pb-2 mb-3">
+                <HelpCircle className="w-4 h-4 text-primary" />
+                <h3 className="font-bold text-xs font-mono-data text-foreground uppercase">
                   1. O QUÊ (Título & Ação Core)
                 </h3>
               </div>
-              <p className="text-sm font-bold text-[#e2e2e2] leading-relaxed">{task.title}</p>
+              <p className="text-sm font-bold text-foreground leading-relaxed">{task.title}</p>
             </div>
 
             {/* 2. WHY */}
-            <div className="bg-[#1a1c1c] border border-[#444748] p-4">
-              <div className="flex items-center gap-2 border-b border-[#444748] pb-2 mb-3">
-                <Brain className="w-4 h-4 text-[#92ccff]" />
-                <h3 className="font-bold text-xs font-mono-data text-[#e2e2e2] uppercase">
+            <div className="bg-card border border-border p-4">
+              <div className="flex items-center gap-2 border-b border-border pb-2 mb-3">
+                <Brain className="w-4 h-4 text-info" />
+                <h3 className="font-bold text-xs font-mono-data text-foreground uppercase">
                   2. POR QUÊ (Justificativa)
                 </h3>
               </div>
-              <p className="text-xs text-[#c4c7c7] leading-relaxed">{task.why}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{task.why}</p>
             </div>
 
             {/* 3. HOW */}
-            <div className="bg-[#1a1c1c] border border-[#444748] p-4">
-              <div className="flex items-center gap-2 border-b border-[#444748] pb-2 mb-3">
-                <Wrench className="w-4 h-4 text-[#c8c6c5]" />
-                <h3 className="font-bold text-xs font-mono-data text-[#e2e2e2] uppercase">
+            <div className="bg-card border border-border p-4">
+              <div className="flex items-center gap-2 border-b border-border pb-2 mb-3">
+                <Wrench className="w-4 h-4 text-foreground" />
+                <h3 className="font-bold text-xs font-mono-data text-foreground uppercase">
                   3. COMO (Procedimento / Método)
                 </h3>
               </div>
-              <p className="text-xs text-[#c4c7c7] leading-relaxed whitespace-pre-line">{task.how}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{task.how}</p>
             </div>
 
             {/* 4. WHERE */}
-            <div className="bg-[#1a1c1c] border border-[#444748] p-4 font-mono-data">
-              <div className="flex items-center gap-2 border-b border-[#444748] pb-2 mb-2">
-                <MapPin className="w-4 h-4 text-[#4ae183]" />
-                <h3 className="font-bold text-xs text-[#e2e2e2] uppercase">4. ONDE (Local / Setor)</h3>
+            <div className="bg-card border border-border p-4 font-mono-data">
+              <div className="flex items-center gap-2 border-b border-border pb-2 mb-2">
+                <MapPin className="w-4 h-4 text-primary" />
+                <h3 className="font-bold text-xs text-foreground uppercase">4. ONDE (Local / Setor)</h3>
               </div>
-              <p className="text-xs text-[#e2e2e2]">{task.where}</p>
+              <p className="text-xs text-foreground">{task.where}</p>
             </div>
 
             {/* 5. WHO */}
-            <div className="bg-[#1a1c1c] border border-[#444748] p-4 font-mono-data">
-              <div className="flex items-center gap-2 border-b border-[#444748] pb-2 mb-2">
-                <User className="w-4 h-4 text-[#92ccff]" />
-                <h3 className="font-bold text-xs text-[#e2e2e2] uppercase">5. QUEM (Responsável)</h3>
+            <div className="bg-card border border-border p-4 font-mono-data">
+              <div className="flex items-center gap-2 border-b border-border pb-2 mb-2">
+                <User className="w-4 h-4 text-info" />
+                <h3 className="font-bold text-xs text-foreground uppercase">5. QUEM (Responsável)</h3>
               </div>
-              <p className="text-xs font-bold text-[#e2e2e2]">{task.who}</p>
+              <p className="text-xs font-bold text-foreground">{task.who}</p>
             </div>
 
             {/* 6. WHEN */}
-            <div className="bg-[#1a1c1c] border border-[#444748] p-4 font-mono-data">
-              <div className="flex items-center gap-2 border-b border-[#444748] pb-2 mb-2">
-                <Calendar className="w-4 h-4 text-[#ffb4ab]" />
-                <h3 className="font-bold text-xs text-[#e2e2e2] uppercase">6. QUANDO (Prazo)</h3>
+            <div className="bg-card border border-border p-4 font-mono-data">
+              <div className="flex items-center gap-2 border-b border-border pb-2 mb-2">
+                <Calendar className="w-4 h-4 text-destructive" />
+                <h3 className="font-bold text-xs text-foreground uppercase">6. QUANDO (Prazo)</h3>
               </div>
-              <div className="text-xs text-[#c4c7c7] space-y-1">
+              <div className="text-xs text-muted-foreground space-y-1">
                 <p>Início: {formatShortDate(task.startDate)}</p>
-                <p className="font-bold text-[#e2e2e2]">Prazo Final: {formatShortDate(task.deadlineDate)}</p>
+                <p className="font-bold text-foreground">Prazo Final: {formatShortDate(task.deadlineDate)}</p>
                 <p
                   className={`font-bold uppercase text-[11px] ${
                     calc.deadlineSituation === 'Atrasado'
-                      ? 'text-[#ffb4ab]'
+                      ? 'text-destructive'
                       : calc.deadlineSituation === 'Atenção'
-                      ? 'text-[#92ccff]'
-                      : 'text-[#4ae183]'
+                      ? 'text-info'
+                      : 'text-primary'
                   }`}
                 >
                   SLA: {calc.deadlineSituation} ({calc.daysRemaining} dias)
@@ -234,31 +234,31 @@ Observações: ${task.observations || 'N/A'}
             </div>
 
             {/* 7. HOW MUCH */}
-            <div className="bg-[#1a1c1c] border border-[#444748] p-4 font-mono-data">
-              <div className="flex items-center gap-2 border-b border-[#444748] pb-2 mb-2">
-                <DollarSign className="w-4 h-4 text-[#4ae183]" />
-                <h3 className="font-bold text-xs text-[#e2e2e2] uppercase">7. QUANTO (Custo)</h3>
+            <div className="bg-card border border-border p-4 font-mono-data">
+              <div className="flex items-center gap-2 border-b border-border pb-2 mb-2">
+                <DollarSign className="w-4 h-4 text-primary" />
+                <h3 className="font-bold text-xs text-foreground uppercase">7. QUANTO (Custo)</h3>
               </div>
-              <p className="text-base font-bold text-[#4ae183]">
+              <p className="text-base font-bold text-primary">
                 {formatCurrency(task.howMuch, workspaceConfig.currencySymbol)}
               </p>
-              <span className="text-[10px] text-[#8e9192] uppercase">Orçamento aprovado</span>
+              <span className="text-[10px] text-muted-foreground uppercase">Orçamento aprovado</span>
             </div>
           </div>
 
           {/* Observations & Progress Bar */}
-          <div className="bg-[#1e2020] p-4 border border-[#444748] space-y-3 font-mono-data">
+          <div className="bg-card p-4 border border-border space-y-3 font-mono-data">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-[#c4c7c7] font-bold">Status Atual: {task.status}</span>
-              <span className="text-[#4ae183] font-bold">{task.progressPercent}% Concluído</span>
+              <span className="text-muted-foreground font-bold">Status Atual: {task.status}</span>
+              <span className="text-primary font-bold">{task.progressPercent}% Concluído</span>
             </div>
-            <div className="w-full bg-[#333535] h-2 border border-[#444748]">
-              <div className="bg-[#4ae183] h-full" style={{ width: `${task.progressPercent}%` }}></div>
+            <div className="w-full bg-muted h-2 border border-border">
+              <div className="bg-primary h-full" style={{ width: `${task.progressPercent}%` }}></div>
             </div>
 
             {task.observations && (
-              <div className="text-xs text-[#c4c7c7] pt-2 border-t border-[#444748]">
-                <span className="text-[#8e9192] font-bold uppercase block mb-1">Observações:</span>
+              <div className="text-xs text-muted-foreground pt-2 border-t border-border">
+                <span className="text-muted-foreground font-bold uppercase block mb-1">Observações:</span>
                 <p>{task.observations}</p>
               </div>
             )}

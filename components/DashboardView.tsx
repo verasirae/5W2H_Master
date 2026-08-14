@@ -98,18 +98,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     });
 
     const COLORS: Record<string, string> = {
-      'Concluído': '#4ae183',
-      'Em andamento': '#92ccff',
-      'Não iniciado': '#8e9192',
-      'Atrasado': '#ffb4ab',
-      'Cancelado': '#444748',
+      'Concluído': 'var(--primary)',
+      'Em andamento': 'var(--info)',
+      'Não iniciado': 'var(--muted-foreground)',
+      'Atrasado': 'var(--destructive)',
+      'Cancelado': 'var(--border)',
     };
 
     return Object.keys(counts)
       .map((key) => ({
         name: key,
         value: counts[key],
-        color: COLORS[key] || '#c8c6c5',
+        color: COLORS[key] || 'var(--muted-foreground)',
       }))
       .filter((item) => item.value > 0);
   }, [filteredTasks]);
@@ -145,10 +145,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     const total = filteredTasks.length || 1;
 
     return [
-      { name: 'No Prazo', count: onTrack, percent: Math.round((onTrack / total) * 100), color: '#4ae183' },
-      { name: 'Atenção', count: attention, percent: Math.round((attention / total) * 100), color: '#92ccff' },
-      { name: 'Atrasado', count: overdue, percent: Math.round((overdue / total) * 100), color: '#ffb4ab' },
-      { name: 'Concluído', count: done, percent: Math.round((done / total) * 100), color: '#8e9192' },
+      { name: 'No Prazo', count: onTrack, percent: Math.round((onTrack / total) * 100), color: 'var(--primary)' },
+      { name: 'Atenção', count: attention, percent: Math.round((attention / total) * 100), color: 'var(--info)' },
+      { name: 'Atrasado', count: overdue, percent: Math.round((overdue / total) * 100), color: 'var(--destructive)' },
+      { name: 'Concluído', count: done, percent: Math.round((done / total) * 100), color: 'var(--muted-foreground)' },
     ];
   }, [filteredTasks, workspaceConfig.attentionThresholdDays]);
 
@@ -157,92 +157,92 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* KPI Cards Grid */}
       <section className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {/* Total Tasks */}
-        <div className="bg-[#1e2020] border border-[#444748] p-4 flex flex-col justify-between h-28">
+        <div className="bg-card border border-border p-4 flex flex-col justify-between h-28">
           <div className="flex justify-between items-start">
-            <span className="text-[10px] text-[#c4c7c7] font-medium uppercase tracking-wider font-mono-data">
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data">
               Total de Tarefas
             </span>
-            <List className="w-4 h-4 text-[#c4c7c7]" />
+            <List className="w-4 h-4 text-muted-foreground" />
           </div>
-          <div className="text-3xl font-bold font-mono-data text-[#e2e2e2]">
+          <div className="text-3xl font-bold font-mono-data text-foreground">
             {totalTasks.toLocaleString('pt-BR')}
           </div>
-          <div className="text-[10px] text-[#8e9192] font-mono-data">
+          <div className="text-[10px] text-muted-foreground font-mono-data">
             Orçamento: {formatCurrency(totalBudget, workspaceConfig.currencySymbol)}
           </div>
         </div>
 
         {/* Completed */}
-        <div className="bg-[#1e2020] border border-[#444748] p-4 flex flex-col justify-between h-28">
+        <div className="bg-card border border-border p-4 flex flex-col justify-between h-28">
           <div className="flex justify-between items-start">
-            <span className="text-[10px] text-[#c4c7c7] font-medium uppercase tracking-wider font-mono-data">
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data">
               Concluídas
             </span>
-            <CheckCircle2 className="w-4 h-4 text-[#4ae183]" />
+            <CheckCircle2 className="w-4 h-4 text-primary" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold font-mono-data text-[#e2e2e2]">
+            <span className="text-3xl font-bold font-mono-data text-foreground">
               {completedTasks}
             </span>
             {totalTasks > 0 && (
-              <span className="text-xs font-mono-data text-[#4ae183]">
+              <span className="text-xs font-mono-data text-primary font-bold">
                 {Math.round((completedTasks / totalTasks) * 100)}%
               </span>
             )}
           </div>
-          <div className="text-[10px] text-[#4ae183] font-mono-data flex items-center gap-1">
+          <div className="text-[10px] text-primary font-mono-data flex items-center gap-1 font-medium">
             <TrendingUp className="w-3 h-3" /> Metas alcançadas
           </div>
         </div>
 
         {/* In Progress */}
-        <div className="bg-[#1e2020] border border-[#444748] p-4 flex flex-col justify-between h-28">
+        <div className="bg-card border border-border p-4 flex flex-col justify-between h-28">
           <div className="flex justify-between items-start">
-            <span className="text-[10px] text-[#c4c7c7] font-medium uppercase tracking-wider font-mono-data">
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data">
               Em Andamento
             </span>
-            <Clock className="w-4 h-4 text-[#92ccff]" />
+            <Clock className="w-4 h-4 text-info" />
           </div>
-          <div className="text-3xl font-bold font-mono-data text-[#e2e2e2]">
+          <div className="text-3xl font-bold font-mono-data text-foreground">
             {inProgressTasks}
           </div>
-          <div className="text-[10px] text-[#92ccff] font-mono-data">
+          <div className="text-[10px] text-info font-mono-data font-medium">
             Em execução ativa
           </div>
         </div>
 
         {/* Overdue */}
-        <div className="bg-[#1e2020] border border-[#ffb4ab] p-4 flex flex-col justify-between h-28 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[#93000a] opacity-10 pointer-events-none"></div>
+        <div className="bg-card border border-destructive p-4 flex flex-col justify-between h-28 relative overflow-hidden">
+          <div className="absolute inset-0 bg-destructive/10 pointer-events-none"></div>
           <div className="flex justify-between items-start relative z-10">
-            <span className="text-[10px] text-[#ffb4ab] font-bold uppercase tracking-wider font-mono-data">
+            <span className="text-[10px] text-destructive font-bold uppercase tracking-wider font-mono-data">
               Atrasadas
             </span>
-            <AlertTriangle className="w-4 h-4 text-[#ffb4ab]" />
+            <AlertTriangle className="w-4 h-4 text-destructive" />
           </div>
-          <div className="text-3xl font-bold font-mono-data text-[#ffb4ab] relative z-10">
+          <div className="text-3xl font-bold font-mono-data text-destructive relative z-10">
             {overdueTasks}
           </div>
-          <div className="text-[10px] text-[#ffb4ab] font-mono-data relative z-10">
+          <div className="text-[10px] text-destructive font-mono-data relative z-10 font-medium">
             Requer atenção imediata
           </div>
         </div>
 
         {/* Avg Completion */}
-        <div className="bg-[#1e2020] border border-[#444748] p-4 flex flex-col justify-between h-28">
+        <div className="bg-card border border-border p-4 flex flex-col justify-between h-28">
           <div className="flex justify-between items-start">
-            <span className="text-[10px] text-[#c4c7c7] font-medium uppercase tracking-wider font-mono-data">
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data">
               % Média Conclusão
             </span>
-            <Gauge className="w-4 h-4 text-[#4ae183]" />
+            <Gauge className="w-4 h-4 text-primary" />
           </div>
-          <div className="text-3xl font-bold font-mono-data text-[#4ae183]">
+          <div className="text-3xl font-bold font-mono-data text-primary">
             {avgCompletionPercent}%
           </div>
           {/* Progress bar line */}
-          <div className="w-full bg-[#333535] h-1.5 border border-[#444748]">
+          <div className="w-full bg-muted h-1.5 border border-border">
             <div
-              className="bg-[#4ae183] h-full"
+              className="bg-primary h-full transition-all"
               style={{ width: `${Math.min(avgCompletionPercent, 100)}%` }}
             ></div>
           </div>
@@ -252,30 +252,30 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Main Charts Grid (Bento Layout) */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Chart 1: Evolution by Competence (Spans 8 cols) */}
-        <div className="lg:col-span-8 bg-[#1e2020] border border-[#444748] flex flex-col">
-          <div className="p-3 border-b border-[#444748] flex justify-between items-center bg-[#1a1c1c]">
-            <h3 className="text-xs font-bold text-[#e2e2e2] uppercase tracking-wider font-mono-data">
+        <div className="lg:col-span-8 bg-card border border-border flex flex-col">
+          <div className="p-3 border-b border-border flex justify-between items-center bg-card">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
               Evolução por Competência (Mês a Mês)
             </h3>
-            <span className="text-[10px] text-[#8e9192] font-mono-data">
+            <span className="text-[10px] text-muted-foreground font-mono-data">
               Total vs Concluídas
             </span>
           </div>
           <div className="p-4 flex-1 min-h-[260px]">
             {competenceData.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-xs text-[#8e9192] font-mono-data">
+              <div className="h-full flex items-center justify-center text-xs text-muted-foreground font-mono-data">
                 Nenhum dado disponível para o filtro selecionado.
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={competenceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="competence" stroke="#8e9192" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#8e9192" fontSize={11} tickLine={false} allowDecimals={false} />
+                  <XAxis dataKey="competence" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
+                  <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} allowDecimals={false} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#121414', borderColor: '#444748', borderRadius: '0px', color: '#e2e2e2', fontSize: '12px' }}
+                    contentStyle={{ backgroundColor: 'var(--popover)', borderColor: 'var(--border)', borderRadius: '0px', color: 'var(--foreground)', fontSize: '12px' }}
                   />
-                  <Bar dataKey="total" name="Total Tarefas" fill="#92ccff" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="completed" name="Concluídas" fill="#4ae183" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="total" name="Total Tarefas" fill="var(--info)" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="completed" name="Concluídas" fill="var(--primary)" radius={[0, 0, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -283,15 +283,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Chart 2: Status Distribution Donut (Spans 4 cols) */}
-        <div className="lg:col-span-4 bg-[#1e2020] border border-[#444748] flex flex-col">
-          <div className="p-3 border-b border-[#444748] bg-[#1a1c1c]">
-            <h3 className="text-xs font-bold text-[#e2e2e2] uppercase tracking-wider font-mono-data">
+        <div className="lg:col-span-4 bg-card border border-border flex flex-col">
+          <div className="p-3 border-b border-border bg-card">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
               Distribuição por Status
             </h3>
           </div>
           <div className="p-4 flex-1 flex flex-col items-center justify-center min-h-[260px]">
             {statusDistributionData.length === 0 ? (
-              <div className="text-xs text-[#8e9192] font-mono-data">Sem tarefas no filtro.</div>
+              <div className="text-xs text-muted-foreground font-mono-data">Sem tarefas no filtro.</div>
             ) : (
               <>
                 <ResponsiveContainer width="100%" height={160}>
@@ -306,17 +306,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       dataKey="value"
                     >
                       {statusDistributionData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} stroke="#1e2020" />
+                        <Cell key={`cell-${index}`} fill={entry.color} stroke="var(--card)" />
                       ))}
                     </Pie>
                     <Tooltip
-                      contentStyle={{ backgroundColor: '#121414', borderColor: '#444748', color: '#e2e2e2', fontSize: '11px' }}
+                      contentStyle={{ backgroundColor: 'var(--popover)', borderColor: 'var(--border)', color: 'var(--foreground)', fontSize: '11px' }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="w-full flex flex-wrap justify-center gap-2 mt-2">
                   {statusDistributionData.map((item) => (
-                    <div key={item.name} className="flex items-center gap-1.5 text-[11px] font-mono-data text-[#c4c7c7]">
+                    <div key={item.name} className="flex items-center gap-1.5 text-[11px] font-mono-data text-muted-foreground">
                       <span className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: item.color }}></span>
                       <span>{item.name}: {item.value}</span>
                     </div>
@@ -328,27 +328,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Chart 3: Tasks by Category (Spans 6 cols) */}
-        <div className="lg:col-span-6 bg-[#1e2020] border border-[#444748] flex flex-col">
-          <div className="p-3 border-b border-[#444748] bg-[#1a1c1c]">
-            <h3 className="text-xs font-bold text-[#e2e2e2] uppercase tracking-wider font-mono-data">
+        <div className="lg:col-span-6 bg-card border border-border flex flex-col">
+          <div className="p-3 border-b border-border bg-card">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
               Tarefas por Categoria / Rotina
             </h3>
           </div>
           <div className="p-4 flex-1 space-y-3 min-h-[200px]">
             {categoryData.length === 0 ? (
-              <div className="text-xs text-[#8e9192] font-mono-data py-8 text-center">Nenhum registro encontrado.</div>
+              <div className="text-xs text-muted-foreground font-mono-data py-8 text-center">Nenhum registro encontrado.</div>
             ) : (
               categoryData.map((item) => {
                 const max = categoryData[0]?.total || 1;
                 const pct = Math.round((item.total / max) * 100);
                 return (
                   <div key={item.category} className="space-y-1">
-                    <div className="flex justify-between text-xs font-mono-data text-[#c4c7c7]">
+                    <div className="flex justify-between text-xs font-mono-data text-muted-foreground">
                       <span className="truncate max-w-[240px]">{item.category}</span>
-                      <span className="font-bold text-[#e2e2e2]">{item.total}</span>
+                      <span className="font-bold text-foreground">{item.total}</span>
                     </div>
-                    <div className="w-full bg-[#333535] h-2">
-                      <div className="bg-[#4ae183] h-2" style={{ width: `${pct}%` }}></div>
+                    <div className="w-full bg-muted h-2">
+                      <div className="bg-primary h-2" style={{ width: `${pct}%` }}></div>
                     </div>
                   </div>
                 );
@@ -358,24 +358,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Chart 4: Deadline Status (Spans 6 cols) */}
-        <div className="lg:col-span-6 bg-[#1e2020] border border-[#444748] flex flex-col">
-          <div className="p-3 border-b border-[#444748] bg-[#1a1c1c]">
-            <h3 className="text-xs font-bold text-[#e2e2e2] uppercase tracking-wider font-mono-data">
+        <div className="lg:col-span-6 bg-card border border-border flex flex-col">
+          <div className="p-3 border-b border-border bg-card">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
               Situação do Prazo (SLA)
             </h3>
           </div>
           <div className="p-4 flex-1 flex flex-col justify-around gap-3 min-h-[200px]">
             {deadlineStatusData.map((item) => (
               <div key={item.name} className="flex items-center gap-3">
-                <div className="w-20 font-mono-data text-xs text-[#c4c7c7] text-right truncate">
+                <div className="w-20 font-mono-data text-xs text-muted-foreground text-right truncate">
                   {item.name}
                 </div>
-                <div className="flex-1 h-6 bg-[#333535] relative">
+                <div className="flex-1 h-6 bg-muted relative">
                   <div
                     className="absolute left-0 top-0 bottom-0 transition-all duration-300"
                     style={{ width: `${item.percent}%`, backgroundColor: item.color }}
                   ></div>
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 font-mono-data text-[11px] text-[#e2e2e2] font-bold">
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 font-mono-data text-[11px] text-foreground font-bold">
                     {item.count} ({item.percent}%)
                   </span>
                 </div>

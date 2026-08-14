@@ -52,7 +52,7 @@ export default function HomePage() {
   } = use5W2H();
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#121414] text-[#e2e2e2]">
+    <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
       {/* Side Navigation Shell */}
       <Navbar
         currentView={currentView}

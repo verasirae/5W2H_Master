@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className="bg-[#121414] text-[#e2e2e2] antialiased min-h-screen flex flex-col" suppressHydrationWarning>
+      <body className="bg-background text-foreground antialiased min-h-screen flex flex-col" suppressHydrationWarning>
         {children}
       </body>
     </html>
