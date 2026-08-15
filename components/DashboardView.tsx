@@ -4,6 +4,13 @@ import React, { useMemo } from 'react';
 import { Task5W2H, WorkspaceConfig } from '@/types/5w2h';
 import { calculateTaskDeadlineInfo, formatCurrency } from '@/lib/5w2h-utils';
 import { CompetenceBarChart } from '@/components/CompetenceBarChart';
+import { ProductivitySection } from '@/components/dashboard/ProductivitySection';
+import { FinancialSection } from '@/components/dashboard/FinancialSection';
+import { ExecutionTimeSection } from '@/components/dashboard/ExecutionTimeSection';
+import { DepartmentComparisonSection } from '@/components/dashboard/DepartmentComparisonSection';
+import { PriorityRiskSection } from '@/components/dashboard/PriorityRiskSection';
+import { FlowTrendSection } from '@/components/dashboard/FlowTrendSection';
+import { QualityRecurrenceSection } from '@/components/dashboard/QualityRecurrenceSection';
 import {
   PieChart,
   Pie,
@@ -365,6 +372,42 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
       </section>
+
+      {/* 1. Seção: Produtividade e Responsáveis */}
+      <ProductivitySection
+        tasks={filteredTasks}
+        workspaceConfig={workspaceConfig}
+      />
+
+      {/* 2. Seção: Financeiro (Quanto) */}
+      <FinancialSection
+        tasks={filteredTasks}
+        workspaceConfig={workspaceConfig}
+      />
+
+      {/* 3. Seção: Tempo de Execução */}
+      <ExecutionTimeSection
+        tasks={filteredTasks}
+        workspaceConfig={workspaceConfig}
+      />
+
+      {/* 4. Seção: Comparativo entre Departamentos */}
+      <DepartmentComparisonSection
+        tasks={filteredTasks}
+        workspaceConfig={workspaceConfig}
+      />
+
+      {/* 5. Seção: Prioridade e Risco */}
+      <PriorityRiskSection tasks={filteredTasks} />
+
+      {/* 6. Seção: Fluxo e Tendência */}
+      <FlowTrendSection tasks={filteredTasks} />
+
+      {/* 7. Seção: Qualidade e Recorrência */}
+      <QualityRecurrenceSection
+        tasks={filteredTasks}
+        workspaceConfig={workspaceConfig}
+      />
     </div>
   );
 };
