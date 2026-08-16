@@ -14,6 +14,8 @@ import {
   Plus,
 } from 'lucide-react';
 
+import { Skeleton } from '@/components/ui/skeleton';
+
 interface TaskTableViewProps {
   tasks: Task5W2H[];
   workspaceConfig: WorkspaceConfig;
@@ -22,6 +24,7 @@ interface TaskTableViewProps {
   deleteTask: (id: string) => void;
   changeTaskStatus: (id: string, newStatus: TaskStatus) => void;
   openCreateModal?: () => void;
+  isLoading?: boolean;
 }
 
 type SortField = 'title' | 'deadlineDate' | 'status' | 'howMuch' | 'priority' | 'department';
@@ -35,6 +38,7 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({
   deleteTask,
   changeTaskStatus,
   openCreateModal,
+  isLoading = false,
 }) => {
   const [sortField, setSortField] = useState<SortField>('deadlineDate');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -74,6 +78,43 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({
     const start = (currentPage - 1) * pageSize;
     return sortedTasks.slice(start, start + pageSize);
   }, [sortedTasks, currentPage, pageSize]);
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex flex-col overflow-hidden p-4 md:p-6 w-full space-y-4">
+        <div className="flex justify-between items-center bg-card border border-border p-3 rounded-md">
+          <Skeleton className="h-4 w-36" />
+          <Skeleton className="h-8 w-28 rounded-md" />
+        </div>
+        <div className="flex-1 overflow-hidden border border-border bg-card rounded-md">
+          <div className="p-4 border-b border-border space-y-2">
+            <div className="flex justify-between">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+          </div>
+          <div className="divide-y divide-border">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="p-3.5 flex items-center justify-between gap-4">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 flex-1 max-w-sm" />
+                <Skeleton className="h-4 w-24 hidden md:block" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-20 hidden lg:block" />
+                <Skeleton className="h-6 w-24 rounded-full" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-7 w-7 rounded" />
+                  <Skeleton className="h-7 w-7 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const priorityBadge = (priority: string) => {
     switch (priority) {

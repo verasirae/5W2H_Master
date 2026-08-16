@@ -19,7 +19,10 @@ import {
   Settings,
   Sparkles,
   Download,
+  Database,
+  RefreshCw,
 } from 'lucide-react';
+import { DatabaseStatus } from '@/hooks/use5w2h';
 
 interface HeaderProps {
   workspaceConfig: WorkspaceConfig;
@@ -32,6 +35,9 @@ interface HeaderProps {
   showToast: (type: 'success' | 'error' | 'info', title: string, message: string) => void;
   isSidebarExpanded: boolean;
   setIsSidebarExpanded: React.Dispatch<React.SetStateAction<boolean>>;
+  isSyncing?: boolean;
+  dbStatus?: DatabaseStatus;
+  onRefresh?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -45,6 +51,9 @@ export const Header: React.FC<HeaderProps> = ({
   showToast,
   isSidebarExpanded,
   setIsSidebarExpanded,
+  isSyncing = false,
+  dbStatus,
+  onRefresh,
 }) => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -159,8 +168,34 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Right Section: Notifications, Color Mode, User Profile */}
+      {/* Right Section: DB Status, Notifications, Color Mode, User Profile */}
       <div className="flex items-center gap-1.5 md:gap-2">
+        {/* Database Status & Refresh Trigger */}
+        {dbStatus && (
+          <button
+            onClick={onRefresh}
+            disabled={isSyncing}
+            className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono-data border rounded transition-colors ${
+              dbStatus.connected
+                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
+                : 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20'
+            }`}
+            title={
+              dbStatus.connected
+                ? 'Supabase Conectado - Clique para sincronizar'
+                : 'Modo Local/Offline - Configure o Supabase nas configurações'
+            }
+          >
+            <Database className="w-3 h-3 shrink-0" />
+            <span className="hidden md:inline font-medium">
+              {dbStatus.connected ? 'Supabase' : 'Offline'}
+            </span>
+            <RefreshCw
+              className={`w-3 h-3 shrink-0 ${isSyncing ? 'animate-spin text-primary' : 'opacity-70'}`}
+            />
+          </button>
+        )}
+
         {/* 1. Notifications Icon */}
         <div className="relative">
           <button

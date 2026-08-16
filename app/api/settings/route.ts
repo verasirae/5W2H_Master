@@ -8,7 +8,7 @@ export async function GET() {
 
   try {
     const prisma = getPrisma();
-    const setting = await prisma.workspaceSetting.findUnique({
+    const setting = await prisma.workspaceConfig.findUnique({
       where: { id: 'default' },
     });
 
@@ -23,25 +23,32 @@ export async function GET() {
         departmentName: setting.departmentName,
         currencySymbol: setting.currencySymbol,
         attentionThresholdDays: setting.attentionThresholdDays,
-        departments: setting.departments as string[],
-        categoriesByDepartment: setting.categoriesByDepartment as Record<string, string[]>,
+        departments: (setting.departments as string[]) || [],
+        categoriesByDepartment:
+          (setting.categoriesByDepartment as Record<string, string[]>) || {},
       },
     });
   } catch (error: any) {
-    return NextResponse.json({ connected: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { connected: false, error: error.message },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(req: NextRequest) {
   if (!isDatabaseConfigured()) {
-    return NextResponse.json({ error: 'Database not configured' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Database not configured' },
+      { status: 400 }
+    );
   }
 
   try {
     const body = await req.json();
     const prisma = getPrisma();
 
-    const setting = await prisma.workspaceSetting.upsert({
+    const setting = await prisma.workspaceConfig.upsert({
       where: { id: 'default' },
       update: {
         workspaceName: body.workspaceName,

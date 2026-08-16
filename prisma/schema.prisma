@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Task {
+  id              String    @id
+  title           String
+  why             String
+  where           String
+  startDate       String
+  deadlineDate    String
+  who             String
+  how             String
+  howMuch         Float     @default(0)
+  department      String
+  category        String
+  competence      String
+  priority        String
+  status          String
+  progressPercent Int       @default(0)
+  completionDate  String?
+  observations    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([department])
+  @@index([status])
+  @@index([competence])
+}
+
+model Department {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  categories  Category[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Category {
+  id           String      @id @default(cuid())
+  name         String
+  departmentId String
+  department   Department  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([name, departmentId])
+}
+
+model WorkspaceConfig {
+  id                     String   @id @default("default")
+  workspaceName          String   @default("5W2H Master")
+  departmentName         String   @default("Operações & Estratégia")
+  currencySymbol         String   @default("R$")
+  attentionThresholdDays Int      @default(3)
+  departments            Json     @default("[]")
+  categoriesByDepartment Json     @default("{}")
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}

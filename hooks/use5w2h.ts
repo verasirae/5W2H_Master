@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Task5W2H,
   WorkspaceConfig,
@@ -30,71 +30,45 @@ export interface DatabaseStatus {
   connected: boolean;
   checked: boolean;
   message?: string;
+  taskCount?: number;
 }
 
 export function use5W2H() {
-  const [tasks, setTasks] = useState<Task5W2H[]>(() => deduplicateTaskIds(INITIAL_SAMPLE_TASKS));
-  const [workspaceConfig, setWorkspaceConfig] = useState<WorkspaceConfig>(DEFAULT_WORKSPACE_CONFIG);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [dbStatus, setDbStatus] = useState<DatabaseStatus>({ connected: false, checked: false });
-
-  // Load saved state from localStorage first, then sync with Supabase backend
-  useEffect(() => {
-    const initializeData = async () => {
-      // 1. Hydrate from localStorage for instant display
+  const [tasks, setTasks] = useState<Task5W2H[]>(() => {
+    if (typeof window !== 'undefined') {
       try {
-        const savedTasks = localStorage.getItem(STORAGE_KEY_TASKS);
-        if (savedTasks) {
-          const parsed = JSON.parse(savedTasks);
+        const saved = localStorage.getItem(STORAGE_KEY_TASKS);
+        if (saved) {
+          const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setTasks(deduplicateTaskIds(parsed));
+            return deduplicateTaskIds(parsed);
           }
-        }
-        const savedConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
-        if (savedConfig) {
-          setWorkspaceConfig(JSON.parse(savedConfig));
         }
       } catch (e) {
-        console.error('Failed to load local state:', e);
-      } finally {
-        setIsLoaded(true);
+        console.error('Failed to parse local tasks:', e);
       }
+    }
+    return deduplicateTaskIds(INITIAL_SAMPLE_TASKS);
+  });
 
-      // 2. Fetch from Supabase backend via API route
+  const [workspaceConfig, setWorkspaceConfig] = useState<WorkspaceConfig>(() => {
+    if (typeof window !== 'undefined') {
       try {
-        const res = await fetch('/api/tasks');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.connected) {
-            setDbStatus({ connected: true, checked: true });
-            if (data.tasks && data.tasks.length > 0) {
-              setTasks(deduplicateTaskIds(data.tasks));
-            }
-          } else {
-            setDbStatus({ connected: false, checked: true, message: data.message });
-          }
+        const saved = localStorage.getItem(STORAGE_KEY_CONFIG);
+        if (saved) {
+          return JSON.parse(saved);
         }
-      } catch (err) {
-        console.warn('Backend database not reachable or running in offline mode:', err);
-        setDbStatus({ connected: false, checked: true });
+      } catch (e) {
+        console.error('Failed to parse local workspace config:', e);
       }
+    }
+    return DEFAULT_WORKSPACE_CONFIG;
+  });
 
-      // 3. Fetch workspace settings from Supabase if configured
-      try {
-        const settingRes = await fetch('/api/settings');
-        if (settingRes.ok) {
-          const settingData = await settingRes.json();
-          if (settingData.connected && settingData.config) {
-            setWorkspaceConfig(settingData.config);
-          }
-        }
-      } catch (err) {
-        console.warn('Backend settings not reachable:', err);
-      }
-    };
-
-    initializeData();
-  }, []);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [dbStatus, setDbStatus] = useState<DatabaseStatus>({ connected: false, checked: false });
 
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -116,28 +90,6 @@ export function use5W2H() {
     deadlineSituation: 'Todas',
   });
 
-  // Save tasks to localStorage
-  useEffect(() => {
-    if (isLoaded) {
-      try {
-        localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
-      } catch (e) {
-        console.error('Failed to save tasks:', e);
-      }
-    }
-  }, [tasks, isLoaded]);
-
-  // Save workspace config to localStorage and Supabase
-  useEffect(() => {
-    if (isLoaded) {
-      try {
-        localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(workspaceConfig));
-      } catch (e) {
-        console.error('Failed to save workspace config:', e);
-      }
-    }
-  }, [workspaceConfig, isLoaded]);
-
   const showToast = useCallback((type: 'success' | 'error' | 'info', title: string, message: string) => {
     const id = Date.now().toString();
     setToast({ id, type, title, message });
@@ -145,6 +97,77 @@ export function use5W2H() {
       setToast((prev) => (prev?.id === id ? null : prev));
     }, 4000);
   }, []);
+
+  const isInitialFetchDone = useRef(false);
+
+  // Core Data Fetch from Supabase with localStorage hydration fallback
+  const refreshTasks = useCallback(async () => {
+    setIsSyncing(true);
+    try {
+      // 1. Fetch tasks
+      const res = await fetch('/api/tasks');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.connected) {
+          setDbStatus({
+            connected: true,
+            checked: true,
+            taskCount: Array.isArray(data.tasks) ? data.tasks.length : 0,
+          });
+          if (Array.isArray(data.tasks) && data.tasks.length > 0) {
+            setTasks(deduplicateTaskIds(data.tasks));
+          }
+        } else {
+          setDbStatus({ connected: false, checked: true, message: data.message });
+        }
+      }
+
+      // 2. Fetch workspace settings
+      const settingRes = await fetch('/api/settings');
+      if (settingRes.ok) {
+        const settingData = await settingRes.json();
+        if (settingData.connected && settingData.config) {
+          setWorkspaceConfig(settingData.config);
+        }
+      }
+    } catch (err: any) {
+      console.warn('Could not sync with Supabase backend:', err);
+      setDbStatus({ connected: false, checked: true, message: err.message });
+    } finally {
+      setIsSyncing(false);
+      setIsLoading(false);
+      setIsLoaded(true);
+    }
+  }, []);
+
+  // Initial load effect
+  useEffect(() => {
+    if (isInitialFetchDone.current) return;
+    isInitialFetchDone.current = true;
+    refreshTasks();
+  }, [refreshTasks]);
+
+  // Persist tasks to localStorage
+  useEffect(() => {
+    if (isLoaded) {
+      try {
+        localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
+      } catch (e) {
+        console.error('Failed to save tasks to local storage:', e);
+      }
+    }
+  }, [tasks, isLoaded]);
+
+  // Persist workspace config to localStorage
+  useEffect(() => {
+    if (isLoaded) {
+      try {
+        localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(workspaceConfig));
+      } catch (e) {
+        console.error('Failed to save workspace config to local storage:', e);
+      }
+    }
+  }, [workspaceConfig, isLoaded]);
 
   // CRUD Actions with reactive optimistic UI & backend database sync
   const addTask = useCallback(
@@ -162,20 +185,26 @@ export function use5W2H() {
 
       // Optimistic state update
       setTasks((prev) => [newTask, ...prev]);
-
       showToast('success', 'Tarefa Criada', `A ação "${createdTitle}" foi adicionada com sucesso.`);
       setIsFormModalOpen(false);
       setEditingTask(null);
 
       // Async backend sync to Supabase
+      setIsSyncing(true);
       try {
-        await fetch('/api/tasks', {
+        const res = await fetch('/api/tasks', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newTask),
         });
+        const result = await res.json();
+        if (!result.success && result.connected === true) {
+          console.warn('API error when creating task:', result.error);
+        }
       } catch (e) {
         console.warn('Could not sync created task to database backend:', e);
+      } finally {
+        setIsSyncing(false);
       }
     },
     [tasks, showToast]
@@ -206,6 +235,7 @@ export function use5W2H() {
       showToast('success', 'Tarefas Importadas', `${newTasksData.length} planos 5W2H foram adicionados com sucesso.`);
 
       // Async batch backend sync to Supabase
+      setIsSyncing(true);
       try {
         await fetch('/api/tasks', {
           method: 'POST',
@@ -214,6 +244,8 @@ export function use5W2H() {
         });
       } catch (e) {
         console.warn('Could not sync batch tasks to database backend:', e);
+      } finally {
+        setIsSyncing(false);
       }
     },
     [showToast]
@@ -232,7 +264,7 @@ export function use5W2H() {
               ...updatedData,
               completionDate: isCompleted
                 ? updatedData.completionDate || t.completionDate || new Date().toISOString().slice(0, 10)
-                : undefined,
+                : updatedData.completionDate !== undefined ? updatedData.completionDate : t.completionDate,
               updatedAt: now,
             };
           }
@@ -248,6 +280,7 @@ export function use5W2H() {
       }
 
       // Async sync to Supabase
+      setIsSyncing(true);
       try {
         await fetch(`/api/tasks/${id}`, {
           method: 'PUT',
@@ -256,6 +289,8 @@ export function use5W2H() {
         });
       } catch (e) {
         console.warn('Could not sync task update to database backend:', e);
+      } finally {
+        setIsSyncing(false);
       }
     },
     [showToast, inspectingTask?.id]
@@ -271,12 +306,15 @@ export function use5W2H() {
       }
 
       // Async sync deletion to Supabase
+      setIsSyncing(true);
       try {
         await fetch(`/api/tasks/${id}`, {
           method: 'DELETE',
         });
       } catch (e) {
         console.warn('Could not sync deletion to database backend:', e);
+      } finally {
+        setIsSyncing(false);
       }
     },
     [showToast, inspectingTask?.id]
@@ -290,12 +328,20 @@ export function use5W2H() {
       setTasks((prev) =>
         prev.map((t) => {
           if (t.id === id) {
-            updatedProgress = newStatus === 'Concluído' ? 100 : newStatus === 'Não iniciado' ? 0 : t.progressPercent === 100 ? 50 : t.progressPercent;
+            updatedProgress =
+              newStatus === 'Concluído'
+                ? 100
+                : newStatus === 'Não iniciado'
+                ? 0
+                : t.progressPercent === 100
+                ? 50
+                : t.progressPercent;
             return {
               ...t,
               status: newStatus,
               progressPercent: updatedProgress,
-              completionDate: newStatus === 'Concluído' ? new Date().toISOString().slice(0, 10) : undefined,
+              completionDate:
+                newStatus === 'Concluído' ? new Date().toISOString().slice(0, 10) : undefined,
               updatedAt: now,
             };
           }
@@ -305,6 +351,7 @@ export function use5W2H() {
       showToast('success', 'Status Alterado', `Status atualizado para "${newStatus}".`);
 
       // Async sync to Supabase
+      setIsSyncing(true);
       try {
         await fetch(`/api/tasks/${id}`, {
           method: 'PUT',
@@ -312,17 +359,21 @@ export function use5W2H() {
           body: JSON.stringify({
             status: newStatus,
             progressPercent: updatedProgress,
-            completionDate: newStatus === 'Concluído' ? new Date().toISOString().slice(0, 10) : null,
+            completionDate:
+              newStatus === 'Concluído' ? new Date().toISOString().slice(0, 10) : null,
           }),
         });
       } catch (e) {
         console.warn('Could not sync status change to database backend:', e);
+      } finally {
+        setIsSyncing(false);
       }
     },
     [showToast]
   );
 
   const syncTasksToDatabase = useCallback(async () => {
+    setIsSyncing(true);
     try {
       const res = await fetch('/api/tasks', {
         method: 'POST',
@@ -332,12 +383,14 @@ export function use5W2H() {
       const data = await res.json();
       if (data.success) {
         showToast('success', 'Sincronização Concluída', `${tasks.length} tarefas sincronizadas com o Supabase.`);
-        setDbStatus({ connected: true, checked: true });
+        setDbStatus({ connected: true, checked: true, taskCount: tasks.length });
       } else {
         showToast('error', 'Falha na Sincronização', data.error || 'Verifique as credenciais do banco.');
       }
     } catch (err: any) {
       showToast('error', 'Erro ao Sincronizar', err.message || 'Não foi possível conectar ao banco.');
+    } finally {
+      setIsSyncing(false);
     }
   }, [tasks, showToast]);
 
@@ -479,6 +532,9 @@ export function use5W2H() {
         deadlineSituation: 'Todas',
       });
     },
+    isLoading,
+    isSyncing,
+    refreshTasks,
     dbStatus,
     syncTasksToDatabase,
   };

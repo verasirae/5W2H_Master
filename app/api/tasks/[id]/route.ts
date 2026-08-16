@@ -6,19 +6,28 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!isDatabaseConfigured()) {
-    return NextResponse.json({ error: 'Database not configured' }, { status: 400 });
+    return NextResponse.json(
+      { success: false, error: 'Database not configured' },
+      { status: 400 }
+    );
   }
 
   try {
     const { id } = await params;
     const prisma = getPrisma();
-    const task = await prisma.task.findUnique({ where: { id } });
+    const task = await prisma.task.findUnique({
+      where: { id },
+    });
 
     if (!task) {
-      return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: 'Tarefa não encontrada' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({
+      success: true,
       task: {
         ...task,
         createdAt: task.createdAt.toISOString(),
@@ -26,7 +35,11 @@ export async function GET(
       },
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(`Error querying task:`, error);
+    return NextResponse.json(
+      { success: false, error: error.message || 'Erro ao buscar tarefa' },
+      { status: 500 }
+    );
   }
 }
 
@@ -35,7 +48,10 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!isDatabaseConfigured()) {
-    return NextResponse.json({ error: 'Database not configured' }, { status: 400 });
+    return NextResponse.json(
+      { success: false, error: 'Database not configured' },
+      { status: 400 }
+    );
   }
 
   try {
@@ -53,15 +69,21 @@ export async function PUT(
         ...(body.deadlineDate !== undefined && { deadlineDate: body.deadlineDate }),
         ...(body.who !== undefined && { who: body.who }),
         ...(body.how !== undefined && { how: body.how }),
-        ...(body.howMuch !== undefined && { howMuch: Number(body.howMuch) }),
+        ...(body.howMuch !== undefined && { howMuch: Number(body.howMuch) || 0 }),
         ...(body.department !== undefined && { department: body.department }),
         ...(body.category !== undefined && { category: body.category }),
         ...(body.competence !== undefined && { competence: body.competence }),
         ...(body.priority !== undefined && { priority: body.priority }),
         ...(body.status !== undefined && { status: body.status }),
-        ...(body.progressPercent !== undefined && { progressPercent: Number(body.progressPercent) }),
-        ...(body.completionDate !== undefined && { completionDate: body.completionDate }),
-        ...(body.observations !== undefined && { observations: body.observations }),
+        ...(body.progressPercent !== undefined && {
+          progressPercent: Number(body.progressPercent) || 0,
+        }),
+        ...(body.completionDate !== undefined && {
+          completionDate: body.completionDate || null,
+        }),
+        ...(body.observations !== undefined && {
+          observations: body.observations || null,
+        }),
       },
     });
 
@@ -74,8 +96,11 @@ export async function PUT(
       },
     });
   } catch (error: any) {
-    console.error('Error updating task in Supabase:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(`Error updating task:`, error);
+    return NextResponse.json(
+      { success: false, error: error.message || 'Erro ao atualizar tarefa' },
+      { status: 500 }
+    );
   }
 }
 
@@ -84,17 +109,29 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!isDatabaseConfigured()) {
-    return NextResponse.json({ error: 'Database not configured' }, { status: 400 });
+    return NextResponse.json(
+      { success: false, error: 'Database not configured' },
+      { status: 400 }
+    );
   }
 
   try {
     const { id } = await params;
     const prisma = getPrisma();
-    await prisma.task.delete({ where: { id } });
 
-    return NextResponse.json({ success: true, message: `Task ${id} deleted` });
+    await prisma.task.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Tarefa ${id} excluída com sucesso.`,
+    });
   } catch (error: any) {
-    console.error('Error deleting task in Supabase:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(`Error deleting task:`, error);
+    return NextResponse.json(
+      { success: false, error: error.message || 'Erro ao excluir tarefa' },
+      { status: 500 }
+    );
   }
 }

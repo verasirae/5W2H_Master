@@ -50,6 +50,9 @@ export default function HomePage() {
     showToast,
     resetToSampleData,
     clearAllData,
+    isLoading,
+    isSyncing,
+    refreshTasks,
     dbStatus,
     syncTasksToDatabase,
   } = use5W2H();
@@ -79,6 +82,9 @@ export default function HomePage() {
           showToast={showToast}
           isSidebarExpanded={isSidebarExpanded}
           setIsSidebarExpanded={setIsSidebarExpanded}
+          isSyncing={isSyncing}
+          dbStatus={dbStatus}
+          onRefresh={refreshTasks}
         />
 
         {/* Combinable Filters Bar (Visible on data views: dashboard, table, cards, kanban) */}
@@ -105,6 +111,7 @@ export default function HomePage() {
               filteredTasks={filteredTasks}
               workspaceConfig={workspaceConfig}
               openCreateModal={openCreateModal}
+              isLoading={isLoading}
             />
           )}
 
@@ -117,6 +124,7 @@ export default function HomePage() {
               deleteTask={deleteTask}
               changeTaskStatus={changeTaskStatus}
               openCreateModal={openCreateModal}
+              isLoading={isLoading}
             />
           )}
 
@@ -129,6 +137,7 @@ export default function HomePage() {
               deleteTask={deleteTask}
               changeTaskStatus={changeTaskStatus}
               openCreateModal={openCreateModal}
+              isLoading={isLoading}
             />
           )}
 
@@ -140,6 +149,7 @@ export default function HomePage() {
               openMatrixModal={openMatrixModal}
               changeTaskStatus={changeTaskStatus}
               openCreateModal={openCreateModal}
+              isLoading={isLoading}
             />
           )}
 

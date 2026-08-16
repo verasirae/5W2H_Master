@@ -17,6 +17,8 @@ import {
   GripVertical,
 } from 'lucide-react';
 
+import { Skeleton } from '@/components/ui/skeleton';
+
 interface TaskKanbanViewProps {
   tasks: Task5W2H[];
   workspaceConfig: WorkspaceConfig;
@@ -24,6 +26,7 @@ interface TaskKanbanViewProps {
   openMatrixModal: (task: Task5W2H) => void;
   changeTaskStatus: (id: string, newStatus: TaskStatus) => void;
   openCreateModal?: () => void;
+  isLoading?: boolean;
 }
 
 export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
@@ -33,9 +36,52 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
   openMatrixModal,
   changeTaskStatus,
   openCreateModal,
+  isLoading = false,
 }) => {
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<TaskStatus | null>(null);
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 overflow-x-auto p-4 md:p-6 w-full">
+        <div className="flex gap-4 min-w-[1100px] h-full items-start">
+          {Array.from({ length: 5 }).map((_, colIdx) => (
+            <div
+              key={colIdx}
+              className="flex-1 bg-muted/20 border border-border rounded-md p-3 space-y-3 min-w-[210px]"
+            >
+              <div className="flex items-center justify-between border-b border-border pb-2">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="w-3.5 h-3.5 rounded-full" />
+                  <Skeleton className="w-24 h-3.5" />
+                </div>
+                <Skeleton className="w-6 h-4 rounded-full" />
+              </div>
+              <div className="space-y-2.5">
+                {Array.from({ length: 3 }).map((_, cardIdx) => (
+                  <div
+                    key={cardIdx}
+                    className="bg-card border border-border p-3 rounded-md space-y-2"
+                  >
+                    <div className="flex justify-between items-center">
+                      <Skeleton className="w-14 h-3 rounded" />
+                      <Skeleton className="w-12 h-3 rounded-full" />
+                    </div>
+                    <Skeleton className="w-full h-4" />
+                    <Skeleton className="w-3/4 h-3" />
+                    <div className="pt-2 border-t border-border/50 flex justify-between items-center">
+                      <Skeleton className="w-16 h-3" />
+                      <Skeleton className="w-12 h-3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   const columns: { status: TaskStatus; label: string; color: string; icon: any }[] = [
     { status: 'Não iniciado', label: 'Não Iniciado', color: 'var(--muted-foreground)', icon: HelpCircle },

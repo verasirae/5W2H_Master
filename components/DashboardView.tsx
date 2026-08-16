@@ -27,16 +27,20 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
+import { Skeleton } from '@/components/ui/skeleton';
+
 interface DashboardViewProps {
   tasks: Task5W2H[];
   filteredTasks: Task5W2H[];
   workspaceConfig: WorkspaceConfig;
   openCreateModal: () => void;
+  isLoading?: boolean;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
   filteredTasks,
   workspaceConfig,
+  isLoading = false,
 }) => {
   // KPI Calculations
   const totalTasks = filteredTasks.length;
@@ -155,6 +159,59 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       { name: 'Concluído', count: done, percent: Math.round((done / total) * 100), color: 'var(--muted-foreground)' },
     ];
   }, [filteredTasks, workspaceConfig.attentionThresholdDays]);
+
+  // Skeleton Loading State (unconditionally rendered after all hooks)
+  if (isLoading) {
+    return (
+      <div className="flex-1 overflow-y-auto pl-2 pr-2.5 md:py-4 space-y-6 w-full max-w-7xl mx-auto">
+        {/* KPI Skeleton Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5 sm:gap-3 md:gap-3 lg:gap-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="bg-card border border-border p-3.5 space-y-2 rounded-md">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-4 w-4 rounded-full" />
+              </div>
+              <Skeleton className="h-7 w-20" />
+              <Skeleton className="h-2.5 w-24" />
+            </div>
+          ))}
+        </div>
+
+        {/* Charts Skeleton Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-card border border-border p-4 md:p-5 rounded-md space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-3 w-20" />
+            </div>
+            <Skeleton className="h-[240px] w-full rounded-md" />
+          </div>
+          <div className="bg-card border border-border p-4 md:p-5 rounded-md space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+            <div className="flex justify-center items-center h-[240px]">
+              <Skeleton className="h-44 w-44 rounded-full" />
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom sections skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-card border border-border p-4 rounded-md space-y-3">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-28 w-full" />
+          </div>
+          <div className="bg-card border border-border p-4 rounded-md space-y-3">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-28 w-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 pl-2 pr-2.5 md:py-4 space-y-6 overflow-y-auto">
