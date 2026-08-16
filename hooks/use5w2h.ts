@@ -5,13 +5,11 @@ import {
   Task5W2H,
   WorkspaceConfig,
   FilterState,
-  TaskPriority,
   TaskStatus,
 } from '@/types/5w2h';
 import {
   DEFAULT_WORKSPACE_CONFIG,
   INITIAL_SAMPLE_TASKS,
-  calculateTaskDeadlineInfo,
   generateUniqueTaskId,
   deduplicateTaskIds,
 } from '@/lib/5w2h-utils';
@@ -28,32 +26,74 @@ export interface ToastMessage {
   message: string;
 }
 
+export interface DatabaseStatus {
+  connected: boolean;
+  checked: boolean;
+  message?: string;
+}
+
 export function use5W2H() {
   const [tasks, setTasks] = useState<Task5W2H[]>(() => deduplicateTaskIds(INITIAL_SAMPLE_TASKS));
   const [workspaceConfig, setWorkspaceConfig] = useState<WorkspaceConfig>(DEFAULT_WORKSPACE_CONFIG);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [dbStatus, setDbStatus] = useState<DatabaseStatus>({ connected: false, checked: false });
 
-  // Load saved state from localStorage after initial hydration
+  // Load saved state from localStorage first, then sync with Supabase backend
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const initializeData = async () => {
+      // 1. Hydrate from localStorage for instant display
       try {
         const savedTasks = localStorage.getItem(STORAGE_KEY_TASKS);
         if (savedTasks) {
           const parsed = JSON.parse(savedTasks);
-          setTasks(deduplicateTaskIds(parsed));
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setTasks(deduplicateTaskIds(parsed));
+          }
         }
         const savedConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
         if (savedConfig) {
           setWorkspaceConfig(JSON.parse(savedConfig));
         }
       } catch (e) {
-        console.error('Failed to load saved state:', e);
+        console.error('Failed to load local state:', e);
       } finally {
         setIsLoaded(true);
       }
-    }, 0);
 
-    return () => clearTimeout(timer);
+      // 2. Fetch from Supabase backend via API route
+      try {
+        const res = await fetch('/api/tasks');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.connected) {
+            setDbStatus({ connected: true, checked: true });
+            if (data.tasks && data.tasks.length > 0) {
+              setTasks(deduplicateTaskIds(data.tasks));
+            }
+          } else {
+            setDbStatus({ connected: false, checked: true, message: data.message });
+          }
+        }
+      } catch (err) {
+        console.warn('Backend database not reachable or running in offline mode:', err);
+        setDbStatus({ connected: false, checked: true });
+      }
+
+      // 3. Fetch workspace settings from Supabase if configured
+      try {
+        const settingRes = await fetch('/api/settings');
+        if (settingRes.ok) {
+          const settingData = await settingRes.json();
+          if (settingData.connected && settingData.config) {
+            setWorkspaceConfig(settingData.config);
+          }
+        }
+      } catch (err) {
+        console.warn('Backend settings not reachable:', err);
+      }
+    };
+
+    initializeData();
   }, []);
 
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
@@ -87,7 +127,7 @@ export function use5W2H() {
     }
   }, [tasks, isLoaded]);
 
-  // Save workspace config to localStorage
+  // Save workspace config to localStorage and Supabase
   useEffect(() => {
     if (isLoaded) {
       try {
@@ -106,35 +146,47 @@ export function use5W2H() {
     }, 4000);
   }, []);
 
-  // CRUD Actions
+  // CRUD Actions with reactive optimistic UI & backend database sync
   const addTask = useCallback(
-    (newTaskData: Omit<Task5W2H, 'id' | 'createdAt' | 'updatedAt'>) => {
+    async (newTaskData: Omit<Task5W2H, 'id' | 'createdAt' | 'updatedAt'>) => {
       const now = new Date().toISOString();
-      let createdTitle = newTaskData.title;
+      const createdTitle = newTaskData.title;
 
-      setTasks((prev) => {
-        const newId = generateUniqueTaskId(prev);
-        const newTask: Task5W2H = {
-          ...newTaskData,
-          id: newId,
-          createdAt: now,
-          updatedAt: now,
-        };
-        return [newTask, ...prev];
-      });
+      const newId = generateUniqueTaskId(tasks);
+      const newTask: Task5W2H = {
+        ...newTaskData,
+        id: newId,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      // Optimistic state update
+      setTasks((prev) => [newTask, ...prev]);
 
       showToast('success', 'Tarefa Criada', `A ação "${createdTitle}" foi adicionada com sucesso.`);
       setIsFormModalOpen(false);
       setEditingTask(null);
+
+      // Async backend sync to Supabase
+      try {
+        await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newTask),
+        });
+      } catch (e) {
+        console.warn('Could not sync created task to database backend:', e);
+      }
     },
-    [showToast]
+    [tasks, showToast]
   );
 
   const addMultipleTasks = useCallback(
-    (newTasksData: Array<Omit<Task5W2H, 'id' | 'createdAt' | 'updatedAt'>>) => {
+    async (newTasksData: Array<Omit<Task5W2H, 'id' | 'createdAt' | 'updatedAt'>>) => {
       if (!newTasksData || newTasksData.length === 0) return;
       const now = new Date().toISOString();
 
+      const createdItems: Task5W2H[] = [];
       setTasks((prev) => {
         let currentList = [...prev];
         for (const item of newTasksData) {
@@ -145,18 +197,30 @@ export function use5W2H() {
             createdAt: now,
             updatedAt: now,
           };
+          createdItems.push(newTask);
           currentList = [newTask, ...currentList];
         }
         return currentList;
       });
 
       showToast('success', 'Tarefas Importadas', `${newTasksData.length} planos 5W2H foram adicionados com sucesso.`);
+
+      // Async batch backend sync to Supabase
+      try {
+        await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createdItems),
+        });
+      } catch (e) {
+        console.warn('Could not sync batch tasks to database backend:', e);
+      }
     },
     [showToast]
   );
 
   const updateTask = useCallback(
-    (id: string, updatedData: Partial<Task5W2H>) => {
+    async (id: string, updatedData: Partial<Task5W2H>) => {
       const now = new Date().toISOString();
       setTasks((prev) =>
         prev.map((t) => {
@@ -182,33 +246,55 @@ export function use5W2H() {
       if (inspectingTask?.id === id) {
         setInspectingTask((prev) => (prev ? { ...prev, ...updatedData, updatedAt: now } : null));
       }
+
+      // Async sync to Supabase
+      try {
+        await fetch(`/api/tasks/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedData),
+        });
+      } catch (e) {
+        console.warn('Could not sync task update to database backend:', e);
+      }
     },
     [showToast, inspectingTask?.id]
   );
 
   const deleteTask = useCallback(
-    (id: string) => {
+    async (id: string) => {
       setTasks((prev) => prev.filter((t) => t.id !== id));
       showToast('info', 'Tarefa Excluída', 'A ação foi removida do sistema.');
       if (inspectingTask?.id === id) {
         setIsMatrixModalOpen(false);
         setInspectingTask(null);
       }
+
+      // Async sync deletion to Supabase
+      try {
+        await fetch(`/api/tasks/${id}`, {
+          method: 'DELETE',
+        });
+      } catch (e) {
+        console.warn('Could not sync deletion to database backend:', e);
+      }
     },
     [showToast, inspectingTask?.id]
   );
 
   const changeTaskStatus = useCallback(
-    (id: string, newStatus: TaskStatus) => {
+    async (id: string, newStatus: TaskStatus) => {
       const now = new Date().toISOString();
+      let updatedProgress = 0;
+
       setTasks((prev) =>
         prev.map((t) => {
           if (t.id === id) {
-            const progress = newStatus === 'Concluído' ? 100 : newStatus === 'Não iniciado' ? 0 : t.progressPercent === 100 ? 50 : t.progressPercent;
+            updatedProgress = newStatus === 'Concluído' ? 100 : newStatus === 'Não iniciado' ? 0 : t.progressPercent === 100 ? 50 : t.progressPercent;
             return {
               ...t,
               status: newStatus,
-              progressPercent: progress,
+              progressPercent: updatedProgress,
               completionDate: newStatus === 'Concluído' ? new Date().toISOString().slice(0, 10) : undefined,
               updatedAt: now,
             };
@@ -217,9 +303,43 @@ export function use5W2H() {
         })
       );
       showToast('success', 'Status Alterado', `Status atualizado para "${newStatus}".`);
+
+      // Async sync to Supabase
+      try {
+        await fetch(`/api/tasks/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: newStatus,
+            progressPercent: updatedProgress,
+            completionDate: newStatus === 'Concluído' ? new Date().toISOString().slice(0, 10) : null,
+          }),
+        });
+      } catch (e) {
+        console.warn('Could not sync status change to database backend:', e);
+      }
     },
     [showToast]
   );
+
+  const syncTasksToDatabase = useCallback(async () => {
+    try {
+      const res = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tasks),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('success', 'Sincronização Concluída', `${tasks.length} tarefas sincronizadas com o Supabase.`);
+        setDbStatus({ connected: true, checked: true });
+      } else {
+        showToast('error', 'Falha na Sincronização', data.error || 'Verifique as credenciais do banco.');
+      }
+    } catch (err: any) {
+      showToast('error', 'Erro ao Sincronizar', err.message || 'Não foi possível conectar ao banco.');
+    }
+  }, [tasks, showToast]);
 
   const resetToSampleData = useCallback(() => {
     setTasks(INITIAL_SAMPLE_TASKS);
@@ -298,63 +418,24 @@ export function use5W2H() {
         return false;
       }
 
-      // Who
+      // Responsible
       if (filters.who !== 'Todos' && t.who !== filters.who) {
         return false;
       }
 
-      // Deadline Situation
-      if (filters.deadlineSituation !== 'Todas') {
-        const calc = calculateTaskDeadlineInfo(t.deadlineDate, t.status, workspaceConfig.attentionThresholdDays);
-        if (calc.deadlineSituation !== filters.deadlineSituation) {
-          return false;
-        }
-      }
-
       return true;
     });
-  }, [tasks, filters, workspaceConfig.attentionThresholdDays]);
-
-  // Modal Triggers
-  const openCreateModal = useCallback(() => {
-    setEditingTask(null);
-    setIsFormModalOpen(true);
-  }, []);
-
-  const openEditModal = useCallback((task: Task5W2H) => {
-    setEditingTask(task);
-    setIsFormModalOpen(true);
-  }, []);
-
-  const openMatrixModal = useCallback((task: Task5W2H) => {
-    setInspectingTask(task);
-    setIsMatrixModalOpen(true);
-  }, []);
-
-  const resetFilters = useCallback(() => {
-    setFilters({
-      searchQuery: '',
-      department: 'Todos',
-      category: 'Todas',
-      competence: 'Todas',
-      status: 'Todos',
-      priority: 'Todas',
-      who: 'Todos',
-      deadlineSituation: 'Todas',
-    });
-  }, []);
+  }, [tasks, filters]);
 
   return {
     tasks,
     filteredTasks,
     workspaceConfig,
     setWorkspaceConfig,
-    isLoaded,
     currentView,
     setCurrentView,
     filters,
     setFilters,
-    resetFilters,
     availableDepartments,
     availableCategories,
     availableCompetences,
@@ -362,8 +443,14 @@ export function use5W2H() {
     isFormModalOpen,
     setIsFormModalOpen,
     editingTask,
-    openCreateModal,
-    openEditModal,
+    openCreateModal: () => {
+      setEditingTask(null);
+      setIsFormModalOpen(true);
+    },
+    openEditModal: (task: Task5W2H) => {
+      setEditingTask(task);
+      setIsFormModalOpen(true);
+    },
     addTask,
     addMultipleTasks,
     updateTask,
@@ -372,10 +459,27 @@ export function use5W2H() {
     isMatrixModalOpen,
     setIsMatrixModalOpen,
     inspectingTask,
-    openMatrixModal,
+    openMatrixModal: (task: Task5W2H) => {
+      setInspectingTask(task);
+      setIsMatrixModalOpen(true);
+    },
     toast,
     showToast,
     resetToSampleData,
     clearAllData,
+    resetFilters: () => {
+      setFilters({
+        searchQuery: '',
+        department: 'Todos',
+        category: 'Todas',
+        competence: 'Todas',
+        status: 'Todos',
+        priority: 'Todas',
+        who: 'Todos',
+        deadlineSituation: 'Todas',
+      });
+    },
+    dbStatus,
+    syncTasksToDatabase,
   };
 }

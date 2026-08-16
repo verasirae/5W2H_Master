@@ -4,10 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
-    "clean": "next clean"
+    "clean": "next clean",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

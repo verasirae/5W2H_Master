@@ -50,6 +50,8 @@ export default function HomePage() {
     showToast,
     resetToSampleData,
     clearAllData,
+    dbStatus,
+    syncTasksToDatabase,
   } = use5W2H();
 
   return (
@@ -157,6 +159,8 @@ export default function HomePage() {
               resetToSampleData={resetToSampleData}
               clearAllData={clearAllData}
               showToast={showToast}
+              dbStatus={dbStatus}
+              syncTasksToDatabase={syncTasksToDatabase}
             />
           )}
         </main>
