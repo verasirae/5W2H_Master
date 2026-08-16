@@ -41,7 +41,7 @@ const RADAR_COLORS = [
 const healthScoreConfig = {
   score: {
     label: 'Score de Saúde',
-    color: 'var(--primary)',
+    color: 'var(--chart-4)',
   },
 } satisfies ChartConfig;
 
@@ -284,7 +284,7 @@ export const DepartmentComparisonSection: React.FC<DepartmentComparisonProps> = 
                       />
                     }
                   />
-                  <Bar dataKey="score" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="score" fill="var(--chart-4)" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ChartContainer>
             )}

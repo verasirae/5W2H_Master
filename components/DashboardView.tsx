@@ -159,92 +159,92 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   return (
     <div className="flex-1 pl-2 pr-4 md:py-4 space-y-6 overflow-y-auto">
       {/* KPI Cards Grid */}
-      <section className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <section className="grid grid-cols-2 md:grid-cols-5 gap-2.5 sm:gap-3 md:gap-3 lg:gap-4">
         {/* Total Tasks */}
-        <div className="bg-card border border-border p-4 flex flex-col justify-between h-28">
+        <div className="bg-card border border-border p-3 sm:p-3.5 lg:p-4 rounded-md flex flex-col justify-between min-h-[96px] md:min-h-[105px] h-auto">
           <div className="flex justify-between items-start">
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data">
+            <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data truncate">
               Total de Tarefas
             </span>
-            <List className="w-4 h-4 text-muted-foreground" />
+            <List className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground shrink-0" />
           </div>
-          <div className="text-3xl font-bold font-mono-data text-foreground">
+          <div className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold font-mono-data text-foreground truncate">
             {totalTasks.toLocaleString('pt-BR')}
           </div>
-          <div className="text-[10px] text-muted-foreground font-mono-data">
+          <div className="text-[9px] sm:text-[10px] text-muted-foreground font-mono-data truncate">
             Orçamento: {formatCurrency(totalBudget, workspaceConfig.currencySymbol)}
           </div>
         </div>
 
         {/* Completed */}
-        <div className="bg-card border border-border p-4 flex flex-col justify-between h-28">
+        <div className="bg-card border border-border p-3 sm:p-3.5 lg:p-4 rounded-md flex flex-col justify-between min-h-[96px] md:min-h-[105px] h-auto">
           <div className="flex justify-between items-start">
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data">
+            <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data truncate">
               Concluídas
             </span>
-            <CheckCircle2 className="w-4 h-4 text-primary" />
+            <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold font-mono-data text-foreground">
+          <div className="flex items-baseline gap-1.5 truncate">
+            <span className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold font-mono-data text-foreground">
               {completedTasks}
             </span>
             {totalTasks > 0 && (
-              <span className="text-xs font-mono-data text-primary font-bold">
+              <span className="text-[10px] sm:text-xs font-mono-data text-primary font-bold">
                 {Math.round((completedTasks / totalTasks) * 100)}%
               </span>
             )}
           </div>
-          <div className="text-[10px] text-primary font-mono-data flex items-center gap-1 font-medium">
-            <TrendingUp className="w-3 h-3" /> Metas alcançadas
+          <div className="text-[9px] sm:text-[10px] text-primary font-mono-data flex items-center gap-1 font-medium truncate">
+            <TrendingUp className="w-3 h-3 shrink-0" /> <span className="truncate">Metas alcançadas</span>
           </div>
         </div>
 
         {/* In Progress */}
-        <div className="bg-card border border-border p-4 flex flex-col justify-between h-28">
+        <div className="bg-card border border-border p-3 sm:p-3.5 lg:p-4 rounded-md flex flex-col justify-between min-h-[96px] md:min-h-[105px] h-auto">
           <div className="flex justify-between items-start">
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data">
+            <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data truncate">
               Em Andamento
             </span>
-            <Clock className="w-4 h-4 text-info" />
+            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-info shrink-0" />
           </div>
-          <div className="text-3xl font-bold font-mono-data text-foreground">
+          <div className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold font-mono-data text-foreground truncate">
             {inProgressTasks}
           </div>
-          <div className="text-[10px] text-info font-mono-data font-medium">
+          <div className="text-[9px] sm:text-[10px] text-info font-mono-data font-medium truncate">
             Em execução ativa
           </div>
         </div>
 
         {/* Overdue */}
-        <div className="bg-card border border-destructive p-4 flex flex-col justify-between h-28 relative overflow-hidden">
+        <div className="bg-card border border-destructive/60 p-3 sm:p-3.5 lg:p-4 rounded-md flex flex-col justify-between min-h-[96px] md:min-h-[105px] h-auto relative overflow-hidden">
           <div className="absolute inset-0 bg-destructive/10 pointer-events-none"></div>
           <div className="flex justify-between items-start relative z-10">
-            <span className="text-[10px] text-destructive font-bold uppercase tracking-wider font-mono-data">
+            <span className="text-[9px] sm:text-[10px] text-destructive font-bold uppercase tracking-wider font-mono-data truncate">
               Atrasadas
             </span>
-            <AlertTriangle className="w-4 h-4 text-destructive" />
+            <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-destructive shrink-0" />
           </div>
-          <div className="text-3xl font-bold font-mono-data text-destructive relative z-10">
+          <div className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold font-mono-data text-destructive relative z-10 truncate">
             {overdueTasks}
           </div>
-          <div className="text-[10px] text-destructive font-mono-data relative z-10 font-medium">
+          <div className="text-[9px] sm:text-[10px] text-destructive font-mono-data relative z-10 font-medium truncate">
             Requer atenção imediata
           </div>
         </div>
 
         {/* Avg Completion */}
-        <div className="bg-card border border-border p-4 flex flex-col justify-between h-28">
+        <div className="bg-card border border-border p-3 sm:p-3.5 lg:p-4 rounded-md flex flex-col justify-between min-h-[96px] md:min-h-[105px] h-auto col-span-2 md:col-span-1">
           <div className="flex justify-between items-start">
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data">
+            <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data truncate">
               % Média Conclusão
             </span>
-            <Gauge className="w-4 h-4 text-primary" />
+            <Gauge className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
           </div>
-          <div className="text-3xl font-bold font-mono-data text-primary">
+          <div className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold font-mono-data text-primary truncate">
             {avgCompletionPercent}%
           </div>
           {/* Progress bar line */}
-          <div className="w-full bg-muted h-1.5 border border-border">
+          <div className="w-full bg-muted h-1.5 border border-border rounded-full overflow-hidden">
             <div
               className="bg-primary h-full transition-all"
               style={{ width: `${Math.min(avgCompletionPercent, 100)}%` }}

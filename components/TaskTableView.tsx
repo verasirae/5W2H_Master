@@ -78,13 +78,29 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({
   const priorityBadge = (priority: string) => {
     switch (priority) {
       case 'Urgente':
-        return <span className="px-1.5 py-0.5 bg-destructive text-destructive-foreground border border-destructive text-[10px] uppercase font-bold font-mono-data">URGENTE</span>;
+        return (
+          <span className="px-1.5 py-0.5 bg-red-500/15 text-red-700 dark:text-red-400 border border-red-500/25 text-[9px] uppercase font-bold font-mono-data rounded-md">
+            Urgente
+          </span>
+        );
       case 'Alta':
-        return <span className="px-1.5 py-0.5 bg-card text-destructive border border-destructive text-[10px] uppercase font-mono-data font-semibold">ALTA</span>;
+        return (
+          <span className="px-1.5 py-0.5 bg-orange-500/15 text-orange-700 dark:text-orange-400 border border-orange-500/25 text-[9px] uppercase font-mono-data font-semibold rounded-md">
+            Alta
+          </span>
+        );
       case 'Média':
-        return <span className="px-1.5 py-0.5 bg-card text-info border border-info text-[10px] uppercase font-mono-data font-medium">MÉDIA</span>;
+        return (
+          <span className="px-1.5 py-0.5 bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 text-[9px] uppercase font-mono-data font-medium rounded-md">
+            Média
+          </span>
+        );
       default:
-        return <span className="px-1.5 py-0.5 bg-card text-muted-foreground border border-border text-[10px] uppercase font-mono-data">BAIXA</span>;
+        return (
+          <span className="px-1.5 py-0.5 bg-slate-500/10 text-slate-700 dark:text-slate-400 border border-slate-500/20 text-[9px] uppercase font-mono-data rounded-md">
+            Baixa
+          </span>
+        );
     }
   };
 
@@ -210,22 +226,22 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({
                       <div className="flex flex-col">
                         <span className="text-foreground">{formatShortDate(t.deadlineDate)}</span>
                         {calc.deadlineSituation === 'Atrasado' && (
-                          <span className="text-[10px] font-bold text-destructive-foreground bg-destructive px-1 py-0.2 uppercase w-fit mt-0.5">
+                          <span className="text-[9px] font-semibold text-red-700 dark:text-red-400 bg-red-500/15 border border-red-500/25 px-1.5 py-0.5 uppercase w-fit mt-0.5 rounded-md">
                             Atrasado ({Math.abs(calc.daysRemaining)}d)
                           </span>
                         )}
                         {calc.deadlineSituation === 'Atenção' && (
-                          <span className="text-[10px] font-bold text-info bg-info/10 border border-info/40 px-1 py-0.2 uppercase w-fit mt-0.5">
+                          <span className="text-[9px] font-medium text-amber-700 dark:text-amber-400 bg-amber-500/15 border border-amber-500/25 px-1.5 py-0.5 uppercase w-fit mt-0.5 rounded-md">
                             Atenção ({calc.daysRemaining}d)
                           </span>
                         )}
                         {calc.deadlineSituation === 'No Prazo' && (
-                          <span className="text-[10px] text-primary font-mono-data mt-0.5 font-medium">
+                          <span className="text-[9px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-500/15 border border-emerald-500/25 px-1.5 py-0.5 uppercase w-fit mt-0.5 rounded-md">
                             No Prazo ({calc.daysRemaining}d)
                           </span>
                         )}
                         {calc.deadlineSituation === 'Concluído' && (
-                          <span className="text-[10px] text-muted-foreground font-mono-data mt-0.5">
+                          <span className="text-[9px] text-muted-foreground bg-muted border border-border px-1.5 py-0.5 uppercase w-fit mt-0.5 rounded-md font-mono-data">
                             Concluído
                           </span>
                         )}
