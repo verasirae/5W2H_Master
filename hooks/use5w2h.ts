@@ -12,6 +12,8 @@ import {
   DEFAULT_WORKSPACE_CONFIG,
   INITIAL_SAMPLE_TASKS,
   calculateTaskDeadlineInfo,
+  generateUniqueTaskId,
+  deduplicateTaskIds,
 } from '@/lib/5w2h-utils';
 
 const STORAGE_KEY_TASKS = '5w2h_master_tasks_v1';
@@ -27,7 +29,7 @@ export interface ToastMessage {
 }
 
 export function use5W2H() {
-  const [tasks, setTasks] = useState<Task5W2H[]>(INITIAL_SAMPLE_TASKS);
+  const [tasks, setTasks] = useState<Task5W2H[]>(() => deduplicateTaskIds(INITIAL_SAMPLE_TASKS));
   const [workspaceConfig, setWorkspaceConfig] = useState<WorkspaceConfig>(DEFAULT_WORKSPACE_CONFIG);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -37,7 +39,8 @@ export function use5W2H() {
       try {
         const savedTasks = localStorage.getItem(STORAGE_KEY_TASKS);
         if (savedTasks) {
-          setTasks(JSON.parse(savedTasks));
+          const parsed = JSON.parse(savedTasks);
+          setTasks(deduplicateTaskIds(parsed));
         }
         const savedConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
         if (savedConfig) {
@@ -73,7 +76,6 @@ export function use5W2H() {
     deadlineSituation: 'Todas',
   });
 
-
   // Save tasks to localStorage
   useEffect(() => {
     if (isLoaded) {
@@ -107,22 +109,50 @@ export function use5W2H() {
   // CRUD Actions
   const addTask = useCallback(
     (newTaskData: Omit<Task5W2H, 'id' | 'createdAt' | 'updatedAt'>) => {
-      const newId = `TSK-${new Date().getFullYear()}-${(tasks.length + 1).toString().padStart(3, '0')}`;
       const now = new Date().toISOString();
+      let createdTitle = newTaskData.title;
 
-      const newTask: Task5W2H = {
-        ...newTaskData,
-        id: newId,
-        createdAt: now,
-        updatedAt: now,
-      };
+      setTasks((prev) => {
+        const newId = generateUniqueTaskId(prev);
+        const newTask: Task5W2H = {
+          ...newTaskData,
+          id: newId,
+          createdAt: now,
+          updatedAt: now,
+        };
+        return [newTask, ...prev];
+      });
 
-      setTasks((prev) => [newTask, ...prev]);
-      showToast('success', 'Tarefa Criada', `A ação "${newTask.title}" foi adicionada com sucesso.`);
+      showToast('success', 'Tarefa Criada', `A ação "${createdTitle}" foi adicionada com sucesso.`);
       setIsFormModalOpen(false);
       setEditingTask(null);
     },
-    [tasks.length, showToast]
+    [showToast]
+  );
+
+  const addMultipleTasks = useCallback(
+    (newTasksData: Array<Omit<Task5W2H, 'id' | 'createdAt' | 'updatedAt'>>) => {
+      if (!newTasksData || newTasksData.length === 0) return;
+      const now = new Date().toISOString();
+
+      setTasks((prev) => {
+        let currentList = [...prev];
+        for (const item of newTasksData) {
+          const newId = generateUniqueTaskId(currentList);
+          const newTask: Task5W2H = {
+            ...item,
+            id: newId,
+            createdAt: now,
+            updatedAt: now,
+          };
+          currentList = [newTask, ...currentList];
+        }
+        return currentList;
+      });
+
+      showToast('success', 'Tarefas Importadas', `${newTasksData.length} planos 5W2H foram adicionados com sucesso.`);
+    },
+    [showToast]
   );
 
   const updateTask = useCallback(
@@ -335,6 +365,7 @@ export function use5W2H() {
     openCreateModal,
     openEditModal,
     addTask,
+    addMultipleTasks,
     updateTask,
     deleteTask,
     changeTaskStatus,

@@ -101,7 +101,7 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
                     Nenhuma tarefa
                   </div>
                 ) : (
-                  colTasks.map((t) => {
+                  colTasks.map((t, idx) => {
                     const calc = calculateTaskDeadlineInfo(
                       t.deadlineDate,
                       t.status,
@@ -110,7 +110,7 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
 
                     return (
                       <div
-                        key={t.id}
+                        key={`${t.id}-${idx}`}
                         className="bg-background border border-border p-3 hover:border-primary/50 transition-all space-y-2 group"
                       >
                         {/* Header ID & Priority */}

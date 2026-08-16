@@ -134,6 +134,50 @@ export const INITIAL_SAMPLE_TASKS: Task5W2H[] = [
   }
 ];
 
+export function generateUniqueTaskId(existingTasks: Task5W2H[]): string {
+  const currentYear = new Date().getFullYear();
+  const prefix = `TSK-${currentYear}-`;
+
+  let maxNum = 0;
+  if (Array.isArray(existingTasks)) {
+    existingTasks.forEach((t) => {
+      if (t?.id && typeof t.id === 'string' && t.id.startsWith(prefix)) {
+        const parts = t.id.replace(prefix, '').split('-');
+        const numPart = parseInt(parts[0], 10);
+        if (!isNaN(numPart) && numPart > maxNum) {
+          maxNum = numPart;
+        }
+      }
+    });
+  }
+
+  const nextNum = maxNum + 1;
+  return `${prefix}${nextNum.toString().padStart(3, '0')}`;
+}
+
+export function deduplicateTaskIds(taskList: Task5W2H[]): Task5W2H[] {
+  if (!Array.isArray(taskList)) return [];
+  const seenIds = new Set<string>();
+  const currentYear = new Date().getFullYear();
+  let counter = 1;
+
+  return taskList.map((task, idx) => {
+    let id = task?.id;
+    if (!id || typeof id !== 'string' || seenIds.has(id)) {
+      while (seenIds.has(`TSK-${currentYear}-${counter.toString().padStart(3, '0')}`)) {
+        counter++;
+      }
+      id = `TSK-${currentYear}-${counter.toString().padStart(3, '0')}`;
+      counter++;
+    }
+    seenIds.add(id);
+    return {
+      ...task,
+      id,
+    };
+  });
+}
+
 export function calculateTaskDeadlineInfo(
   deadlineDateStr: string,
   status: string,

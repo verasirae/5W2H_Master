@@ -66,7 +66,7 @@ export const TaskCardsView: React.FC<TaskCardsViewProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto pr-1">
-        {tasks.map((t) => {
+        {tasks.map((t, idx) => {
           const calc = calculateTaskDeadlineInfo(
             t.deadlineDate,
             t.status,
@@ -75,7 +75,7 @@ export const TaskCardsView: React.FC<TaskCardsViewProps> = ({
 
           return (
             <div
-              key={t.id}
+              key={`${t.id}-${idx}`}
               className="bg-card border border-border flex flex-col justify-between hover:border-primary/50 transition-colors relative"
             >
               {/* Card Header */}

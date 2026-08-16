@@ -160,7 +160,7 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({
                 </td>
               </tr>
             ) : (
-              paginatedTasks.map((t) => {
+              paginatedTasks.map((t, index) => {
                 const calc = calculateTaskDeadlineInfo(
                   t.deadlineDate,
                   t.status,
@@ -169,7 +169,7 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({
 
                 return (
                   <tr
-                    key={t.id}
+                    key={`${t.id}-${index}`}
                     className="hover:bg-muted transition-colors group cursor-default"
                   >
                     {/* O quê (Title) */}

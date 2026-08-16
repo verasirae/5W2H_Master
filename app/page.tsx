@@ -38,6 +38,7 @@ export default function HomePage() {
     openCreateModal,
     openEditModal,
     addTask,
+    addMultipleTasks,
     updateTask,
     deleteTask,
     changeTaskStatus,
@@ -144,6 +145,7 @@ export default function HomePage() {
             <AiGeneratorView
               workspaceConfig={workspaceConfig}
               addTask={addTask}
+              addMultipleTasks={addMultipleTasks}
               showToast={showToast}
             />
           )}

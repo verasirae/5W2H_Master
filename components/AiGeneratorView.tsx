@@ -20,12 +20,14 @@ import {
 interface AiGeneratorViewProps {
   workspaceConfig: WorkspaceConfig;
   addTask: (newTask: Omit<Task5W2H, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  addMultipleTasks?: (newTasks: Array<Omit<Task5W2H, 'id' | 'createdAt' | 'updatedAt'>>) => void;
   showToast: (type: 'success' | 'error' | 'info', title: string, message: string) => void;
 }
 
 export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
   workspaceConfig,
   addTask,
+  addMultipleTasks,
   showToast,
 }) => {
   const [promptText, setPromptText] = useState('');
@@ -56,17 +58,33 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Falha ao comunicar com a IA Gemini');
+      let data: any = null;
+      const contentType = res.headers.get('content-type') || '';
+      
+      if (contentType.includes('application/json')) {
+        try {
+          data = await res.json();
+        } catch {
+          data = null;
+        }
+      } else {
+        const textOutput = await res.text();
+        console.warn('Non-JSON response from /api/gemini/5w2h:', textOutput);
       }
 
-      if (data.tasks && Array.isArray(data.tasks)) {
+      if (!res.ok) {
+        throw new Error(
+          data?.error ||
+            `Erro no servidor (${res.status}). Verifique a conexão ou a chave de API nas configurações.`
+        );
+      }
+
+      if (data?.tasks && Array.isArray(data.tasks) && data.tasks.length > 0) {
         setAiDrafts(data.tasks);
         showToast(
-          'success',
-          'Plano 5W2H Gerado!',
-          `A IA criou ${data.tasks.length} rascunhos de plano de ação 5W2H.`
+          data.notice ? 'info' : 'success',
+          data.notice ? 'Plano 5W2H Estruturado' : 'Plano 5W2H Gerado!',
+          data.notice || `A IA criou ${data.tasks.length} rascunhos de plano de ação 5W2H.`
         );
       } else {
         showToast('error', 'Resposta Inválida', 'A IA não retornou um plano estruturado.');
@@ -79,15 +97,13 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
     }
   };
 
-  const handleConvertDraftToTask = (draft: Partial<Task5W2H>, index: number) => {
-    if (addedIndexes.includes(index)) return;
-
+  const buildTaskFromDraft = (draft: Partial<Task5W2H>): Omit<Task5W2H, 'id' | 'createdAt' | 'updatedAt'> => {
     const todayStr = new Date().toISOString().slice(0, 10);
     const deadlineDefault = new Date();
     deadlineDefault.setDate(deadlineDefault.getDate() + 30);
     const deadlineStr = deadlineDefault.toISOString().slice(0, 10);
 
-    const newTask: Omit<Task5W2H, 'id' | 'createdAt' | 'updatedAt'> = {
+    return {
       title: draft.title || 'Nova Ação 5W2H',
       why: draft.why || 'Melhoria de processo',
       where: draft.where || selectedDept,
@@ -104,17 +120,36 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
       progressPercent: 0,
       observations: draft.observations || 'Gerado via Inteligência Artificial Gemini',
     };
+  };
 
+  const handleConvertDraftToTask = (draft: Partial<Task5W2H>, index: number) => {
+    if (addedIndexes.includes(index)) return;
+
+    const newTask = buildTaskFromDraft(draft);
     addTask(newTask);
     setAddedIndexes((prev) => [...prev, index]);
   };
 
   const handleAddAll = () => {
+    const pendingIndexes: number[] = [];
+    const pendingTasks: Array<Omit<Task5W2H, 'id' | 'createdAt' | 'updatedAt'>> = [];
+
     aiDrafts.forEach((draft, idx) => {
       if (!addedIndexes.includes(idx)) {
-        handleConvertDraftToTask(draft, idx);
+        pendingIndexes.push(idx);
+        pendingTasks.push(buildTaskFromDraft(draft));
       }
     });
+
+    if (pendingTasks.length === 0) return;
+
+    if (addMultipleTasks) {
+      addMultipleTasks(pendingTasks);
+    } else {
+      pendingTasks.forEach((t) => addTask(t));
+    }
+
+    setAddedIndexes((prev) => [...prev, ...pendingIndexes]);
   };
 
   return (
