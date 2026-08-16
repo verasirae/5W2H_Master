@@ -136,8 +136,8 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Center Section: Search Bar (Full Aligned) */}
-      <div className="flex-1 max-w-xl mx-2 md:mx-6 relative">
+      {/* Center Section: Search Bar (Hidden on Mobile/Tablet < lg to prioritize Notification, Color Mode, User) */}
+      <div className="hidden lg:flex flex-1 max-w-xl mx-2 md:mx-6 relative">
         <div className="relative flex items-center w-full">
           <Search className="w-4 h-4 absolute left-3 text-muted-foreground pointer-events-none" />
           <input

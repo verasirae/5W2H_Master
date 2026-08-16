@@ -50,7 +50,7 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
         MOBILE & TABLET VIEW (< lg): Floating Half-Moon Toggle at Top-Right
         ========================================================================
       */}
-      <div className="lg:hidden relative w-full px-3 md:px-4 mb-2">
+      <div className="lg:hidden relative w-full px-3 md:pl-2 md:pr-4 mb-2">
         <div className="flex justify-between items-center">
           {/* Active summary info */}
           <div className="flex items-center gap-2 text-[11px] font-mono-data text-muted-foreground">
