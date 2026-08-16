@@ -265,8 +265,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               Total vs Concluídas
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[260px] flex items-center">
-            <CompetenceBarChart data={competenceData} className="min-h-[240px] w-full" />
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
+            <CompetenceBarChart data={competenceData} className="h-full w-full" />
           </div>
         </div>
 
@@ -277,31 +277,33 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               Distribuição por Status
             </h3>
           </div>
-          <div className="p-4 flex-1 flex flex-col items-center justify-center min-h-[260px]">
+          <div className="p-4 flex-1 flex flex-col items-center justify-center min-h-[280px] h-[300px]">
             {statusDistributionData.length === 0 ? (
               <div className="text-xs text-muted-foreground font-mono-data">Sem tarefas no filtro.</div>
             ) : (
               <>
-                <ResponsiveContainer width="100%" height={160}>
-                  <PieChart>
-                    <Pie
-                      data={statusDistributionData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={45}
-                      outerRadius={70}
-                      paddingAngle={3}
-                      dataKey="value"
-                    >
-                      {statusDistributionData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} stroke="var(--card)" />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ backgroundColor: 'var(--popover)', borderColor: 'var(--border)', color: 'var(--foreground)', fontSize: '11px' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <div className="w-full h-[180px] flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={statusDistributionData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={75}
+                        paddingAngle={3}
+                        dataKey="value"
+                      >
+                        {statusDistributionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} stroke="var(--card)" />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{ backgroundColor: 'var(--popover)', borderColor: 'var(--border)', color: 'var(--foreground)', fontSize: '11px' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
                 <div className="w-full flex flex-wrap justify-center gap-2 mt-2">
                   {statusDistributionData.map((item) => (
                     <div key={item.name} className="flex items-center gap-1.5 text-[11px] font-mono-data text-muted-foreground">
@@ -322,7 +324,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               Tarefas por Categoria / Rotina
             </h3>
           </div>
-          <div className="p-4 flex-1 space-y-3 min-h-[200px]">
+          <div className="p-4 flex-1 space-y-3 min-h-[280px] h-[300px] overflow-y-auto">
             {categoryData.length === 0 ? (
               <div className="text-xs text-muted-foreground font-mono-data py-8 text-center">Nenhum registro encontrado.</div>
             ) : (
@@ -352,7 +354,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               Situação do Prazo (SLA)
             </h3>
           </div>
-          <div className="p-4 flex-1 flex flex-col justify-around gap-3 min-h-[200px]">
+          <div className="p-4 flex-1 flex flex-col justify-around gap-3 min-h-[280px] h-[300px]">
             {deadlineStatusData.map((item) => (
               <div key={item.name} className="flex items-center gap-3">
                 <div className="w-20 font-mono-data text-xs text-muted-foreground text-right truncate">

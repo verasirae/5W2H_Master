@@ -109,20 +109,20 @@ export const QualityRecurrenceSection: React.FC<QualityRecurrenceSectionProps> =
         {/* 23. Rotinas Mais Problemáticas (Maior taxa de atraso) */}
         <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
-              Rotinas Mais Problemáticas (Taxa de Atraso)
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
+              Rotinas Mais Problemáticas
             </h3>
-            <span className="text-[10px] text-destructive font-mono-data font-bold">
-              Maior Vulnerabilidade
+            <span className="text-[10px] text-destructive font-mono-data font-bold shrink-0 ml-1">
+              Taxa de Atraso
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[240px] flex items-center justify-center">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
             {problematicRoutines.length === 0 ? (
-              <div className="text-xs text-muted-foreground font-mono-data">
+              <div className="text-xs text-muted-foreground font-mono-data text-center">
                 Nenhum registro encontrado.
               </div>
             ) : (
-              <ChartContainer config={problematicConfig} className="min-h-[220px] w-full">
+              <ChartContainer config={problematicConfig} className="h-full w-full">
                 <BarChart
                   accessibilityLayer
                   layout="vertical"
@@ -135,7 +135,7 @@ export const QualityRecurrenceSection: React.FC<QualityRecurrenceSectionProps> =
                     type="category"
                     tickLine={false}
                     axisLine={false}
-                    width={90}
+                    width={85}
                     tickFormatter={(val) =>
                       val.length > 12 ? `${val.slice(0, 10)}...` : val
                     }
@@ -160,27 +160,27 @@ export const QualityRecurrenceSection: React.FC<QualityRecurrenceSectionProps> =
         {/* 24. Taxa de Cancelamento */}
         <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
               Taxa de Cancelamento
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
               Descartes vs Conclusão
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[240px] flex flex-col items-center justify-center">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex flex-col items-center justify-center">
             {cancellationData.length === 0 ? (
-              <div className="text-xs text-muted-foreground font-mono-data">
+              <div className="text-xs text-muted-foreground font-mono-data text-center">
                 Nenhuma tarefa registrada.
               </div>
             ) : (
-              <ChartContainer config={cancellationConfig} className="min-h-[220px] w-full">
+              <ChartContainer config={cancellationConfig} className="h-full w-full">
                 <PieChart>
                   <Pie
                     data={cancellationData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={75}
+                    innerRadius={55}
+                    outerRadius={80}
                     paddingAngle={3}
                     dataKey="value"
                     nameKey="name"

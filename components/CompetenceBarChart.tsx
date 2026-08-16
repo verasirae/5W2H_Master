@@ -36,15 +36,15 @@ interface CompetenceBarChartProps {
 export function CompetenceBarChart({ data, className }: CompetenceBarChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="h-full min-h-[220px] flex items-center justify-center text-xs text-muted-foreground font-mono-data">
+      <div className="h-full min-h-[280px] flex items-center justify-center text-xs text-muted-foreground font-mono-data">
         Nenhum dado disponível para o filtro selecionado.
       </div>
     );
   }
 
   return (
-    <ChartContainer config={competenceChartConfig} className={className || 'min-h-[240px] w-full'}>
-      <BarChart accessibilityLayer data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+    <ChartContainer config={competenceChartConfig} className={className || 'h-full min-h-[280px] w-full'}>
+      <BarChart accessibilityLayer data={data} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
         <CartesianGrid vertical={false} strokeDasharray="3 3" />
         <XAxis
           dataKey="competence"

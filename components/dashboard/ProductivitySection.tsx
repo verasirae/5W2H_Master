@@ -173,29 +173,29 @@ export const ProductivitySection: React.FC<ProductivitySectionProps> = ({
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
         {/* 1. Ranking de Responsáveis (Concluídas) */}
         <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
-              Ranking de Responsáveis (Concluídas)
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
+              Ranking de Responsáveis
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
-              Top Entregas
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
+              Concluídas
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[240px] flex items-center justify-center">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
             {rankingData.length === 0 ? (
-              <div className="text-xs text-muted-foreground font-mono-data">
+              <div className="text-xs text-muted-foreground font-mono-data text-center">
                 Nenhum dado encontrado.
               </div>
             ) : (
-              <ChartContainer config={rankingConfig} className="min-h-[220px] w-full">
+              <ChartContainer config={rankingConfig} className="h-full w-full">
                 <BarChart
                   accessibilityLayer
                   layout="vertical"
                   data={rankingData}
-                  margin={{ top: 10, right: 20, left: 10, bottom: 0 }}
+                  margin={{ top: 10, right: 15, left: 10, bottom: 0 }}
                 >
                   <CartesianGrid horizontal={false} strokeDasharray="3 3" />
                   <YAxis
@@ -203,7 +203,7 @@ export const ProductivitySection: React.FC<ProductivitySectionProps> = ({
                     type="category"
                     tickLine={false}
                     axisLine={false}
-                    width={90}
+                    width={85}
                     tickFormatter={(val) =>
                       val.length > 12 ? `${val.slice(0, 10)}...` : val
                     }
@@ -220,25 +220,25 @@ export const ProductivitySection: React.FC<ProductivitySectionProps> = ({
         {/* 2. Carga de Trabalho Atual por Responsável */}
         <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
-              Carga de Trabalho Atual por Responsável
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
+              Carga de Trabalho Atual
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
-              Em andamento + Não iniciado
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
+              Ativas
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[240px] flex items-center justify-center">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
             {workloadData.length === 0 ? (
-              <div className="text-xs text-muted-foreground font-mono-data">
-                Nenhuma tarefa ativa no momento.
+              <div className="text-xs text-muted-foreground font-mono-data text-center">
+                Nenhuma tarefa ativa.
               </div>
             ) : (
-              <ChartContainer config={workloadConfig} className="min-h-[220px] w-full">
+              <ChartContainer config={workloadConfig} className="h-full w-full">
                 <BarChart
                   accessibilityLayer
                   layout="vertical"
                   data={workloadData}
-                  margin={{ top: 10, right: 20, left: 10, bottom: 0 }}
+                  margin={{ top: 10, right: 15, left: 10, bottom: 0 }}
                 >
                   <CartesianGrid horizontal={false} strokeDasharray="3 3" />
                   <YAxis
@@ -246,7 +246,7 @@ export const ProductivitySection: React.FC<ProductivitySectionProps> = ({
                     type="category"
                     tickLine={false}
                     axisLine={false}
-                    width={90}
+                    width={85}
                     tickFormatter={(val) =>
                       val.length > 12 ? `${val.slice(0, 10)}...` : val
                     }
@@ -265,25 +265,25 @@ export const ProductivitySection: React.FC<ProductivitySectionProps> = ({
         {/* 3. Top 5 com Mais Atrasos */}
         <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
-              Top 5 Responsáveis com Mais Atrasos
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
+              Top 5 com Mais Atrasos
             </h3>
-            <span className="text-[10px] text-destructive font-mono-data font-bold">
+            <span className="text-[10px] text-destructive font-mono-data font-bold shrink-0 ml-1">
               Crítico
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[240px] flex items-center justify-center">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
             {topOverdueData.length === 0 ? (
-              <div className="text-xs text-primary font-mono-data">
-                ✓ Nenhuma tarefa com atraso registrado!
+              <div className="text-xs text-primary font-mono-data text-center">
+                ✓ Nenhuma tarefa com atraso!
               </div>
             ) : (
-              <ChartContainer config={overdueConfig} className="min-h-[220px] w-full">
+              <ChartContainer config={overdueConfig} className="h-full w-full">
                 <BarChart
                   accessibilityLayer
                   layout="vertical"
                   data={topOverdueData}
-                  margin={{ top: 10, right: 20, left: 10, bottom: 0 }}
+                  margin={{ top: 10, right: 15, left: 10, bottom: 0 }}
                 >
                   <CartesianGrid horizontal={false} strokeDasharray="3 3" />
                   <YAxis
@@ -291,7 +291,7 @@ export const ProductivitySection: React.FC<ProductivitySectionProps> = ({
                     type="category"
                     tickLine={false}
                     axisLine={false}
-                    width={90}
+                    width={85}
                     tickFormatter={(val) =>
                       val.length > 12 ? `${val.slice(0, 10)}...` : val
                     }
@@ -308,25 +308,25 @@ export const ProductivitySection: React.FC<ProductivitySectionProps> = ({
         {/* 4. Taxa de Conclusão no Prazo por Responsável (%) */}
         <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
-              Taxa de Conclusão no Prazo por Responsável
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
+              Taxa de Conclusão no Prazo
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
-              Conformidade SLA (%)
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
+              SLA (%)
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[240px] flex items-center justify-center">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
             {onTimeRateData.length === 0 ? (
-              <div className="text-xs text-muted-foreground font-mono-data">
+              <div className="text-xs text-muted-foreground font-mono-data text-center">
                 Nenhum dado disponível.
               </div>
             ) : (
-              <ChartContainer config={onTimeRateConfig} className="min-h-[220px] w-full">
+              <ChartContainer config={onTimeRateConfig} className="h-full w-full">
                 <BarChart
                   accessibilityLayer
                   layout="vertical"
                   data={onTimeRateData}
-                  margin={{ top: 10, right: 20, left: 10, bottom: 0 }}
+                  margin={{ top: 10, right: 15, left: 10, bottom: 0 }}
                 >
                   <CartesianGrid horizontal={false} strokeDasharray="3 3" />
                   <YAxis
@@ -334,7 +334,7 @@ export const ProductivitySection: React.FC<ProductivitySectionProps> = ({
                     type="category"
                     tickLine={false}
                     axisLine={false}
-                    width={90}
+                    width={85}
                     tickFormatter={(val) =>
                       val.length > 12 ? `${val.slice(0, 10)}...` : val
                     }

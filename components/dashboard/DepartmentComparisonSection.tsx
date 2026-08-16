@@ -193,29 +193,30 @@ export const DepartmentComparisonSection: React.FC<DepartmentComparisonProps> = 
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* 14. Radar Comparativo entre Departamentos (Spans 6 cols) */}
-        <div className="lg:col-span-6 bg-card border border-border flex flex-col">
+      {/* Row 1: 2 colunas (Radar Comparativo Multidimensional, Score de Saúde do Planejamento) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 14. Radar Comparativo entre Departamentos */}
+        <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
               Radar Comparativo Multidimensional
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
-              Top 3 Departamentos
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
+              Top 3 Deptos
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[260px] flex items-center justify-center">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
             {radarData.length === 0 ? (
-              <div className="text-xs text-muted-foreground font-mono-data">
+              <div className="text-xs text-muted-foreground font-mono-data text-center">
                 Dados insuficientes para radar.
               </div>
             ) : (
-              <ChartContainer config={radarConfig} className="min-h-[240px] w-full">
-                <RadarChart data={radarData}>
+              <ChartContainer config={radarConfig} className="h-full w-full">
+                <RadarChart data={radarData} margin={{ top: 10, right: 25, bottom: 10, left: 25 }}>
                   <PolarGrid stroke="var(--border)" />
                   <PolarAngleAxis
                     dataKey="metric"
-                    tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
+                    tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
                   />
                   <PolarRadiusAxis
                     angle={30}
@@ -241,23 +242,23 @@ export const DepartmentComparisonSection: React.FC<DepartmentComparisonProps> = 
           </div>
         </div>
 
-        {/* 15. Ranking por Score de Saúde do Planejamento (Spans 6 cols) */}
-        <div className="lg:col-span-6 bg-card border border-border flex flex-col">
+        {/* 15. Ranking por Score de Saúde do Planejamento */}
+        <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
-              Score de Saúde do Planejamento (0–100)
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
+              Score de Saúde do Planejamento
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
-              Composto (Entrega + SLA)
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
+              (0–100)
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[260px] flex items-center justify-center">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
             {healthScoreData.length === 0 ? (
-              <div className="text-xs text-muted-foreground font-mono-data">
+              <div className="text-xs text-muted-foreground font-mono-data text-center">
                 Nenhum departamento registrado.
               </div>
             ) : (
-              <ChartContainer config={healthScoreConfig} className="min-h-[240px] w-full">
+              <ChartContainer config={healthScoreConfig} className="h-full w-full">
                 <BarChart
                   accessibilityLayer
                   layout="vertical"
@@ -270,7 +271,7 @@ export const DepartmentComparisonSection: React.FC<DepartmentComparisonProps> = 
                     type="category"
                     tickLine={false}
                     axisLine={false}
-                    width={90}
+                    width={85}
                     tickFormatter={(val) =>
                       val.length > 12 ? `${val.slice(0, 10)}...` : val
                     }
@@ -283,38 +284,37 @@ export const DepartmentComparisonSection: React.FC<DepartmentComparisonProps> = 
                       />
                     }
                   />
-                  <Bar dataKey="score" radius={[0, 4, 4, 0]}>
-                    {healthScoreData.map((entry, index) => (
-                      <Cell key={`health-cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
+                  <Bar dataKey="score" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ChartContainer>
             )}
           </div>
         </div>
+      </div>
 
-        {/* 16. Volume de Tarefas por Departamento (Spans 12 cols) */}
-        <div className="lg:col-span-12 bg-card border border-border flex flex-col">
+      {/* Row 2: 1 coluna ocupando largura total (Volume Total de Tarefas por Departamento) */}
+      <div className="grid grid-cols-1 gap-6">
+        {/* 16. Volume de Tarefas por Departamento */}
+        <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
               Volume Total de Tarefas por Departamento
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
               Distribuição Geral
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[200px] flex items-center justify-center">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
             {volumeData.length === 0 ? (
-              <div className="text-xs text-muted-foreground font-mono-data">
+              <div className="text-xs text-muted-foreground font-mono-data text-center">
                 Nenhum dado encontrado.
               </div>
             ) : (
-              <ChartContainer config={volumeConfig} className="min-h-[180px] w-full">
+              <ChartContainer config={volumeConfig} className="h-full w-full">
                 <BarChart
                   accessibilityLayer
                   data={volumeData}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  margin={{ top: 10, right: 15, left: -15, bottom: 0 }}
                 >
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis
@@ -322,12 +322,12 @@ export const DepartmentComparisonSection: React.FC<DepartmentComparisonProps> = 
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(val) =>
-                      val.length > 12 ? `${val.slice(0, 10)}...` : val
+                      val.length > 15 ? `${val.slice(0, 12)}...` : val
                     }
                   />
                   <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="tasks" fill="var(--color-tasks)" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                  <Bar dataKey="tasks" fill="var(--color-tasks)" radius={[4, 4, 0, 0]} maxBarSize={45} />
                 </BarChart>
               </ChartContainer>
             )}

@@ -174,29 +174,29 @@ export const ExecutionTimeSection: React.FC<ExecutionTimeSectionProps> = ({
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* 10. Lead Time Médio (dias) por Categoria (Spans 6 cols) */}
-        <div className="lg:col-span-6 bg-card border border-border flex flex-col">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 10. Lead Time Médio (dias) por Categoria */}
+        <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
-              Lead Time Médio por Categoria
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
+              Lead Time Médio
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
-              Média em dias corridos
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
+              Dias corridos
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[240px] flex items-center justify-center">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
             {leadTimeByCategory.length === 0 ? (
-              <div className="text-xs text-muted-foreground font-mono-data">
+              <div className="text-xs text-muted-foreground font-mono-data text-center">
                 Nenhum dado temporal encontrado.
               </div>
             ) : (
-              <ChartContainer config={leadTimeConfig} className="min-h-[220px] w-full">
+              <ChartContainer config={leadTimeConfig} className="h-full w-full">
                 <BarChart
                   accessibilityLayer
                   layout="vertical"
                   data={leadTimeByCategory}
-                  margin={{ top: 10, right: 20, left: 10, bottom: 0 }}
+                  margin={{ top: 10, right: 15, left: 10, bottom: 0 }}
                 >
                   <CartesianGrid horizontal={false} strokeDasharray="3 3" />
                   <YAxis
@@ -204,7 +204,7 @@ export const ExecutionTimeSection: React.FC<ExecutionTimeSectionProps> = ({
                     type="category"
                     tickLine={false}
                     axisLine={false}
-                    width={90}
+                    width={85}
                     tickFormatter={(val) =>
                       val.length > 12 ? `${val.slice(0, 10)}...` : val
                     }
@@ -224,46 +224,41 @@ export const ExecutionTimeSection: React.FC<ExecutionTimeSectionProps> = ({
           </div>
         </div>
 
-        {/* 11. Aging de Tarefas Atrasadas & 12. Tempo Médio de Atraso (Spans 6 cols) */}
-        <div className="lg:col-span-6 bg-card border border-border flex flex-col">
+        {/* 11. Aging de Tarefas Atrasadas & 12. Tempo Médio de Atraso */}
+        <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
-              Aging de Tarefas Atrasadas
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
+              Aging de Atrasos
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
-              Distribuição por faixa de atraso
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
+              Faixas de Dias
             </span>
           </div>
 
-          <div className="p-4 flex-1 flex flex-col md:flex-row gap-4 items-center justify-between min-h-[240px]">
-            {/* 12. Tempo Médio de Atraso (Card KPI Simples) */}
-            <div className="w-full md:w-44 bg-muted/40 border border-border p-3 flex flex-col justify-between h-full min-h-[140px]">
-              <div className="flex justify-between items-start">
-                <span className="text-[10px] text-destructive font-bold uppercase tracking-wider font-mono-data">
-                  Tempo Médio Atraso
+          <div className="p-4 flex-1 flex flex-col gap-3 min-h-[280px] h-[300px]">
+            {/* 12. Tempo Médio de Atraso (KPI Compacto) */}
+            <div className="bg-muted/40 border border-border px-3 py-2 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-1.5">
+                <AlertOctagon className="w-4 h-4 text-destructive shrink-0" />
+                <span className="text-xs text-destructive font-bold uppercase tracking-wider font-mono-data">
+                  Média: {avgDelayDays} dias
                 </span>
-                <AlertOctagon className="w-4 h-4 text-destructive" />
               </div>
-              <div>
-                <div className="text-2xl font-bold font-mono-data text-destructive">
-                  {avgDelayDays} <span className="text-xs font-normal">dias</span>
-                </div>
-                <div className="text-[10px] text-muted-foreground font-mono-data mt-1">
-                  {totalOverdueCount} tarefas atrasadas
-                </div>
-              </div>
+              <span className="text-xs text-muted-foreground font-mono-data">
+                {totalOverdueCount} atrasadas
+              </span>
             </div>
 
             {/* Aging Chart */}
-            <div className="flex-1 w-full min-h-[180px]">
-              <ChartContainer config={agingConfig} className="min-h-[180px] w-full">
+            <div className="flex-1 w-full min-h-0">
+              <ChartContainer config={agingConfig} className="h-full w-full">
                 <BarChart
                   accessibilityLayer
                   data={agingData}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  margin={{ top: 10, right: 10, left: -15, bottom: 0 }}
                 >
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                  <XAxis dataKey="range" tickLine={false} axisLine={false} />
+                  <XAxis dataKey="range" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
                   <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar dataKey="count" radius={[4, 4, 0, 0]}>
@@ -277,28 +272,28 @@ export const ExecutionTimeSection: React.FC<ExecutionTimeSectionProps> = ({
           </div>
         </div>
 
-        {/* 13. Próximos Vencimentos (7/15/30 dias) (Spans 12 cols) */}
-        <div className="lg:col-span-12 bg-card border border-border flex flex-col">
+        {/* 13. Próximos Vencimentos (7/15/30 dias) */}
+        <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
-              Próximos Vencimentos (Janelas de 7, 15 e 30 dias)
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
+              Próximos Vencimentos
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
-              Previsão de Carga Próxima
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
+              7, 15 e 30 dias
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[200px] flex items-center justify-center">
-            <ChartContainer config={upcomingConfig} className="min-h-[180px] w-full">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
+            <ChartContainer config={upcomingConfig} className="h-full w-full">
               <BarChart
                 accessibilityLayer
                 data={upcomingDeadlinesData}
-                margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                margin={{ top: 10, right: 15, left: -10, bottom: 0 }}
               >
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis dataKey="window" tickLine={false} axisLine={false} />
                 <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="tasks" fill="var(--color-tasks)" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                <Bar dataKey="tasks" fill="var(--color-tasks)" radius={[4, 4, 0, 0]} maxBarSize={45} />
               </BarChart>
             </ChartContainer>
           </div>

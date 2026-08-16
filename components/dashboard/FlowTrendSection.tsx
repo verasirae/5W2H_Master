@@ -149,24 +149,24 @@ export const FlowTrendSection: React.FC<FlowTrendSectionProps> = ({ tasks }) => 
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* 20. Funil de Status (Spans 4 cols) */}
-        <div className="lg:col-span-4 bg-card border border-border flex flex-col">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 20. Funil de Status */}
+        <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
-              Funil de Execução de Status
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
+              Funil de Status
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
               Entrada → Saída
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[260px] flex items-center justify-center">
-            <ChartContainer config={funnelConfig} className="min-h-[220px] w-full">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
+            <ChartContainer config={funnelConfig} className="h-full w-full">
               <BarChart
                 accessibilityLayer
                 layout="vertical"
                 data={funnelData}
-                margin={{ top: 10, right: 20, left: 10, bottom: 0 }}
+                margin={{ top: 10, right: 15, left: 10, bottom: 0 }}
               >
                 <CartesianGrid horizontal={false} strokeDasharray="3 3" />
                 <YAxis
@@ -174,7 +174,8 @@ export const FlowTrendSection: React.FC<FlowTrendSectionProps> = ({ tasks }) => 
                   type="category"
                   tickLine={false}
                   axisLine={false}
-                  width={110}
+                  width={90}
+                  tick={{ fontSize: 11 }}
                 />
                 <XAxis type="number" tickLine={false} axisLine={false} allowDecimals={false} />
                 <ChartTooltip content={<ChartTooltipContent />} />
@@ -184,27 +185,27 @@ export const FlowTrendSection: React.FC<FlowTrendSectionProps> = ({ tasks }) => 
           </div>
         </div>
 
-        {/* 21. Burn-up: Criadas vs. Concluídas (Spans 5 cols) */}
-        <div className="lg:col-span-5 bg-card border border-border flex flex-col">
+        {/* 21. Burn-up: Criadas vs. Concluídas */}
+        <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
-              Burn-Up Acumulado (Criadas vs Concluídas)
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
+              Burn-Up Acumulado
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
-              Progresso do Escopo
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
+              Criadas vs Concluídas
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[260px] flex items-center justify-center">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
             {burnupData.length === 0 ? (
-              <div className="text-xs text-muted-foreground font-mono-data">
+              <div className="text-xs text-muted-foreground font-mono-data text-center">
                 Nenhum dado temporal.
               </div>
             ) : (
-              <ChartContainer config={burnupConfig} className="min-h-[220px] w-full">
+              <ChartContainer config={burnupConfig} className="h-full w-full">
                 <AreaChart
                   accessibilityLayer
                   data={burnupData}
-                  margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                  margin={{ top: 10, right: 15, left: -15, bottom: 0 }}
                 >
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis dataKey="competence" tickLine={false} axisLine={false} />
@@ -233,25 +234,25 @@ export const FlowTrendSection: React.FC<FlowTrendSectionProps> = ({ tasks }) => 
           </div>
         </div>
 
-        {/* 22. Comparativo Competência Atual vs Anterior (Spans 3 cols) */}
-        <div className="lg:col-span-3 bg-card border border-border flex flex-col">
+        {/* 22. Comparativo Competência Atual vs Anterior */}
+        <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
               Competência vs. Anterior
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
               Variação MoM
             </span>
           </div>
-          <div className="p-4 flex-1 flex flex-col justify-around min-h-[260px]">
+          <div className="p-4 flex-1 flex flex-col justify-around min-h-[280px] h-[300px]">
             <div className="flex justify-between items-start">
-              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data">
+              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data truncate max-w-[140px]">
                 {currentCompName}
               </span>
-              <ArrowRightLeft className="w-4 h-4 text-primary" />
+              <ArrowRightLeft className="w-4 h-4 text-primary shrink-0" />
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-2">
               <div className="text-3xl font-bold font-mono-data text-foreground">
                 {currentCompCount}{' '}
                 <span className="text-xs font-normal text-muted-foreground">tarefas</span>
@@ -259,25 +260,25 @@ export const FlowTrendSection: React.FC<FlowTrendSectionProps> = ({ tasks }) => 
 
               <div className="flex items-center gap-1.5 pt-1">
                 {isPositive ? (
-                  <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                  <TrendingUp className="w-4 h-4 text-primary shrink-0" />
                 ) : (
-                  <TrendingDown className="w-3.5 h-3.5 text-destructive" />
+                  <TrendingDown className="w-4 h-4 text-destructive shrink-0" />
                 )}
                 <span
-                  className={`text-xs font-bold font-mono-data ${
+                  className={`text-sm font-bold font-mono-data ${
                     isPositive ? 'text-primary' : 'text-destructive'
                   }`}
                 >
                   {isPositive ? '+' : '-'}
                   {diffPercent}%
                 </span>
-                <span className="text-[10px] text-muted-foreground font-mono-data">
-                  vs mês anterior ({prevCompCount})
+                <span className="text-xs text-muted-foreground font-mono-data">
+                  vs anterior ({prevCompCount})
                 </span>
               </div>
             </div>
 
-            <div className="text-[10px] text-muted-foreground font-mono-data border-t border-border pt-2">
+            <div className="text-xs text-muted-foreground font-mono-data border-t border-border pt-2">
               Ritmo de planejamento ativo para a competência de referência.
             </div>
           </div>

@@ -200,28 +200,29 @@ export const FinancialSection: React.FC<FinancialSectionProps> = ({
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Row 1: 3 colunas (Orçamento Planejado vs. Realizado, Evolução do Custo por Competência, Custo por Categoria/Rotina) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 5. Orçamento Planejado vs. Realizado */}
         <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
               Orçamento Planejado vs. Realizado
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
-              Por Departamento ({workspaceConfig.currencySymbol})
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
+              ({workspaceConfig.currencySymbol})
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[240px] flex items-center justify-center">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
             {plannedVsRealizedData.length === 0 ? (
-              <div className="text-xs text-muted-foreground font-mono-data">
+              <div className="text-xs text-muted-foreground font-mono-data text-center">
                 Nenhum orçamento cadastrado.
               </div>
             ) : (
-              <ChartContainer config={plannedVsRealizedConfig} className="min-h-[220px] w-full">
+              <ChartContainer config={plannedVsRealizedConfig} className="h-full w-full">
                 <BarChart
                   accessibilityLayer
                   data={plannedVsRealizedData}
-                  margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+                  margin={{ top: 10, right: 15, left: 10, bottom: 0 }}
                 >
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis
@@ -229,7 +230,7 @@ export const FinancialSection: React.FC<FinancialSectionProps> = ({
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(val) =>
-                      val.length > 10 ? `${val.slice(0, 8)}...` : val
+                      val.length > 12 ? `${val.slice(0, 10)}...` : val
                     }
                   />
                   <YAxis
@@ -257,133 +258,27 @@ export const FinancialSection: React.FC<FinancialSectionProps> = ({
           </div>
         </div>
 
-        {/* 6. Custo por Departamento (Donut) */}
+        {/* 8. Evolução do Custo por Competência */}
         <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
-              Custo por Departamento
-            </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
-              Distribuição %
-            </span>
-          </div>
-          <div className="p-4 flex-1 min-h-[240px] flex flex-col items-center justify-center">
-            {costByDeptData.length === 0 ? (
-              <div className="text-xs text-muted-foreground font-mono-data">
-                Nenhum custo lançado no filtro.
-              </div>
-            ) : (
-              <ChartContainer config={costByDeptConfig} className="min-h-[220px] w-full">
-                <PieChart>
-                  <Pie
-                    data={costByDeptData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={75}
-                    paddingAngle={3}
-                    dataKey="value"
-                    nameKey="name"
-                  >
-                    {costByDeptData.map((entry, index) => (
-                      <Cell key={`dept-cell-${index}`} fill={entry.color} stroke="var(--card)" />
-                    ))}
-                  </Pie>
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        formatter={(val) =>
-                          formatCurrency(Number(val), workspaceConfig.currencySymbol)
-                        }
-                      />
-                    }
-                  />
-                  <ChartLegend content={<ChartLegendContent />} />
-                </PieChart>
-              </ChartContainer>
-            )}
-          </div>
-        </div>
-
-        {/* 7. Custo por Categoria / Rotina */}
-        <div className="bg-card border border-border flex flex-col">
-          <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
-              Custo por Categoria / Rotina
-            </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
-              Top Despesas
-            </span>
-          </div>
-          <div className="p-4 flex-1 min-h-[240px] flex items-center justify-center">
-            {costByCategoryData.length === 0 ? (
-              <div className="text-xs text-muted-foreground font-mono-data">
-                Nenhum registro encontrado.
-              </div>
-            ) : (
-              <ChartContainer config={costByCategoryConfig} className="min-h-[220px] w-full">
-                <BarChart
-                  accessibilityLayer
-                  layout="vertical"
-                  data={costByCategoryData}
-                  margin={{ top: 10, right: 20, left: 10, bottom: 0 }}
-                >
-                  <CartesianGrid horizontal={false} strokeDasharray="3 3" />
-                  <YAxis
-                    dataKey="category"
-                    type="category"
-                    tickLine={false}
-                    axisLine={false}
-                    width={90}
-                    tickFormatter={(val) =>
-                      val.length > 12 ? `${val.slice(0, 10)}...` : val
-                    }
-                  />
-                  <XAxis
-                    type="number"
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(val) =>
-                      val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val
-                    }
-                  />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        formatter={(val) =>
-                          formatCurrency(Number(val), workspaceConfig.currencySymbol)
-                        }
-                      />
-                    }
-                  />
-                  <Bar dataKey="cost" fill="var(--color-cost)" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ChartContainer>
-            )}
-          </div>
-        </div>
-
-        {/* 8. Evolução do Custo por Competência (Area Chart) */}
-        <div className="bg-card border border-border flex flex-col">
-          <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
               Evolução do Custo por Competência
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
-              Linha Temporal
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
+              Temporal
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[240px] flex items-center justify-center">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
             {costEvolutionData.length === 0 ? (
-              <div className="text-xs text-muted-foreground font-mono-data">
+              <div className="text-xs text-muted-foreground font-mono-data text-center">
                 Nenhum dado financeiro temporal.
               </div>
             ) : (
-              <ChartContainer config={costEvolutionConfig} className="min-h-[220px] w-full">
+              <ChartContainer config={costEvolutionConfig} className="h-full w-full">
                 <AreaChart
                   accessibilityLayer
                   data={costEvolutionData}
-                  margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+                  margin={{ top: 10, right: 15, left: 10, bottom: 0 }}
                 >
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis dataKey="competence" tickLine={false} axisLine={false} />
@@ -417,25 +312,134 @@ export const FinancialSection: React.FC<FinancialSectionProps> = ({
           </div>
         </div>
 
-        {/* 9. Consumo do Orçamento Total (Gauge) - Spans full width or 2 cols on lg if desired */}
-        <div className="lg:col-span-2 bg-card border border-border flex flex-col">
+        {/* 7. Custo por Categoria / Rotina */}
+        <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
+              Custo por Categoria / Rotina
+            </h3>
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
+              Top Despesas
+            </span>
+          </div>
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
+            {costByCategoryData.length === 0 ? (
+              <div className="text-xs text-muted-foreground font-mono-data text-center">
+                Nenhum registro encontrado.
+              </div>
+            ) : (
+              <ChartContainer config={costByCategoryConfig} className="h-full w-full">
+                <BarChart
+                  accessibilityLayer
+                  layout="vertical"
+                  data={costByCategoryData}
+                  margin={{ top: 10, right: 15, left: 10, bottom: 0 }}
+                >
+                  <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+                  <YAxis
+                    dataKey="category"
+                    type="category"
+                    tickLine={false}
+                    axisLine={false}
+                    width={85}
+                    tickFormatter={(val) =>
+                      val.length > 12 ? `${val.slice(0, 10)}...` : val
+                    }
+                  />
+                  <XAxis
+                    type="number"
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(val) =>
+                      val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val
+                    }
+                  />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(val) =>
+                          formatCurrency(Number(val), workspaceConfig.currencySymbol)
+                        }
+                      />
+                    }
+                  />
+                  <Bar dataKey="cost" fill="var(--color-cost)" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ChartContainer>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Row 2: 2 colunas (Custo por Departamento, Consumo do Orçamento Total) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 6. Custo por Departamento (Donut) */}
+        <div className="bg-card border border-border flex flex-col">
+          <div className="p-3 border-b border-border flex justify-between items-center bg-card">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
+              Custo por Departamento
+            </h3>
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
+              Distribuição %
+            </span>
+          </div>
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex flex-col items-center justify-center">
+            {costByDeptData.length === 0 ? (
+              <div className="text-xs text-muted-foreground font-mono-data text-center">
+                Nenhum custo lançado no filtro.
+              </div>
+            ) : (
+              <ChartContainer config={costByDeptConfig} className="h-full w-full">
+                <PieChart>
+                  <Pie
+                    data={costByDeptData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={80}
+                    paddingAngle={3}
+                    dataKey="value"
+                    nameKey="name"
+                  >
+                    {costByDeptData.map((entry, index) => (
+                      <Cell key={`dept-cell-${index}`} fill={entry.color} stroke="var(--card)" />
+                    ))}
+                  </Pie>
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(val) =>
+                          formatCurrency(Number(val), workspaceConfig.currencySymbol)
+                        }
+                      />
+                    }
+                  />
+                  <ChartLegend content={<ChartLegendContent />} />
+                </PieChart>
+              </ChartContainer>
+            )}
+          </div>
+        </div>
+
+        {/* 9. Consumo do Orçamento Total (Gauge) */}
+        <div className="bg-card border border-border flex flex-col">
+          <div className="p-3 border-b border-border flex justify-between items-center bg-card">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
               Consumo do Orçamento Total (Gauge)
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
               Meta vs Comprometido
             </span>
           </div>
-          <div className="p-4 flex-1 flex flex-col md:flex-row items-center justify-around gap-6 min-h-[200px]">
-            <div className="relative w-48 h-48 flex items-center justify-center">
+          <div className="p-4 flex-1 flex flex-col sm:flex-row items-center justify-around gap-6 min-h-[280px] h-[300px]">
+            <div className="relative w-44 h-44 flex items-center justify-center shrink-0">
               <ChartContainer config={gaugeConfig} className="w-full h-full aspect-square">
                 <RadialBarChart
                   data={gaugeData}
                   startAngle={180}
                   endAngle={0}
-                  innerRadius={70}
-                  outerRadius={100}
+                  innerRadius={65}
+                  outerRadius={90}
                 >
                   <PolarAngleAxis
                     type="number"
@@ -461,7 +465,7 @@ export const FinancialSection: React.FC<FinancialSectionProps> = ({
               </div>
             </div>
 
-            <div className="space-y-3 font-mono-data text-xs max-w-sm">
+            <div className="space-y-3 font-mono-data text-xs w-full max-w-sm">
               <div className="flex justify-between border-b border-border pb-1.5">
                 <span className="text-muted-foreground">Orçamento Planejado:</span>
                 <span className="font-bold text-foreground">

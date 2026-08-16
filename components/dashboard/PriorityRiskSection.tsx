@@ -141,31 +141,31 @@ export const PriorityRiskSection: React.FC<PriorityRiskSectionProps> = ({
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* 17. Distribuição por Prioridade (Spans 4 cols) */}
-        <div className="lg:col-span-4 bg-card border border-border flex flex-col">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 17. Distribuição por Prioridade */}
+        <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
               Distribuição por Prioridade
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
-              Matriz Gravidade
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
+              Gravidade
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[260px] flex flex-col items-center justify-center">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex flex-col items-center justify-center">
             {priorityData.length === 0 ? (
-              <div className="text-xs text-muted-foreground font-mono-data">
+              <div className="text-xs text-muted-foreground font-mono-data text-center">
                 Nenhuma tarefa encontrada.
               </div>
             ) : (
-              <ChartContainer config={priorityChartConfig} className="min-h-[220px] w-full">
+              <ChartContainer config={priorityChartConfig} className="h-full w-full">
                 <PieChart>
                   <Pie
                     data={priorityData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={75}
+                    innerRadius={55}
+                    outerRadius={80}
                     paddingAngle={3}
                     dataKey="value"
                     nameKey="name"
@@ -182,22 +182,22 @@ export const PriorityRiskSection: React.FC<PriorityRiskSectionProps> = ({
           </div>
         </div>
 
-        {/* 18. Cruzamento Prioridade × Status (Spans 5 cols) */}
-        <div className="lg:col-span-5 bg-card border border-border flex flex-col">
+        {/* 18. Cruzamento Prioridade × Status */}
+        <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
               Cruzamento Prioridade × Status
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
-              Empilhado por Status
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
+              Empilhado
             </span>
           </div>
-          <div className="p-4 flex-1 min-h-[260px] flex items-center justify-center">
-            <ChartContainer config={crossPriorityConfig} className="min-h-[220px] w-full">
+          <div className="p-4 flex-1 min-h-[280px] h-[300px] flex items-center justify-center">
+            <ChartContainer config={crossPriorityConfig} className="h-full w-full">
               <BarChart
                 accessibilityLayer
                 data={crossData}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                margin={{ top: 10, right: 10, left: -15, bottom: 0 }}
               >
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis dataKey="priority" tickLine={false} axisLine={false} />
@@ -214,17 +214,17 @@ export const PriorityRiskSection: React.FC<PriorityRiskSectionProps> = ({
           </div>
         </div>
 
-        {/* 19. % Tarefas com Observações Registradas (Spans 3 cols) */}
-        <div className="lg:col-span-3 bg-card border border-border flex flex-col">
+        {/* 19. % Tarefas com Observações Registradas */}
+        <div className="bg-card border border-border flex flex-col">
           <div className="p-3 border-b border-border flex justify-between items-center bg-card">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data">
-              Observações e Pendências
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono-data truncate">
+              Bloqueios e Impedimentos
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono-data">
+            <span className="text-[10px] text-muted-foreground font-mono-data shrink-0 ml-1">
               Rastreabilidade
             </span>
           </div>
-          <div className="p-4 flex-1 flex flex-col justify-around min-h-[260px]">
+          <div className="p-4 flex-1 flex flex-col justify-around min-h-[280px] h-[300px]">
             <div className="flex justify-between items-start">
               <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data">
                 Taxa de Anotações
@@ -243,7 +243,7 @@ export const PriorityRiskSection: React.FC<PriorityRiskSectionProps> = ({
               </div>
 
               {/* Progress bar native styled */}
-              <div className="w-full bg-muted h-2 border border-border">
+              <div className="w-full bg-muted h-2.5 border border-border">
                 <div
                   className="bg-primary h-full transition-all"
                   style={{ width: `${Math.min(notesPercent, 100)}%` }}
@@ -251,7 +251,7 @@ export const PriorityRiskSection: React.FC<PriorityRiskSectionProps> = ({
               </div>
             </div>
 
-            <div className="text-[10px] text-muted-foreground font-mono-data">
+            <div className="text-xs text-muted-foreground font-mono-data">
               {notesCount > 0
                 ? `${notesCount} tarefas possuem notas ou impedimentos descritos.`
                 : 'Nenhuma tarefa com pendência ou observação.'}
