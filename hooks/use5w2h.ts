@@ -37,15 +37,15 @@ export function use5W2H() {
   const [tasks, setTasks] = useState<Task5W2H[]>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem(STORAGE_KEY_TASKS);
-        if (saved) {
-          const parsed = JSON.parse(saved);
+        const savedTasks = localStorage.getItem(STORAGE_KEY_TASKS);
+        if (savedTasks) {
+          const parsed = JSON.parse(savedTasks);
           if (Array.isArray(parsed) && parsed.length > 0) {
             return deduplicateTaskIds(parsed);
           }
         }
       } catch (e) {
-        console.error('Failed to parse local tasks:', e);
+        console.error('Failed to load local tasks:', e);
       }
     }
     return deduplicateTaskIds(INITIAL_SAMPLE_TASKS);
@@ -54,18 +54,18 @@ export function use5W2H() {
   const [workspaceConfig, setWorkspaceConfig] = useState<WorkspaceConfig>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem(STORAGE_KEY_CONFIG);
-        if (saved) {
-          return JSON.parse(saved);
+        const savedConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
+        if (savedConfig) {
+          return JSON.parse(savedConfig);
         }
       } catch (e) {
-        console.error('Failed to parse local workspace config:', e);
+        console.error('Failed to load local config:', e);
       }
     }
     return DEFAULT_WORKSPACE_CONFIG;
   });
 
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [dbStatus, setDbStatus] = useState<DatabaseStatus>({ connected: false, checked: false });
@@ -136,7 +136,6 @@ export function use5W2H() {
     } finally {
       setIsSyncing(false);
       setIsLoading(false);
-      setIsLoaded(true);
     }
   }, []);
 

@@ -21,8 +21,10 @@ import {
   Download,
   Database,
   RefreshCw,
+  LogOut,
 } from 'lucide-react';
 import { DatabaseStatus } from '@/hooks/use5w2h';
+import { useAuth } from '@/lib/supabase/auth-context';
 
 interface HeaderProps {
   workspaceConfig: WorkspaceConfig;
@@ -55,6 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
   dbStatus,
   onRefresh,
 }) => {
+  const { user, getUserDisplayName, getUserInitials, signOut, isConfigured } = useAuth();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [colorMode, setColorMode] = useState<'dark' | 'light'>('dark');
@@ -274,24 +277,32 @@ export const Header: React.FC<HeaderProps> = ({
               setIsUserMenuOpen((prev) => !prev);
               setIsNotificationsOpen(false);
             }}
-            className="w-8 h-8 rounded-full bg-background border border-border hover:border-primary flex items-center justify-center text-foreground transition-colors ml-1"
+            className="w-8 h-8 rounded-full bg-background border border-border hover:border-primary flex items-center justify-center text-foreground transition-colors ml-1 font-bold text-xs"
             title="Perfil de Usuário"
           >
-            <User className="w-4 h-4 text-foreground" />
+            {user ? (
+              <span className="text-primary">{getUserInitials()}</span>
+            ) : (
+              <User className="w-4 h-4 text-foreground" />
+            )}
           </button>
 
           {/* User Profile Dropdown Popover */}
           {isUserMenuOpen && (
             <div className="absolute right-0 mt-2 w-64 bg-popover border border-border shadow-2xl p-3 z-50 text-xs">
               <div className="flex items-center gap-3 border-b border-border pb-3 mb-2">
-                <div className="w-10 h-10 rounded-full bg-background border border-primary flex items-center justify-center font-bold text-primary">
-                  IV
+                <div className="w-10 h-10 rounded-full bg-background border border-primary flex items-center justify-center font-bold text-primary shrink-0 text-sm">
+                  {getUserInitials()}
                 </div>
-                <div className="overflow-hidden">
-                  <p className="font-bold text-foreground truncate">Iraê Veras</p>
-                  <p className="text-[10px] text-muted-foreground font-mono-data truncate">iraeveras@outlook.com.br</p>
+                <div className="overflow-hidden min-w-0 flex-1">
+                  <p className="font-bold text-foreground truncate" title={getUserDisplayName()}>
+                    {getUserDisplayName()}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground font-mono-data truncate" title={user?.email || 'iraeveras@outlook.com.br'}>
+                    {user?.email || 'iraeveras@outlook.com.br'}
+                  </p>
                   <span className="text-[9px] bg-accent text-primary px-1.5 py-0.2 uppercase font-mono-data mt-1 inline-block">
-                    Gestor 5W2H
+                    {user ? 'Autenticado' : 'Gestor 5W2H'}
                   </span>
                 </div>
               </div>
@@ -301,10 +312,20 @@ export const Header: React.FC<HeaderProps> = ({
                     setCurrentView('settings');
                     setIsUserMenuOpen(false);
                   }}
-                  className="w-full text-left px-2 py-1.5 text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-2"
+                  className="w-full text-left px-2 py-1.5 text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-2 cursor-pointer transition-colors"
                 >
                   <Settings className="w-3.5 h-3.5" />
                   <span>Configurações da Conta</span>
+                </button>
+                <button
+                  onClick={async () => {
+                    setIsUserMenuOpen(false);
+                    await signOut();
+                  }}
+                  className="w-full text-left px-2 py-1.5 text-destructive hover:bg-destructive/10 flex items-center gap-2 cursor-pointer transition-colors pt-1 border-t border-border mt-1"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sair da Conta (Logout)</span>
                 </button>
               </div>
             </div>

@@ -17,6 +17,11 @@ import {
   CheckCircle2,
   RefreshCw,
   Server,
+  Copy,
+  Check,
+  Code,
+  ShieldCheck,
+  ExternalLink,
 } from 'lucide-react';
 
 interface SettingsViewProps {
@@ -45,6 +50,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [newDepartmentName, setNewDepartmentName] = useState('');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isTestingDb, setIsTestingDb] = useState(false);
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
+  const [sqlContent, setSqlContent] = useState<string>('');
   const [dbHealth, setDbHealth] = useState<{
     status?: string;
     connected?: boolean;
@@ -53,7 +61,43 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     error?: string;
   } | null>(null);
 
-  const checkDbHealth = useCallback(async (isManualTrigger = false) => {
+  const handleCopySql = async () => {
+    try {
+      let content = sqlContent;
+      if (!content) {
+        const res = await fetch('/api/database/migrate');
+        const data = await res.json();
+        content = data.sql || '';
+        setSqlContent(content);
+      }
+      await navigator.clipboard.writeText(content);
+      setCopiedSql(true);
+      showToast('success', 'Script SQL Copiado!', 'Cole no Supabase SQL Editor (SQL Editor > New Query > Run) para criar todas as tabelas e gatilhos.');
+      setTimeout(() => setCopiedSql(false), 3000);
+    } catch (e: any) {
+      showToast('error', 'Falha ao copiar', 'Não foi possível copiar o script para a área de transferência.');
+    }
+  };
+
+  const handleRunMigration = async () => {
+    setIsMigrating(true);
+    try {
+      const res = await fetch('/api/database/migrate', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        showToast('success', 'Migração Concluída', data.message || 'Tabelas criadas com sucesso no Supabase.');
+        checkDbHealth(false);
+      } else {
+        showToast('info', 'Execução Manual Recomendada', data.message || data.error || 'Copie o script SQL e execute no Supabase SQL Editor.');
+      }
+    } catch (err: any) {
+      showToast('error', 'Erro na Migração', err.message || 'Falha ao conectar com o endpoint de migração.');
+    } finally {
+      setIsMigrating(false);
+    }
+  };
+
+  const checkDbHealth = async (isManualTrigger = false) => {
     setIsTestingDb(true);
     try {
       const res = await fetch('/api/health/db');
@@ -74,7 +118,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     } finally {
       setIsTestingDb(false);
     }
-  }, [showToast]);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -254,6 +298,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <span>{isTestingDb ? 'Testando Conexão...' : 'Testar Conexão com Supabase'}</span>
           </button>
 
+          <button
+            type="button"
+            onClick={handleCopySql}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border hover:border-primary text-foreground font-mono-data text-xs rounded-md transition-colors cursor-pointer"
+          >
+            {copiedSql ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-primary" />}
+            <span className="font-bold">{copiedSql ? 'Script Copiado!' : 'Copiar Script SQL do Supabase'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleRunMigration}
+            disabled={isMigrating}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border hover:border-primary text-foreground font-mono-data text-xs rounded-md transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <Code className={`w-3.5 h-3.5 ${isMigrating ? 'animate-spin text-primary' : 'text-primary'}`} />
+            <span>{isMigrating ? 'Criando Tabelas...' : 'Executar Migração / Criar Tabelas'}</span>
+          </button>
+
           {syncTasksToDatabase && (
             <button
               type="button"
@@ -264,6 +327,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <span>Sincronizar Tarefas Locais com Supabase</span>
             </button>
           )}
+        </div>
+
+        {/* Instructions Collapsible Box */}
+        <div className="border border-border/80 bg-background/50 rounded-md p-3.5 text-xs space-y-2.5">
+          <div className="flex items-center gap-2 font-bold font-mono-data text-foreground text-[11px] uppercase">
+            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            <span>Instruções para o Supabase (SQL Editor & Autenticação Google)</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] text-muted-foreground leading-relaxed">
+            <div className="space-y-1 bg-card/60 p-2.5 border border-border/60 rounded">
+              <strong className="text-foreground block font-mono-data">1. Criar Tabelas no Supabase:</strong>
+              <p>
+                Clique no botão <strong>&quot;Copiar Script SQL do Supabase&quot;</strong> acima, abra seu <strong>Supabase Dashboard &gt; SQL Editor</strong>, cole o script e clique em <strong>&quot;Run&quot;</strong>. Todas as tabelas (<code>User</code>, <code>Task</code>, <code>Department</code>, <code>Category</code>, <code>WorkspaceConfig</code>) e os gatilhos de sincronização automática de usuários serão criados imediatamente.
+              </p>
+            </div>
+
+            <div className="space-y-1 bg-card/60 p-2.5 border border-border/60 rounded">
+              <strong className="text-foreground block font-mono-data">2. Ativar Login com Google:</strong>
+              <p>
+                No Supabase Dashboard, acesse <strong>Authentication &gt; Providers &gt; Google</strong>. Ative a opção <strong>&quot;Enable Sign in with Google&quot;</strong> e informe o <strong>Client ID</strong> e <strong>Client Secret</strong> obtidos no Google Cloud Console.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 

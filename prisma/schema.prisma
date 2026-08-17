@@ -1,13 +1,38 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql"
+model User {
+  id            String    @id // Supabase Auth UUID
+  email         String    @unique
+  name          String?
+  avatarUrl     String?
+  role          String    @default("member") // "admin", "manager", "member", "viewer"
+  department    String?   // Departamento padrão (ex: "RH/DP", "Operações", "TI")
+  jobTitle      String?   // Cargo/Função
+  status        String    @default("active") // "active", "inactive", "pending"
+  lastLoginAt   DateTime?
+
+  // Relacionamentos com tarefas
+  tasksCreated  Task[]    @relation("TaskCreator")
+  tasksAssigned Task[]    @relation("TaskAssignee")
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([role])
+  @@index([department])
 }
 
 model Task {
-  id              String    @id
+  id              String      @id
   title           String
   why             String
   where           String
@@ -15,50 +40,75 @@ model Task {
   deadlineDate    String
   who             String
   how             String
-  howMuch         Float     @default(0)
+  howMuch         Float       @default(0)
   department      String
   category        String
   competence      String
   priority        String
   status          String
-  progressPercent Int       @default(0)
+  progressPercent Float       @default(0)
   completionDate  String?
   observations    String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  
+  departmentRel   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  departmentId    String?
+  categoryRel     Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId      String?
+
+  createdById     String?
+  createdBy       User?       @relation("TaskCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  assignedUserId  String?
+  assignedUser    User?       @relation("TaskAssignee", fields: [assignedUserId], references: [id], onDelete: SetNull)
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   @@index([department])
+  @@index([category])
   @@index([status])
+  @@index([deadlineDate])
   @@index([competence])
+  @@index([who])
+  @@index([priority])
+  @@index([createdById])
+  @@index([assignedUserId])
 }
 
 model Department {
   id          String     @id @default(cuid())
   name        String     @unique
-  categories  Category[]
+  description String?
+  color       String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+
+  categories  Category[]
+  tasks       Task[]
 }
 
 model Category {
-  id           String      @id @default(cuid())
-  name         String
-  departmentId String
-  department   Department  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id             String      @id @default(cuid())
+  name           String
+  departmentName String
+  departmentId   String?
+  department     Department? @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
-  @@unique([name, departmentId])
+  tasks          Task[]
+
+  @@unique([name, departmentName])
+  @@index([departmentName])
 }
 
 model WorkspaceConfig {
   id                     String   @id @default("default")
-  workspaceName          String   @default("5W2H Master")
-  departmentName         String   @default("Operações & Estratégia")
+  workspaceName          String   @default("5W2H Gerenciamento de Rotinas")
+  departmentName         String   @default("RH/DP")
   currencySymbol         String   @default("R$")
   attentionThresholdDays Int      @default(3)
-  departments            Json     @default("[]")
-  categoriesByDepartment Json     @default("{}")
+  departments            Json?
+  categoriesByDepartment Json?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 }

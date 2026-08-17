@@ -160,13 +160,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     ];
   }, [filteredTasks, workspaceConfig.attentionThresholdDays]);
 
-  // Skeleton Loading State (unconditionally rendered after all hooks)
   if (isLoading) {
     return (
-      <div className="flex-1 overflow-y-auto pl-2 pr-2.5 md:py-4 space-y-6 w-full max-w-7xl mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 w-full max-w-7xl mx-auto">
         {/* KPI Skeleton Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5 sm:gap-3 md:gap-3 lg:gap-4">
-          {Array.from({ length: 5 }).map((_, i) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="bg-card border border-border p-3.5 space-y-2 rounded-md">
               <div className="flex items-center justify-between">
                 <Skeleton className="h-3 w-16" />
