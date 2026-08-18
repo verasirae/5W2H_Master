@@ -5,14 +5,20 @@ declare global {
 }
 
 /**
+ * Helper to get clean sanitized database URL without quotes or whitespace.
+ */
+export function getSanitizedDatabaseUrl(): string {
+  const raw = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
+  if (typeof raw !== 'string') return '';
+  return raw.trim().replace(/^["']+|["']+$/g, '');
+}
+
+/**
  * Checks if the DATABASE_URL environment variable is provided, valid, and not a placeholder.
  */
 export function isDatabaseConfigured(): boolean {
-  const url = process.env.DATABASE_URL;
-  if (!url || typeof url !== 'string') return false;
-  
-  const trimmed = url.trim();
-  if (trimmed === '') return false;
+  const trimmed = getSanitizedDatabaseUrl();
+  if (!trimmed) return false;
 
   // Must strictly start with standard PostgreSQL URI protocol
   if (!trimmed.startsWith('postgresql://') && !trimmed.startsWith('postgres://')) {
@@ -39,7 +45,7 @@ export function isDatabaseConfigured(): boolean {
  * Uses lazy loading to prevent build-time/module-load bundling crashes.
  */
 export function getPrisma(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = getSanitizedDatabaseUrl();
   if (!connectionString || !isDatabaseConfigured()) {
     throw new Error('DATABASE_URL is not configured or does not start with postgresql:// or postgres://.');
   }
@@ -53,7 +59,7 @@ export function getPrisma(): PrismaClient {
     global.prismaGlobal = new PrismaClientConstructor({
       datasources: {
         db: {
-          url: connectionString.trim(),
+          url: connectionString,
         },
       },
       log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],

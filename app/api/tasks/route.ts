@@ -99,8 +99,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, count: created.length });
     }
 
-    const newTask = await prisma.task.create({
-      data: {
+    const newTask = await prisma.task.upsert({
+      where: { id: body.id },
+      update: {
+        title: body.title,
+        why: body.why,
+        where: body.where,
+        startDate: body.startDate,
+        deadlineDate: body.deadlineDate,
+        who: body.who,
+        how: body.how,
+        howMuch: Number(body.howMuch) || 0,
+        department: body.department,
+        category: body.category,
+        competence: body.competence,
+        priority: body.priority,
+        status: body.status,
+        progressPercent: Number(body.progressPercent) || 0,
+        completionDate: body.completionDate || null,
+        observations: body.observations || null,
+      },
+      create: {
         id: body.id,
         title: body.title,
         why: body.why,

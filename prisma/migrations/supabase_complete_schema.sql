@@ -64,13 +64,38 @@ CREATE TABLE IF NOT EXISTS public."Task" (
   "progressPercent" DOUBLE PRECISION NOT NULL DEFAULT 0,
   "completionDate" TEXT,
   "observations" TEXT,
-  "departmentId" TEXT REFERENCES public."Department"("id") ON DELETE SET NULL,
-  "categoryId" TEXT REFERENCES public."Category"("id") ON DELETE SET NULL,
-  "createdById" TEXT REFERENCES public."User"("id") ON DELETE SET NULL,
-  "assignedUserId" TEXT REFERENCES public."User"("id") ON DELETE SET NULL,
+  "departmentId" TEXT,
+  "categoryId" TEXT,
+  "createdById" TEXT,
+  "assignedUserId" TEXT,
   "createdAt" TIMESTAMP(3) WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP(3) WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Garantir que colunas adicionais existam caso a tabela Task já tenha sido criada anteriormente
+ALTER TABLE public."Task" ADD COLUMN IF NOT EXISTS "departmentId" TEXT;
+ALTER TABLE public."Task" ADD COLUMN IF NOT EXISTS "categoryId" TEXT;
+ALTER TABLE public."Task" ADD COLUMN IF NOT EXISTS "createdById" TEXT;
+ALTER TABLE public."Task" ADD COLUMN IF NOT EXISTS "assignedUserId" TEXT;
+
+-- Foreign keys opcionais
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Task_departmentId_fkey') THEN
+    ALTER TABLE public."Task" ADD CONSTRAINT "Task_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES public."Department"("id") ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Task_categoryId_fkey') THEN
+    ALTER TABLE public."Task" ADD CONSTRAINT "Task_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES public."Category"("id") ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Task_createdById_fkey') THEN
+    ALTER TABLE public."Task" ADD CONSTRAINT "Task_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES public."User"("id") ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Task_assignedUserId_fkey') THEN
+    ALTER TABLE public."Task" ADD CONSTRAINT "Task_assignedUserId_fkey" FOREIGN KEY ("assignedUserId") REFERENCES public."User"("id") ON DELETE SET NULL;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN NULL;
+END $$;
 
 CREATE INDEX IF NOT EXISTS "Task_department_idx" ON public."Task"("department");
 CREATE INDEX IF NOT EXISTS "Task_category_idx" ON public."Task"("category");
@@ -96,8 +121,11 @@ CREATE TABLE IF NOT EXISTS public."WorkspaceConfig" (
 );
 
 -- Inserir configuração padrão inicial se não existir
-INSERT INTO public."WorkspaceConfig" ("id", "workspaceName", "departmentName", "currencySymbol", "attentionThresholdDays")
-VALUES ('default', '5W2H Gerenciamento de Rotinas', 'RH/DP', 'R$', 3)
+ALTER TABLE public."WorkspaceConfig" ALTER COLUMN "createdAt" SET DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE public."WorkspaceConfig" ALTER COLUMN "updatedAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+INSERT INTO public."WorkspaceConfig" ("id", "workspaceName", "departmentName", "currencySymbol", "attentionThresholdDays", "createdAt", "updatedAt")
+VALUES ('default', '5W2H Gerenciamento de Rotinas', 'RH/DP', 'R$', 3, NOW(), NOW())
 ON CONFLICT ("id") DO NOTHING;
 
 -- 6. GATILHO AUTOMÁTICO PARA CRIAR USUÁRIO AO CADASTRAR NO SUPABASE AUTH
@@ -123,11 +151,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Ativar trigger na tabela auth.users
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT OR UPDATE ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+-- Ativar trigger na tabela auth.users se a tabela auth.users existir
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'auth' AND table_name = 'users') THEN
+    DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+    CREATE TRIGGER on_auth_user_created
+      AFTER INSERT OR UPDATE ON auth.users
+      FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN NULL;
+END $$;
 
 -- 7. HABILITAR ROW LEVEL SECURITY (RLS) COM PERMISSÕES PÚBLICAS/AUTENTICADAS
 ALTER TABLE public."User" ENABLE ROW LEVEL SECURITY;

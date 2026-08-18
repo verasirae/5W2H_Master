@@ -34,38 +34,11 @@ export interface DatabaseStatus {
 }
 
 export function use5W2H() {
-  const [tasks, setTasks] = useState<Task5W2H[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const savedTasks = localStorage.getItem(STORAGE_KEY_TASKS);
-        if (savedTasks) {
-          const parsed = JSON.parse(savedTasks);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return deduplicateTaskIds(parsed);
-          }
-        }
-      } catch (e) {
-        console.error('Failed to load local tasks:', e);
-      }
-    }
-    return deduplicateTaskIds(INITIAL_SAMPLE_TASKS);
-  });
+  // Deterministic initial state to guarantee 100% matching SSR and Client initial hydration
+  const [tasks, setTasks] = useState<Task5W2H[]>(() => deduplicateTaskIds(INITIAL_SAMPLE_TASKS));
+  const [workspaceConfig, setWorkspaceConfig] = useState<WorkspaceConfig>(DEFAULT_WORKSPACE_CONFIG);
 
-  const [workspaceConfig, setWorkspaceConfig] = useState<WorkspaceConfig>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const savedConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
-        if (savedConfig) {
-          return JSON.parse(savedConfig);
-        }
-      } catch (e) {
-        console.error('Failed to load local config:', e);
-      }
-    }
-    return DEFAULT_WORKSPACE_CONFIG;
-  });
-
-  const [isLoaded, setIsLoaded] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [dbStatus, setDbStatus] = useState<DatabaseStatus>({ connected: false, checked: false });
@@ -90,6 +63,8 @@ export function use5W2H() {
     deadlineSituation: 'Todas',
   });
 
+  const hasHydratedFromStorage = useRef(false);
+
   const showToast = useCallback((type: 'success' | 'error' | 'info', title: string, message: string) => {
     const id = Date.now().toString();
     setToast({ id, type, title, message });
@@ -98,11 +73,39 @@ export function use5W2H() {
     }, 4000);
   }, []);
 
-  const isInitialFetchDone = useRef(false);
-
-  // Core Data Fetch from Supabase with localStorage hydration fallback
+  // Core Data Fetch from Supabase with localStorage fallback
   const refreshTasks = useCallback(async () => {
     setIsSyncing(true);
+
+    // 0. Load local storage cache asynchronously on client mount
+    if (!hasHydratedFromStorage.current) {
+      hasHydratedFromStorage.current = true;
+      try {
+        const savedTasks = localStorage.getItem(STORAGE_KEY_TASKS);
+        if (savedTasks) {
+          const parsed = JSON.parse(savedTasks);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setTasks(deduplicateTaskIds(parsed));
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load local tasks:', e);
+      }
+
+      try {
+        const savedConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
+        if (savedConfig) {
+          const parsedConfig = JSON.parse(savedConfig);
+          if (parsedConfig && typeof parsedConfig === 'object') {
+            setWorkspaceConfig(parsedConfig);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load local config:', e);
+      }
+      setIsLoaded(true);
+    }
+
     try {
       // 1. Fetch tasks
       const res = await fetch('/api/tasks');
@@ -141,14 +144,15 @@ export function use5W2H() {
 
   // Initial load effect
   useEffect(() => {
-    if (isInitialFetchDone.current) return;
-    isInitialFetchDone.current = true;
-    refreshTasks();
+    const timer = setTimeout(() => {
+      refreshTasks();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [refreshTasks]);
 
-  // Persist tasks to localStorage
+  // Persist tasks to localStorage (only after local storage hydration has completed)
   useEffect(() => {
-    if (isLoaded) {
+    if (isLoaded && hasHydratedFromStorage.current) {
       try {
         localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
       } catch (e) {
@@ -157,9 +161,9 @@ export function use5W2H() {
     }
   }, [tasks, isLoaded]);
 
-  // Persist workspace config to localStorage
+  // Persist workspace config to localStorage (only after local storage hydration has completed)
   useEffect(() => {
-    if (isLoaded) {
+    if (isLoaded && hasHydratedFromStorage.current) {
       try {
         localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(workspaceConfig));
       } catch (e) {
@@ -253,12 +257,14 @@ export function use5W2H() {
   const updateTask = useCallback(
     async (id: string, updatedData: Partial<Task5W2H>) => {
       const now = new Date().toISOString();
+      let mergedTask: Task5W2H | undefined;
+
       setTasks((prev) =>
         prev.map((t) => {
           if (t.id === id) {
             const nextStatus = updatedData.status ?? t.status;
             const isCompleted = nextStatus === 'Concluído';
-            return {
+            const updated: Task5W2H = {
               ...t,
               ...updatedData,
               completionDate: isCompleted
@@ -266,6 +272,8 @@ export function use5W2H() {
                 : updatedData.completionDate !== undefined ? updatedData.completionDate : t.completionDate,
               updatedAt: now,
             };
+            mergedTask = updated;
+            return updated;
           }
           return t;
         })
@@ -284,7 +292,7 @@ export function use5W2H() {
         await fetch(`/api/tasks/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedData),
+          body: JSON.stringify(mergedTask || updatedData),
         });
       } catch (e) {
         console.warn('Could not sync task update to database backend:', e);
@@ -323,6 +331,7 @@ export function use5W2H() {
     async (id: string, newStatus: TaskStatus) => {
       const now = new Date().toISOString();
       let updatedProgress = 0;
+      let mergedTask: Task5W2H | undefined;
 
       setTasks((prev) =>
         prev.map((t) => {
@@ -335,7 +344,7 @@ export function use5W2H() {
                 : t.progressPercent === 100
                 ? 50
                 : t.progressPercent;
-            return {
+            const updated: Task5W2H = {
               ...t,
               status: newStatus,
               progressPercent: updatedProgress,
@@ -343,6 +352,8 @@ export function use5W2H() {
                 newStatus === 'Concluído' ? new Date().toISOString().slice(0, 10) : undefined,
               updatedAt: now,
             };
+            mergedTask = updated;
+            return updated;
           }
           return t;
         })
@@ -355,12 +366,14 @@ export function use5W2H() {
         await fetch(`/api/tasks/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            status: newStatus,
-            progressPercent: updatedProgress,
-            completionDate:
-              newStatus === 'Concluído' ? new Date().toISOString().slice(0, 10) : null,
-          }),
+          body: JSON.stringify(
+            mergedTask || {
+              status: newStatus,
+              progressPercent: updatedProgress,
+              completionDate:
+                newStatus === 'Concluído' ? new Date().toISOString().slice(0, 10) : null,
+            }
+          ),
         });
       } catch (e) {
         console.warn('Could not sync status change to database backend:', e);
