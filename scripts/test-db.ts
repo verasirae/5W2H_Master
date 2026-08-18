@@ -24,7 +24,8 @@ async function main() {
   });
 
   const adapter = new PrismaPg(pool);
-  const prisma = new PrismaClient({
+  // Instanciação segura com suporte a driver adapter
+  const prisma: PrismaClient = new (PrismaClient as any)({
     adapter,
     log: ['error'],
   });
