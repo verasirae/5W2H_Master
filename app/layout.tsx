@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { AuthProvider } from '@/lib/supabase/auth-context';
+import { AuthProvider } from '@/lib/auth/auth-context';
 
 export const metadata: Metadata = {
   title: '5W2H Master - Ferramenta de Gestão de Planos de Ação',

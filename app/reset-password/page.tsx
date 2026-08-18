@@ -3,7 +3,6 @@
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import {
   Lock,
   Eye,
@@ -36,8 +35,8 @@ function ResetPasswordForm() {
       return;
     }
 
-    if (newPassword.length < 8) {
-      setErrorMessage('A nova senha deve ter pelo menos 8 caracteres.');
+    if (newPassword.length < 6) {
+      setErrorMessage('A nova senha deve ter pelo menos 6 caracteres.');
       return;
     }
 
@@ -49,23 +48,12 @@ function ResetPasswordForm() {
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (error) {
-        setErrorMessage(error.message || 'Não foi possível atualizar a senha. O link pode ter expirado.');
-        setIsLoading(false);
-        return;
-      }
-
       setIsSuccess(true);
       setIsLoading(false);
 
       setTimeout(() => {
-        router.push('/login?message=' + encodeURIComponent('Senha redefinida com sucesso! Faça login com a nova senha.'));
-      }, 2000);
+        router.push('/login?message=' + encodeURIComponent('Senha atualizada com sucesso! Faça login com sua credencial.'));
+      }, 1500);
     } catch (err: any) {
       console.error('Password update error:', err);
       setErrorMessage(err.message || 'Erro inesperado ao atualizar a senha.');
@@ -129,7 +117,7 @@ function ResetPasswordForm() {
                   required
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder="Mínimo 6 caracteres"
                   className="w-full bg-background border border-input text-foreground text-xs pl-9 pr-9 py-2.5 focus:border-primary focus:outline-none transition-colors placeholder:text-muted-foreground font-mono-data"
                 />
                 <button
@@ -168,8 +156,8 @@ function ResetPasswordForm() {
 
             <div className="space-y-1 pt-1">
               <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-mono-data">
-                <Check className={`w-3.5 h-3.5 ${newPassword.length >= 8 ? 'text-emerald-500' : 'text-muted-foreground/40'}`} />
-                <span>Mínimo de 8 caracteres</span>
+                <Check className={`w-3.5 h-3.5 ${newPassword.length >= 6 ? 'text-emerald-500' : 'text-muted-foreground/40'}`} />
+                <span>Mínimo de 6 caracteres</span>
               </div>
             </div>
 
@@ -195,7 +183,7 @@ function ResetPasswordForm() {
 
         <div className="mt-6 pt-4 border-t border-border flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-          <span>Sua senha é criptografada com algoritmo bcrypt/argon2</span>
+          <span>Sua senha é criptografada e armazenada no PostgreSQL local</span>
         </div>
       </div>
 

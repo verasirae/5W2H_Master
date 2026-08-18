@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 
 export async function GET() {
-  const sqlPath = path.join(process.cwd(), 'prisma', 'migrations', 'supabase_complete_schema.sql');
+  const sqlPath = path.join(process.cwd(), 'prisma', 'migrations', 'schema.sql');
   let sqlContent = '';
   try {
     sqlContent = fs.readFileSync(sqlPath, 'utf8');
@@ -25,7 +25,7 @@ export async function POST() {
       {
         success: false,
         message:
-          'DATABASE_URL não configurada ou inválida no ambiente. Para criar as tabelas, copie o script SQL e execute no Supabase SQL Editor.',
+          'DATABASE_URL não configurada no ambiente.',
       },
       { status: 400 }
     );
@@ -39,7 +39,7 @@ export async function POST() {
   });
 
   try {
-    const sqlPath = path.join(process.cwd(), 'prisma', 'migrations', 'supabase_complete_schema.sql');
+    const sqlPath = path.join(process.cwd(), 'prisma', 'migrations', 'schema.sql');
     const sqlContent = fs.readFileSync(sqlPath, 'utf8');
 
     await client.connect();
@@ -57,7 +57,7 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
-      message: `Tabelas sincronizadas com sucesso no Supabase PostgreSQL: ${tables.join(', ')}`,
+      message: `Tabelas criadas/atualizadas com sucesso no PostgreSQL Local: ${tables.join(', ')}`,
       tables,
     });
   } catch (error: any) {

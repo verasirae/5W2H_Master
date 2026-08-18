@@ -7,10 +7,10 @@ export async function GET() {
   if (!configured) {
     return NextResponse.json({
       status: 'unconfigured',
-      provider: 'supabase/postgresql',
+      provider: 'postgresql-local',
       orm: 'prisma-v7',
       connected: false,
-      message: 'DATABASE_URL environment variable is not defined. Add it to project settings to enable real-time Supabase synchronization.',
+      message: 'DATABASE_URL environment variable is not defined.',
     });
   }
 
@@ -20,7 +20,7 @@ export async function GET() {
 
     return NextResponse.json({
       status: 'connected',
-      provider: 'supabase/postgresql',
+      provider: 'postgresql-local',
       orm: 'prisma-v7',
       connected: true,
       taskCount,
@@ -30,7 +30,7 @@ export async function GET() {
     return NextResponse.json(
       {
         status: 'error',
-        provider: 'supabase/postgresql',
+        provider: 'postgresql-local',
         orm: 'prisma-v7',
         connected: false,
         error: error.message || 'Connection failed',

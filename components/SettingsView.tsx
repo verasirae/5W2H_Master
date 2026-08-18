@@ -72,7 +72,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       }
       await navigator.clipboard.writeText(content);
       setCopiedSql(true);
-      showToast('success', 'Script SQL Copiado!', 'Cole no Supabase SQL Editor (SQL Editor > New Query > Run) para criar todas as tabelas e gatilhos.');
+      showToast('success', 'Script SQL Copiado!', 'Script DDL completo copiado para a área de transferência.');
       setTimeout(() => setCopiedSql(false), 3000);
     } catch (e: any) {
       showToast('error', 'Falha ao copiar', 'Não foi possível copiar o script para a área de transferência.');
@@ -85,10 +85,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       const res = await fetch('/api/database/migrate', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        showToast('success', 'Migração Concluída', data.message || 'Tabelas criadas com sucesso no Supabase.');
+        showToast('success', 'Migração Concluída', data.message || 'Tabelas criadas com sucesso no PostgreSQL Local.');
         checkDbHealth(false);
       } else {
-        showToast('info', 'Execução Manual Recomendada', data.message || data.error || 'Copie o script SQL e execute no Supabase SQL Editor.');
+        showToast('info', 'Execução de Migração', data.message || data.error || 'Copie o script SQL e execute no PostgreSQL.');
       }
     } catch (err: any) {
       showToast('error', 'Erro na Migração', err.message || 'Falha ao conectar com o endpoint de migração.');
@@ -105,7 +105,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       setDbHealth(data);
       if (isManualTrigger) {
         if (data.connected) {
-          showToast('success', 'Supabase Conectado', `Conexão ativa com o banco PostgreSQL via Prisma 7 (${data.taskCount} tarefas).`);
+          showToast('success', 'PostgreSQL Conectado', `Conexão ativa com o banco PostgreSQL Local via Prisma (${data.taskCount} tarefas).`);
         } else {
           showToast('info', 'Banco de Dados', data.message || 'DATABASE_URL ainda não configurada no ambiente.');
         }
@@ -243,24 +243,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             Configurações do Workspace 5W2H
           </h2>
           <p className="text-[11px] text-muted-foreground font-body-md mt-0.5">
-            Personalize departamentos, categorias de rotina, banco de dados Supabase e parâmetros do SLA de prazo.
+            Personalize departamentos, categorias de rotina, banco de dados PostgreSQL Local e parâmetros do SLA de prazo.
           </p>
         </div>
       </div>
 
-      {/* Supabase & Prisma ORM v7 Status Card */}
+      {/* PostgreSQL Local & Prisma ORM Status Card */}
       <div className="bg-card border border-border p-4 md:p-5 rounded-md space-y-3.5">
         <div className="flex items-center justify-between border-b border-border pb-2.5 flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <Database className="w-4 h-4 text-primary" />
             <h3 className="text-xs font-bold text-foreground font-mono-data uppercase">
-              Banco de Dados Supabase (PostgreSQL + Prisma ORM v7)
+              Banco de Dados PostgreSQL Local (Prisma ORM)
             </h3>
           </div>
           <div className="flex items-center gap-2">
             {dbHealth?.connected ? (
               <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 rounded-md text-[10px] font-mono-data font-bold uppercase">
-                <CheckCircle2 className="w-3 h-3" /> Supabase Conectado
+                <CheckCircle2 className="w-3 h-3" /> PostgreSQL Conectado
               </span>
             ) : (
               <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 rounded-md text-[10px] font-mono-data font-bold uppercase">
@@ -271,19 +271,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         <p className="text-xs text-muted-foreground leading-relaxed">
-          O ambiente está totalmente preparado e configurado com o <strong>Prisma ORM 7</strong> utilizando o adapter nativo PostgreSQL (<code>@prisma/adapter-pg</code>) otimizado para o pool de conexões do <strong>Supabase</strong>.
+          O ambiente está conectado ao seu <strong>PostgreSQL Local</strong> (banco <code>5w2h</code>) utilizando <strong>Prisma ORM</strong> com suporte completo a autenticação local com criptografia de senhas e autenticação com o Google.
         </p>
 
         <div className="bg-background border border-border rounded-md p-3 text-[11px] font-mono-data space-y-1.5">
           <div className="flex justify-between items-center text-muted-foreground">
-            <span>Variáveis de Ambiente Suportadas:</span>
-            <span className="text-foreground font-bold">DATABASE_URL & DIRECT_URL</span>
+            <span>Configuração do Banco Local:</span>
+            <span className="text-foreground font-bold">5w2h (PostgreSQL 5432)</span>
           </div>
           <div className="text-muted-foreground text-[10px]">
-            • <code>DATABASE_URL</code>: String de conexão com Transaction Pooler (porta 6543) com <code>?pgbouncer=true</code>
-          </div>
-          <div className="text-muted-foreground text-[10px]">
-            • <code>DIRECT_URL</code>: Conexão direta com a porta 5432 para migrations e prisma push
+            • <code>DATABASE_URL</code>: <code>postgresql://postgres:db_postgre_root@localhost:5432/5w2h?schema=public</code>
           </div>
         </div>
 
@@ -295,7 +292,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border hover:border-primary text-foreground font-mono-data text-xs rounded-md transition-colors cursor-pointer disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isTestingDb ? 'animate-spin text-primary' : ''}`} />
-            <span>{isTestingDb ? 'Testando Conexão...' : 'Testar Conexão com Supabase'}</span>
+            <span>{isTestingDb ? 'Testando Conexão...' : 'Testar Conexão com PostgreSQL'}</span>
           </button>
 
           <button
@@ -304,7 +301,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border hover:border-primary text-foreground font-mono-data text-xs rounded-md transition-colors cursor-pointer"
           >
             {copiedSql ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-primary" />}
-            <span className="font-bold">{copiedSql ? 'Script Copiado!' : 'Copiar Script SQL do Supabase'}</span>
+            <span className="font-bold">{copiedSql ? 'Script Copiado!' : 'Copiar Script SQL Completo'}</span>
           </button>
 
           <button
@@ -324,7 +321,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 font-mono-data font-bold text-xs rounded-md transition-colors cursor-pointer shadow-sm"
             >
               <Database className="w-3.5 h-3.5" />
-              <span>Sincronizar Tarefas Locais com Supabase</span>
+              <span>Sincronizar Tarefas Locais com o Banco</span>
             </button>
           )}
         </div>
@@ -333,21 +330,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <div className="border border-border/80 bg-background/50 rounded-md p-3.5 text-xs space-y-2.5">
           <div className="flex items-center gap-2 font-bold font-mono-data text-foreground text-[11px] uppercase">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span>Instruções para o Supabase (SQL Editor & Autenticação Google)</span>
+            <span>Instruções de Configuração (PostgreSQL Local & Google OAuth)</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] text-muted-foreground leading-relaxed">
             <div className="space-y-1 bg-card/60 p-2.5 border border-border/60 rounded">
-              <strong className="text-foreground block font-mono-data">1. Criar Tabelas no Supabase:</strong>
+              <strong className="text-foreground block font-mono-data">1. Banco de Dados Local:</strong>
               <p>
-                Clique no botão <strong>&quot;Copiar Script SQL do Supabase&quot;</strong> acima, abra seu <strong>Supabase Dashboard &gt; SQL Editor</strong>, cole o script e clique em <strong>&quot;Run&quot;</strong>. Todas as tabelas (<code>User</code>, <code>Task</code>, <code>Department</code>, <code>Category</code>, <code>WorkspaceConfig</code>) e os gatilhos de sincronização automática de usuários serão criados imediatamente.
+                As tabelas (<code>User</code>, <code>Task</code>, <code>Department</code>, <code>Category</code>, <code>WorkspaceConfig</code>) são sincronizadas com o banco <code>5w2h</code> através do botão &quot;Executar Migração / Criar Tabelas&quot; ou do comando <code>npx prisma db push</code>.
               </p>
             </div>
 
             <div className="space-y-1 bg-card/60 p-2.5 border border-border/60 rounded">
-              <strong className="text-foreground block font-mono-data">2. Ativar Login com Google:</strong>
+              <strong className="text-foreground block font-mono-data">2. Login com Google:</strong>
               <p>
-                No Supabase Dashboard, acesse <strong>Authentication &gt; Providers &gt; Google</strong>. Ative a opção <strong>&quot;Enable Sign in with Google&quot;</strong> e informe o <strong>Client ID</strong> e <strong>Client Secret</strong> obtidos no Google Cloud Console.
+                Configure as variáveis <code>GOOGLE_CLIENT_ID</code> e <code>GOOGLE_CLIENT_SECRET</code> obtidas no Google Cloud Console com o redirect URI apontando para <code>/auth/callback</code>.
               </p>
             </div>
           </div>

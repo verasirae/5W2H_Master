@@ -3,8 +3,7 @@
 import React, { useState, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import { useAuth } from '@/lib/supabase/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import {
   Lock,
   Mail,
@@ -18,7 +17,7 @@ import {
 } from 'lucide-react';
 
 function LoginForm() {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading, signInWithEmail, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -66,46 +65,18 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+      const res = await signInWithEmail(email.trim(), password);
 
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          setErrorMessage('E-mail ou senha incorretos. Verifique suas credenciais.');
-        } else if (error.message.includes('Email not confirmed')) {
-          setErrorMessage('E-mail ainda não confirmado. Por favor, verifique sua caixa de entrada.');
-        } else if (error.message.includes('rate limit')) {
-          setErrorMessage('Muitas tentativas consecutivas. Aguarde alguns instantes e tente novamente.');
-        } else {
-          setErrorMessage(error.message || 'Erro ao realizar login. Tente novamente.');
-        }
+      if (!res.success) {
+        setErrorMessage(res.error || 'Credenciais inválidas.');
         setIsLoading(false);
         return;
       }
 
-      if (data.user) {
-        // Sync user profile to database (non-blocking)
-        fetch('/api/users/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || null,
-            avatarUrl: data.user.user_metadata?.avatar_url || null,
-          }),
-        }).catch((err) => console.warn('User profile background sync:', err));
-
-        setSuccessMessage('Login efetuado com sucesso! Redirecionando...');
-        
-        // Execute immediate redirect with fallback
-        setTimeout(() => {
-          window.location.href = redirectPath;
-        }, 200);
-      }
+      setSuccessMessage('Login efetuado com sucesso! Redirecionando...');
+      setTimeout(() => {
+        window.location.href = redirectPath;
+      }, 200);
     } catch (err: any) {
       console.error('Login error:', err);
       setErrorMessage(err.message || 'Ocorreu um erro inesperado ao autenticar.');
@@ -118,48 +89,14 @@ function LoginForm() {
     setIsGoogleLoading(true);
 
     try {
-      const supabase = createClient();
-      const callbackUrl = `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectPath)}`;
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: callbackUrl,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'select_account',
-          },
-        },
-      });
-
-      if (error) {
-        const errorMsg = error.message || '';
-        if (
-          errorMsg.toLowerCase().includes('unsupported provider') ||
-          errorMsg.toLowerCase().includes('not enabled') ||
-          errorMsg.toLowerCase().includes('validation_failed')
-        ) {
-          setErrorMessage(
-            'O provedor de login com Google não está ativado no seu projeto Supabase. Para ativá-lo, acesse o painel do Supabase > Authentication > Providers > Google, insira seu Client ID e Client Secret do Google Cloud Console e salve. Enquanto isso, você pode criar uma conta e entrar com seu e-mail e senha normalmente.'
-          );
-        } else {
-          setErrorMessage(error.message || 'Falha ao iniciar autenticação com o Google.');
-        }
-        setIsGoogleLoading(false);
-      }
+      await signInWithGoogle();
     } catch (err: any) {
-      console.error('Google OAuth error:', err);
-      const errMsg = err?.message || '';
-      if (
-        errMsg.toLowerCase().includes('unsupported provider') ||
-        errMsg.toLowerCase().includes('not enabled')
-      ) {
-        setErrorMessage(
-          'O provedor de login com Google não está ativado no painel do Supabase (Authentication > Providers > Google).'
-        );
-      } else {
-        setErrorMessage(errMsg || 'Erro de conexão com o provedor Google.');
-      }
+      console.error('Google login error:', err);
+      setErrorMessage(
+        err.message ||
+          'Falha ao iniciar autenticação com o Google. Verifique se o GOOGLE_CLIENT_ID está configurado nas configurações.'
+      );
+    } finally {
       setIsGoogleLoading(false);
     }
   };
@@ -337,7 +274,7 @@ function LoginForm() {
         {/* Security Badge */}
         <div className="mt-6 pt-4 border-t border-border flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-          <span>Autenticação nativa com criptografia de ponta a ponta</span>
+          <span>Autenticação nativa com banco de dados PostgreSQL local</span>
         </div>
       </div>
 

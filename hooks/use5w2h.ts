@@ -394,7 +394,7 @@ export function use5W2H() {
       });
       const data = await res.json();
       if (data.success) {
-        showToast('success', 'Sincronização Concluída', `${tasks.length} tarefas sincronizadas com o Supabase.`);
+        showToast('success', 'Sincronização Concluída', `${tasks.length} tarefas sincronizadas com o banco de dados PostgreSQL.`);
         setDbStatus({ connected: true, checked: true, taskCount: tasks.length });
       } else {
         showToast('error', 'Falha na Sincronização', data.error || 'Verifique as credenciais do banco.');

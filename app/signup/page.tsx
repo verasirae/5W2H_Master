@@ -3,8 +3,7 @@
 import React, { useState, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import { useAuth } from '@/lib/supabase/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import {
   Lock,
   Mail,
@@ -20,7 +19,7 @@ import {
 } from 'lucide-react';
 
 function SignupForm() {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading, signUp, signInWithGoogle } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,7 +30,6 @@ function SignupForm() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successState, setSuccessState] = useState<boolean>(false);
-  const [isEmailConfirmationPending, setIsEmailConfirmationPending] = useState<boolean>(false);
 
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get('redirect');
@@ -61,8 +59,8 @@ function SignupForm() {
       return;
     }
 
-    if (password.length < 8) {
-      setErrorMessage('A senha deve conter no mínimo 8 caracteres para maior segurança.');
+    if (password.length < 6) {
+      setErrorMessage('A senha deve conter no mínimo 6 caracteres.');
       return;
     }
 
@@ -74,57 +72,18 @@ function SignupForm() {
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-      const callbackUrl = `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectPath)}`;
+      const res = await signUp(email.trim(), password, fullName.trim());
 
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          data: {
-            full_name: fullName.trim(),
-            name: fullName.trim(),
-          },
-          emailRedirectTo: callbackUrl,
-        },
-      });
-
-      if (error) {
-        if (error.message.includes('User already registered')) {
-          setErrorMessage('Este e-mail já está cadastrado. Faça login ou recupere sua senha.');
-        } else if (error.message.includes('Password should be')) {
-          setErrorMessage('A senha fornecida não atende aos requisitos de complexidade.');
-        } else {
-          setErrorMessage(error.message || 'Erro ao registrar nova conta.');
-        }
+      if (!res.success) {
+        setErrorMessage(res.error || 'Erro ao registrar nova conta.');
         setIsLoading(false);
         return;
       }
 
-      if (data.user) {
-        // Sync user profile to database (non-blocking)
-        fetch('/api/users/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: data.user.id,
-            email: data.user.email,
-            name: fullName.trim(),
-          }),
-        }).catch((err) => console.warn('User profile background sync:', err));
-      }
-
-      // Check if email confirmation is required or session was created directly
-      if (data.session) {
-        setSuccessState(true);
-        setTimeout(() => {
-          window.location.href = redirectPath;
-        }, 300);
-      } else if (data.user && !data.session) {
-        // Confirmation email sent
-        setIsEmailConfirmationPending(true);
-        setSuccessState(true);
-      }
+      setSuccessState(true);
+      setTimeout(() => {
+        window.location.href = redirectPath;
+      }, 300);
     } catch (err: any) {
       console.error('Signup error:', err);
       setErrorMessage(err.message || 'Ocorreu um erro inesperado durante o cadastro.');
@@ -137,48 +96,14 @@ function SignupForm() {
     setIsGoogleLoading(true);
 
     try {
-      const supabase = createClient();
-      const callbackUrl = `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectPath)}`;
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: callbackUrl,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'select_account',
-          },
-        },
-      });
-
-      if (error) {
-        const errorMsg = error.message || '';
-        if (
-          errorMsg.toLowerCase().includes('unsupported provider') ||
-          errorMsg.toLowerCase().includes('not enabled') ||
-          errorMsg.toLowerCase().includes('validation_failed')
-        ) {
-          setErrorMessage(
-            'O provedor de login com Google não está ativado no seu projeto Supabase. Para ativá-lo, acesse o painel do Supabase > Authentication > Providers > Google, insira seu Client ID e Client Secret do Google Cloud Console e salve. Enquanto isso, você pode criar uma conta e entrar com seu e-mail e senha normalmente.'
-          );
-        } else {
-          setErrorMessage(error.message || 'Falha ao iniciar cadastro via Google.');
-        }
-        setIsGoogleLoading(false);
-      }
+      await signInWithGoogle();
     } catch (err: any) {
-      console.error('Google OAuth error:', err);
-      const errMsg = err?.message || '';
-      if (
-        errMsg.toLowerCase().includes('unsupported provider') ||
-        errMsg.toLowerCase().includes('not enabled')
-      ) {
-        setErrorMessage(
-          'O provedor de login com Google não está ativado no painel do Supabase (Authentication > Providers > Google).'
-        );
-      } else {
-        setErrorMessage(errMsg || 'Erro de conexão com o provedor Google.');
-      }
+      console.error('Google signup error:', err);
+      setErrorMessage(
+        err.message ||
+          'Falha ao iniciar cadastro via Google. Verifique se o GOOGLE_CLIENT_ID está configurado.'
+      );
+    } finally {
       setIsGoogleLoading(false);
     }
   };
@@ -210,33 +135,10 @@ function SignupForm() {
 
       {/* Main Card */}
       <div className="bg-card border border-border shadow-xl p-6 md:p-8 relative">
-        {/* Success Confirmation Mode */}
-        {successState && isEmailConfirmationPending ? (
-          <div className="space-y-4 py-2 animate-in fade-in duration-300">
-            <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-bold text-sm">Conta criada com sucesso!</h3>
-                <p className="text-xs mt-1 text-muted-foreground leading-relaxed">
-                  Enviamos um link de confirmação para <strong className="text-foreground">{email}</strong>. 
-                  Por favor, verifique sua caixa de entrada e clique no link para ativar sua conta.
-                </p>
-              </div>
-            </div>
-            <div className="pt-2">
-              <Link
-                href="/login"
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-primary text-primary-foreground font-semibold text-xs uppercase tracking-wider font-mono-data transition-colors"
-              >
-                <span>Ir para a tela de Login</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-        ) : successState ? (
+        {successState ? (
           <div className="space-y-4 py-4 text-center animate-in fade-in duration-300">
             <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
-            <h3 className="font-bold text-sm text-foreground">Conta registrada e ativada!</h3>
+            <h3 className="font-bold text-sm text-foreground">Conta registrada e autenticada!</h3>
             <p className="text-xs text-muted-foreground">Redirecionando para seu workspace...</p>
             <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
           </div>
@@ -340,7 +242,7 @@ function SignupForm() {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Mín. 8 dígitos"
+                      placeholder="Mín. 6 caracteres"
                       className="w-full bg-background border border-input text-foreground text-xs pl-9 pr-8 py-2.5 focus:border-primary focus:outline-none transition-colors placeholder:text-muted-foreground font-mono-data"
                     />
                     <button
@@ -381,8 +283,8 @@ function SignupForm() {
               {/* Password strength indicator */}
               <div className="space-y-1 pt-1">
                 <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-mono-data">
-                  <Check className={`w-3.5 h-3.5 ${password.length >= 8 ? 'text-emerald-500' : 'text-muted-foreground/40'}`} />
-                  <span>Mínimo de 8 caracteres</span>
+                  <Check className={`w-3.5 h-3.5 ${password.length >= 6 ? 'text-emerald-500' : 'text-muted-foreground/40'}`} />
+                  <span>Mínimo de 6 caracteres</span>
                 </div>
               </div>
 
@@ -409,7 +311,7 @@ function SignupForm() {
             {/* Security Notice */}
             <div className="mt-6 pt-4 border-t border-border flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Seus dados são protegidos por políticas RLS e SSL</span>
+              <span>Armazenamento e autenticação segura no PostgreSQL local</span>
             </div>
           </>
         )}

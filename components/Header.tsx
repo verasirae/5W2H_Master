@@ -24,7 +24,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { DatabaseStatus } from '@/hooks/use5w2h';
-import { useAuth } from '@/lib/supabase/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 
 interface HeaderProps {
   workspaceConfig: WorkspaceConfig;
@@ -185,13 +185,13 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
             title={
               dbStatus.connected
-                ? 'Supabase Conectado - Clique para sincronizar'
-                : 'Modo Local/Offline - Configure o Supabase nas configurações'
+                ? 'PostgreSQL Local Conectado - Clique para sincronizar'
+                : 'Modo Offline - Verifique a conexão com PostgreSQL'
             }
           >
             <Database className="w-3 h-3 shrink-0" />
             <span className="hidden md:inline font-medium">
-              {dbStatus.connected ? 'Supabase' : 'Offline'}
+              {dbStatus.connected ? 'PostgreSQL' : 'Offline'}
             </span>
             <RefreshCw
               className={`w-3 h-3 shrink-0 ${isSyncing ? 'animate-spin text-primary' : 'opacity-70'}`}

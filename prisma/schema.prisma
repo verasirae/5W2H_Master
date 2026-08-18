@@ -9,10 +9,13 @@ generator client {
 }
 
 model User {
-  id            String    @id // Supabase Auth UUID
+  id            String    @id @default(uuid())
   email         String    @unique
   name          String?
   avatarUrl     String?
+  passwordHash  String?
+  provider      String    @default("local") // "local", "google"
+  googleId      String?
   role          String    @default("member") // "admin", "manager", "member", "viewer"
   department    String?   // Departamento padrão (ex: "RH/DP", "Operações", "TI")
   jobTitle      String?   // Cargo/Função

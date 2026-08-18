@@ -25,7 +25,7 @@ export async function GET() {
       })),
     });
   } catch (error: any) {
-    console.error('Error fetching tasks from Supabase:', error);
+    console.error('Error fetching tasks from database:', error);
     return NextResponse.json(
       {
         connected: false,
