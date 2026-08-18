@@ -3,15 +3,16 @@ const fs = require('fs');
 const path = require('path');
 
 async function run() {
-  const rawUrl = (process.env.DATABASE_URL || process.env.POSTGRES_URL || '').trim().replace(/^["']+|["']+$/g, '');
-  if (!rawUrl) {
-    console.error('DATABASE_URL is not set in environment.');
-    process.exit(1);
-  }
+  const rawUrl = (
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    'postgresql://postgres:db_postgre_root@localhost:5432/5w2h?schema=public'
+  ).trim().replace(/^["']+|["']+$/g, '');
 
+  const isLocal = rawUrl.includes('localhost') || rawUrl.includes('127.0.0.1');
   const client = new Client({
     connectionString: rawUrl,
-    ssl: { rejectUnauthorized: false },
+    ssl: isLocal ? false : { rejectUnauthorized: false },
   });
 
   try {

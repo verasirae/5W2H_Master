@@ -8,8 +8,13 @@ declare global {
  * Helper to get clean sanitized database URL without quotes or whitespace.
  */
 export function getSanitizedDatabaseUrl(): string {
-  const raw = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
-  if (typeof raw !== 'string') return '';
+  const raw =
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    'postgresql://postgres:db_postgre_root@localhost:5432/5w2h?schema=public';
+  if (typeof raw !== 'string') {
+    return 'postgresql://postgres:db_postgre_root@localhost:5432/5w2h?schema=public';
+  }
   return raw.trim().replace(/^["']+|["']+$/g, '');
 }
 

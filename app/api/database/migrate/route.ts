@@ -32,9 +32,10 @@ export async function POST() {
   }
 
   const cleanUrl = getSanitizedDatabaseUrl();
+  const isLocal = cleanUrl.includes('localhost') || cleanUrl.includes('127.0.0.1');
   const client = new Client({
     connectionString: cleanUrl,
-    ssl: { rejectUnauthorized: false },
+    ssl: isLocal ? false : { rejectUnauthorized: false },
   });
 
   try {
