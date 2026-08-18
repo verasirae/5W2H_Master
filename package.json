@@ -10,8 +10,12 @@
     "clean": "next clean",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "test:db": "node scripts/test-db-connection.js",
-    "db:migrate": "node scripts/apply-migration.js"
+    "test:db": "tsx scripts/test-db.ts",
+    "db:migrate": "node scripts/apply-migration.js",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -45,6 +49,7 @@
     "eslint-config-next": "16.0.8",
     "prisma": "^7.9.1",
     "tailwindcss": "4.1.11",
+    "tsx": "^4.23.12",
     "tw-animate-css": "^1.4.0",
     "typescript": "5.9.3"
   }
