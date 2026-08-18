@@ -162,7 +162,7 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
   };
 
   return (
-    <div className="flex-1 pl-2 pr-4 md:py-4 flex flex-col overflow-x-auto bg-background">
+    <div className="flex-1 pl-2 pr-4 md:py-4 flex flex-col bg-background">
       {/* View Header */}
       <div className="flex items-center justify-between pb-3 mb-3 flex-wrap gap-2 border-b border-border shrink-0">
         <div>
@@ -185,7 +185,7 @@ export const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
       </div>
 
       {/* Kanban Board Columns */}
-      <div className="flex gap-4 min-w-[1250px] flex-1 items-start pb-4">
+      <div className="flex gap-4 min-w-[1250px] flex-1 items-start pb-4 overflow-x-auto md:pr-3">
         {columns.map((col) => {
           const colTasks = tasksByStatus(col.status);
           const Icon = col.icon;
