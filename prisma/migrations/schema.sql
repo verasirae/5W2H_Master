@@ -2,6 +2,7 @@
 
 -- 1. Habilitar extensões
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- 2. Tabela de Usuários (Autenticação Local + Google OAuth)
 CREATE TABLE IF NOT EXISTS "User" (
@@ -99,10 +100,14 @@ CREATE TABLE IF NOT EXISTS "WorkspaceConfig" (
 );
 
 -- Inserir departamentos padrão caso não existam
-INSERT INTO "Department" ("id", "name", "description", "color")
+INSERT INTO "Department" ("id", "name", "description", "color", "createdAt", "updatedAt")
 VALUES 
-  ('dept-rh', 'RH/DP', 'Recursos Humanos e Departamento Pessoal', 'indigo'),
-  ('dept-ops', 'Operações', 'Logística, Produção e Suprimentos', 'emerald'),
-  ('dept-ti', 'TI / Tecnologia', 'Sistemas, Infraestrutura e Segurança', 'sky'),
-  ('dept-fin', 'Financeiro / Controladoria', 'Contabilidade, Tesouraria e Fiscal', 'amber')
+  ('dept-rh', 'RH/DP', 'Recursos Humanos e Departamento Pessoal', 'indigo', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('dept-ops', 'Operações', 'Logística, Produção e Suprimentos', 'emerald', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('dept-ti', 'TI / Tecnologia', 'Sistemas, Infraestrutura e Segurança', 'sky', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('dept-fin', 'Financeiro / Controladoria', 'Contabilidade, Tesouraria e Fiscal', 'amber', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT ("name") DO NOTHING;
+
+INSERT INTO "WorkspaceConfig" ("id", "workspaceName", "departmentName", "currencySymbol", "attentionThresholdDays", "createdAt", "updatedAt")
+VALUES ('default', '5W2H Gerenciamento de Rotinas', 'RH/DP', 'R$', 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT ("id") DO NOTHING;

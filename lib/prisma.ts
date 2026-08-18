@@ -1,7 +1,10 @@
 import type { PrismaClient } from '@prisma/client';
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 declare global {
   var prismaGlobal: PrismaClient | undefined;
+  var pgPoolGlobal: Pool | undefined;
 }
 
 /**
@@ -46,7 +49,7 @@ export function isDatabaseConfigured(): boolean {
 }
 
 /**
- * Singleton Prisma client for Next.js server runtime.
+ * Singleton Prisma client for Next.js server runtime using Prisma 7 adapter-pg.
  * Uses lazy loading to prevent build-time/module-load bundling crashes.
  */
 export function getPrisma(): PrismaClient {
@@ -60,13 +63,22 @@ export function getPrisma(): PrismaClient {
   }
 
   try {
+    const isLocal = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+    
+    if (!global.pgPoolGlobal) {
+      global.pgPoolGlobal = new Pool({
+        connectionString,
+        ssl: isLocal ? false : { rejectUnauthorized: false },
+        max: 10,
+        idleTimeoutMillis: 30000,
+      });
+    }
+
+    const adapter = new PrismaPg(global.pgPoolGlobal);
     const { PrismaClient: PrismaClientConstructor } = require('@prisma/client');
+    
     global.prismaGlobal = new PrismaClientConstructor({
-      datasources: {
-        db: {
-          url: connectionString,
-        },
-      },
+      adapter,
       log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
     });
 
@@ -78,5 +90,3 @@ export function getPrisma(): PrismaClient {
 }
 
 export default getPrisma;
-
-
