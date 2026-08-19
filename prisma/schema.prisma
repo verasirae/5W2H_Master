@@ -14,22 +14,130 @@ model User {
   passwordHash  String?
   provider      String    @default("local") // "local", "google"
   googleId      String?
-  role          String    @default("member") // "admin", "manager", "member", "viewer"
-  department    String?   // Departamento padrão (ex: "RH/DP", "Operações", "TI")
+  role          String    @default("membro") // "admin", "gestor", "membro"
+  department    String?   // Departamento padrão/primário (ex: "RH/DP", "Operações", "TI")
   jobTitle      String?   // Cargo/Função
-  status        String    @default("active") // "active", "inactive", "pending"
+  status        String    @default("pendente") // "pendente", "ativo", "inativo"
   lastLoginAt   DateTime?
 
   // Relacionamentos com tarefas
   tasksCreated  Task[]    @relation("TaskCreator")
   tasksAssigned Task[]    @relation("TaskAssignee")
 
+  // Relacionamentos muitos-para-muitos (Gestor e Membro)
+  managedDepartments ManagerDepartment[]
+  managedTeams       ManagerTeam[]
+  memberDepartments  MemberDepartment[]
+  memberTeams        MemberTeam[]
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   @@index([email])
   @@index([role])
+  @@index([status])
   @@index([department])
+}
+
+model Department {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String?
+  color       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  teams       Team[]
+  categories  Category[]
+  tasks       Task[]
+
+  managers    ManagerDepartment[]
+  members     MemberDepartment[]
+}
+
+model Team {
+  id           String     @id @default(cuid())
+  name         String
+  description  String?
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  managers     ManagerTeam[]
+  members      MemberTeam[]
+
+  @@unique([name, departmentId])
+  @@index([departmentId])
+}
+
+// Tabelas de Junção / Associação (Muitos-para-Muitos)
+
+model ManagerDepartment {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, departmentId])
+  @@index([userId])
+  @@index([departmentId])
+}
+
+model ManagerTeam {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, teamId])
+  @@index([userId])
+  @@index([teamId])
+}
+
+model MemberDepartment {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, departmentId])
+  @@index([userId])
+  @@index([departmentId])
+}
+
+model MemberTeam {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, teamId])
+  @@index([userId])
+  @@index([teamId])
+}
+
+model Category {
+  id             String      @id @default(cuid())
+  name           String
+  departmentName String
+  departmentId   String?
+  department     Department? @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  tasks          Task[]
+
+  @@unique([name, departmentName])
+  @@index([departmentName])
 }
 
 model Task {
@@ -39,7 +147,7 @@ model Task {
   where           String
   startDate       String
   deadlineDate    String
-  who             String
+  who             String      // Nome do responsável para exibição rápida
   how             String
   howMuch         Float       @default(0)
   department      String
@@ -73,33 +181,6 @@ model Task {
   @@index([priority])
   @@index([createdById])
   @@index([assignedUserId])
-}
-
-model Department {
-  id          String     @id @default(cuid())
-  name        String     @unique
-  description String?
-  color       String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  categories  Category[]
-  tasks       Task[]
-}
-
-model Category {
-  id             String      @id @default(cuid())
-  name           String
-  departmentName String
-  departmentId   String?
-  department     Department? @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-
-  tasks          Task[]
-
-  @@unique([name, departmentName])
-  @@index([departmentName])
 }
 
 model WorkspaceConfig {

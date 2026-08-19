@@ -208,6 +208,24 @@ export function calculateTaskDeadlineInfo(
   }
 }
 
+export function getStatusColor(status: string): string {
+  switch (status) {
+    case 'Concluído':
+      return 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
+    case 'Em andamento':
+      return 'bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/30';
+    case 'Atrasado':
+      return 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30';
+    case 'Cancelado':
+      return 'bg-muted text-muted-foreground border-border line-through';
+    case 'Não iniciado':
+    default:
+      return 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30';
+  }
+}
+
+export const calculateTaskInfo = calculateTaskDeadlineInfo;
+
 export function formatCurrency(amount: number, currencySymbol: string = 'R$'): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',

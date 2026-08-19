@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPrisma, isDatabaseConfigured } from '@/lib/prisma';
-import { hashPassword, createSessionToken, SESSION_COOKIE_NAME, SESSION_COOKIE_OPTIONS } from '@/lib/auth/session';
+import {
+  hashPassword,
+  createSessionToken,
+  SESSION_COOKIE_NAME,
+  SESSION_COOKIE_OPTIONS,
+  normalizeRole,
+  normalizeStatus,
+} from '@/lib/auth/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +54,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const isFirstUser = (await prisma.user.count()) === 0;
+    const isMasterAdmin = cleanEmail === 'iraeveras@outlook.com.br' || cleanEmail === 'admin@5w2h.local';
+    
+    // First user or explicit admin email gets active admin, otherwise new users enter as 'pendente'
+    const assignedRole = isFirstUser || isMasterAdmin ? 'admin' : 'membro';
+    const assignedStatus = isFirstUser || isMasterAdmin ? 'ativo' : 'pendente';
+
     const passwordHash = hashPassword(password);
 
     const newUser = await prisma.user.create({
@@ -55,10 +69,10 @@ export async function POST(req: NextRequest) {
         name: name?.trim() || cleanEmail.split('@')[0],
         passwordHash,
         provider: 'local',
-        role: 'member',
+        role: assignedRole,
         department: department || null,
         jobTitle: jobTitle || null,
-        status: 'active',
+        status: assignedStatus,
         lastLoginAt: new Date(),
       },
     });
@@ -67,9 +81,15 @@ export async function POST(req: NextRequest) {
       userId: newUser.id,
       email: newUser.email,
       name: newUser.name,
-      role: newUser.role,
+      role: normalizeRole(newUser.role),
+      status: normalizeStatus(newUser.status),
       avatarUrl: newUser.avatarUrl,
       department: newUser.department,
+      jobTitle: newUser.jobTitle,
+      managedDepartments: [],
+      managedTeams: [],
+      memberDepartments: newUser.department ? [newUser.department] : [],
+      memberTeams: [],
     });
 
     const response = NextResponse.json({
@@ -79,10 +99,15 @@ export async function POST(req: NextRequest) {
         email: newUser.email,
         name: newUser.name,
         avatarUrl: newUser.avatarUrl,
-        role: newUser.role,
+        role: normalizeRole(newUser.role),
+        status: normalizeStatus(newUser.status),
         department: newUser.department,
         jobTitle: newUser.jobTitle,
         provider: newUser.provider,
+        managedDepartments: [],
+        managedTeams: [],
+        memberDepartments: newUser.department ? [newUser.department] : [],
+        memberTeams: [],
       },
     });
 

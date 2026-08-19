@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/prisma';
-import { createSessionToken, SESSION_COOKIE_NAME, SESSION_COOKIE_OPTIONS } from '@/lib/auth/session';
+import {
+  createSessionToken,
+  SESSION_COOKIE_NAME,
+  SESSION_COOKIE_OPTIONS,
+  normalizeRole,
+  normalizeStatus,
+} from '@/lib/auth/session';
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
@@ -94,6 +100,12 @@ export async function GET(request: NextRequest) {
     const prisma = getPrisma();
     let dbUser = await prisma.user.findUnique({
       where: { email },
+      include: {
+        managedDepartments: { include: { department: true } },
+        managedTeams: { include: { team: true } },
+        memberDepartments: { include: { department: true } },
+        memberTeams: { include: { team: true } },
+      },
     });
 
     if (dbUser) {
@@ -105,8 +117,18 @@ export async function GET(request: NextRequest) {
           googleId: googleId || dbUser.googleId,
           lastLoginAt: new Date(),
         },
+        include: {
+          managedDepartments: { include: { department: true } },
+          managedTeams: { include: { team: true } },
+          memberDepartments: { include: { department: true } },
+          memberTeams: { include: { team: true } },
+        },
       });
     } else {
+      const userCount = await prisma.user.count();
+      const isFirst = userCount === 0;
+      const isMaster = email === 'iraeveras@outlook.com.br' || email === 'admin@5w2h.local';
+
       dbUser = await prisma.user.create({
         data: {
           email,
@@ -114,21 +136,51 @@ export async function GET(request: NextRequest) {
           avatarUrl,
           googleId,
           provider: 'google',
-          role: 'member',
-          status: 'active',
+          role: isFirst || isMaster ? 'admin' : 'membro',
+          status: isFirst || isMaster ? 'ativo' : 'pendente',
           lastLoginAt: new Date(),
+        },
+        include: {
+          managedDepartments: { include: { department: true } },
+          managedTeams: { include: { team: true } },
+          memberDepartments: { include: { department: true } },
+          memberTeams: { include: { team: true } },
         },
       });
     }
+
+    const managedDepts = Array.from(
+      new Set(
+        [
+          ...(dbUser.managedDepartments?.map((md) => md.department.name) || []),
+          dbUser.role === 'gestor' && dbUser.department ? dbUser.department : null,
+        ].filter(Boolean) as string[]
+      )
+    );
+
+    const memberDepts = Array.from(
+      new Set(
+        [
+          ...(dbUser.memberDepartments?.map((md) => md.department.name) || []),
+          dbUser.department ? dbUser.department : null,
+        ].filter(Boolean) as string[]
+      )
+    );
 
     // 4. Create local session token
     const sessionToken = createSessionToken({
       userId: dbUser.id,
       email: dbUser.email,
       name: dbUser.name,
-      role: dbUser.role,
+      role: normalizeRole(dbUser.role),
+      status: normalizeStatus(dbUser.status),
       avatarUrl: dbUser.avatarUrl,
       department: dbUser.department,
+      jobTitle: dbUser.jobTitle,
+      managedDepartments: managedDepts,
+      managedTeams: dbUser.managedTeams?.map((mt) => mt.team.name) || [],
+      memberDepartments: memberDepts,
+      memberTeams: dbUser.memberTeams?.map((mt) => mt.team.name) || [],
     });
 
     // 5. Return success HTML with postMessage and cookie

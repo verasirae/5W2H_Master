@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
+import type { PrismaClient } from '@prisma/client';
+import type { Pool } from 'pg';
 
 declare global {
   var prismaGlobal: PrismaClient | undefined;
@@ -63,6 +62,10 @@ export function getPrisma(): PrismaClient {
   try {
     const isLocal = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
     
+    const { Pool } = require('pg');
+    const { PrismaPg } = require('@prisma/adapter-pg');
+    const { PrismaClient } = require('@prisma/client');
+
     if (!global.pgPoolGlobal) {
       global.pgPoolGlobal = new Pool({
         connectionString,

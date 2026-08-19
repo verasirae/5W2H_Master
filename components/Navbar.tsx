@@ -14,7 +14,9 @@ import {
   ChevronLeft,
   Users,
   UserCheck,
+  Building2,
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth/auth-context';
 
 interface NavbarProps {
   currentView: ViewMode;
@@ -30,15 +32,34 @@ export const Navbar: React.FC<NavbarProps> = ({
   isSidebarExpanded,
   setIsSidebarExpanded,
 }) => {
+  const { user, isAdmin, isManager } = useAuth();
+
   const navItems = [
     { id: 'dashboard' as ViewMode, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'table' as ViewMode, label: 'Lista (Tabela)', icon: ListTodo },
     { id: 'kanban' as ViewMode, label: 'Quadro Kanban', icon: Kanban },
     { id: 'cards' as ViewMode, label: 'Matriz 5W2H', icon: LayoutGrid },
+    // Minha Equipe is available for Gestor and Admin
+    ...((isManager || isAdmin)
+      ? [
+          {
+            id: 'team' as ViewMode,
+            label: 'Minha Equipe',
+            icon: Building2,
+            badge: isManager ? 'GESTOR' : 'EQUIPES',
+          },
+        ]
+      : []),
     { id: 'ai' as ViewMode, label: 'Gerador IA', icon: Sparkles, badge: 'AI' },
-    { id: 'users' as ViewMode, label: 'Usuários', icon: Users },
+    // Users Management is only for Admin
+    ...(isAdmin
+      ? [{ id: 'users' as ViewMode, label: 'Usuários (RBAC)', icon: Users }]
+      : []),
     { id: 'profile' as ViewMode, label: 'Meu Perfil', icon: UserCheck },
-    { id: 'settings' as ViewMode, label: 'Configurações', icon: Settings },
+    // Settings is only for Admin
+    ...(isAdmin
+      ? [{ id: 'settings' as ViewMode, label: 'Configurações', icon: Settings }]
+      : []),
   ];
 
   return (
@@ -64,7 +85,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 5W2H Master
               </span>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider font-mono-data">
-                Gestão de Ações
+                {user?.role === 'admin' ? 'Painel Admin' : user?.role === 'gestor' ? 'Painel Gestor' : 'Gestão Pessoal'}
               </span>
             </div>
           )}
@@ -118,25 +139,27 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Support / Guide Link & Sidebar Toggle Button */}
       <div className="mt-auto w-full px-0.5 pt-1.5 border-t border-border flex flex-col gap-1">
-        <button
-          onClick={() => setCurrentView('settings')}
-          title={!isSidebarExpanded ? 'Manual & Guia 5W2H' : undefined}
-          className={`w-full flex items-center h-9 text-muted-foreground hover:text-primary hover:bg-muted transition-all group relative cursor-pointer ${
-            isSidebarExpanded ? 'px-2.5 justify-start' : 'justify-center px-0'
-          }`}
-        >
-          <HelpCircle className="w-4 h-4 shrink-0" />
-          {isSidebarExpanded && (
-            <span className="ml-2.5 text-xs uppercase tracking-wider font-medium truncate whitespace-nowrap">
-              Manual 5W2H
-            </span>
-          )}
-          {!isSidebarExpanded && (
-            <div className="absolute left-full ml-2 px-2.5 py-1 bg-popover text-popover-foreground text-xs font-mono-data border border-border opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap shadow-xl">
-              Manual 5W2H
-            </div>
-          )}
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setCurrentView('settings')}
+            title={!isSidebarExpanded ? 'Manual & Guia 5W2H' : undefined}
+            className={`w-full flex items-center h-9 text-muted-foreground hover:text-primary hover:bg-muted transition-all group relative cursor-pointer ${
+              isSidebarExpanded ? 'px-2.5 justify-start' : 'justify-center px-0'
+            }`}
+          >
+            <HelpCircle className="w-4 h-4 shrink-0" />
+            {isSidebarExpanded && (
+              <span className="ml-2.5 text-xs uppercase tracking-wider font-medium truncate whitespace-nowrap">
+                Manual 5W2H
+              </span>
+            )}
+            {!isSidebarExpanded && (
+              <div className="absolute left-full ml-2 px-2.5 py-1 bg-popover text-popover-foreground text-xs font-mono-data border border-border opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap shadow-xl">
+                Manual 5W2H
+              </div>
+            )}
+          </button>
+        )}
 
         {/* Explicit Expand / Collapse Button at bottom of sidebar */}
         <button

@@ -2,28 +2,52 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
+export type UserRole = 'admin' | 'gestor' | 'membro';
+export type UserStatus = 'pendente' | 'ativo' | 'inativo';
+
+export interface ImpersonationInfo {
+  userId: string;
+  email: string;
+  name?: string | null;
+  role: string;
+}
+
 export interface AuthUser {
   id: string;
   email: string;
   name?: string | null;
   avatarUrl?: string | null;
-  role?: string;
+  role: UserRole;
+  status: UserStatus;
   department?: string | null;
   jobTitle?: string | null;
   provider?: string;
+  managedDepartments?: string[];
+  managedTeams?: string[];
+  memberDepartments?: string[];
+  memberTeams?: string[];
+  impersonatedFrom?: ImpersonationInfo | null;
 }
 
 interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
   isConfigured: boolean;
-  signInWithEmail: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  signUp: (email: string, password: string, name?: string) => Promise<{ success: boolean; error?: string }>;
+  isImpersonating: boolean;
+  impersonatedFrom: ImpersonationInfo | null;
+  signInWithEmail: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: AuthUser }>;
+  signUp: (email: string, password: string, name?: string) => Promise<{ success: boolean; error?: string; user?: AuthUser }>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  impersonateUser: (targetUserId: string) => Promise<{ success: boolean; error?: string }>;
+  stopImpersonation: () => Promise<{ success: boolean; error?: string }>;
   refreshSession: () => Promise<void>;
   getUserInitials: () => string;
   getUserDisplayName: () => string;
+  isAdmin: boolean;
+  isManager: boolean;
+  isMember: boolean;
+  isPending: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -108,7 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (res.ok && data.success && data.user) {
         setUser(data.user);
-        return { success: true };
+        return { success: true, user: data.user };
       }
       return { success: false, error: data.error || 'Credenciais inválidas' };
     } catch (e: any) {
@@ -126,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (res.ok && data.success && data.user) {
         setUser(data.user);
-        return { success: true };
+        return { success: true, user: data.user };
       }
       return { success: false, error: data.error || 'Erro ao criar conta' };
     } catch (e: any) {
@@ -156,6 +180,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error('Google Sign-In error:', error);
       throw error;
+    }
+  };
+
+  const impersonateUser = async (targetUserId: string) => {
+    try {
+      const res = await fetch('/api/auth/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.user) {
+        setUser(data.user);
+        return { success: true };
+      }
+      return { success: false, error: data.error || 'Falha ao impersonar usuário' };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Erro ao conectar ao servidor' };
+    }
+  };
+
+  const stopImpersonation = async () => {
+    try {
+      const res = await fetch('/api/auth/impersonate/stop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.user) {
+        setUser(data.user);
+        return { success: true };
+      }
+      return { success: false, error: data.error || 'Falha ao encerrar impersonação' };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Erro ao conectar ao servidor' };
     }
   };
 
@@ -206,19 +265,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
+  const isImpersonating = Boolean(user?.impersonatedFrom);
+  const impersonatedFrom = user?.impersonatedFrom || null;
+  const isAdmin = user?.role === 'admin';
+  const isManager = user?.role === 'gestor';
+  const isMember = user?.role === 'membro';
+  const isPending = user?.status === 'pendente';
+
   return (
     <AuthContext.Provider
       value={{
         user,
         isLoading,
         isConfigured: true,
+        isImpersonating,
+        impersonatedFrom,
         signInWithEmail,
         signUp,
         signInWithGoogle,
         signOut,
+        impersonateUser,
+        stopImpersonation,
         refreshSession,
         getUserInitials,
         getUserDisplayName,
+        isAdmin,
+        isManager,
+        isMember,
+        isPending,
       }}
     >
       {children}

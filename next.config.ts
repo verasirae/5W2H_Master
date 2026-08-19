@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
     ],
   },
   output: 'standalone',
-  serverExternalPackages: ['@prisma/client', '@prisma/adapter-pg', 'pg', 'prisma'],
+  serverExternalPackages: ['@prisma/client', '.prisma/client', '@prisma/adapter-pg', 'pg', 'prisma'],
   transpilePackages: ['motion'],
   webpack: (config, {dev}) => {
     // HMR is disabled in AI Studio via DISABLE_HMR env var.

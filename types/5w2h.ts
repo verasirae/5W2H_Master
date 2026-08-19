@@ -4,6 +4,28 @@ export type TaskStatus = 'Não iniciado' | 'Em andamento' | 'Concluído' | 'Atra
 
 export type DeadlineSituation = 'No Prazo' | 'Atenção' | 'Atrasado' | 'Concluído' | 'Cancelado';
 
+export type UserRole = 'admin' | 'gestor' | 'membro';
+export type UserStatus = 'pendente' | 'ativo' | 'inativo';
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  name?: string | null;
+  avatarUrl?: string | null;
+  role: UserRole;
+  status: UserStatus;
+  department?: string | null;
+  jobTitle?: string | null;
+  provider?: string;
+  managedDepartments?: string[];
+  managedTeams?: string[];
+  memberDepartments?: string[];
+  memberTeams?: string[];
+  lastLoginAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Task5W2H {
   id: string;
   title: string;          // O quê
@@ -11,7 +33,7 @@ export interface Task5W2H {
   where: string;          // Onde
   startDate: string;      // YYYY-MM-DD
   deadlineDate: string;   // YYYY-MM-DD (Quando)
-  who: string;            // Quem
+  who: string;            // Quem (Nome do responsável)
   how: string;            // Como
   howMuch: number;        // Quanto (R$)
   department: string;     // Departamento
@@ -22,6 +44,18 @@ export interface Task5W2H {
   progressPercent: number; // 0 - 100
   completionDate?: string; // YYYY-MM-DD
   observations?: string;
+  departmentId?: string;
+  categoryId?: string;
+  assignedUserId?: string;
+  createdById?: string;
+  assignedUser?: {
+    id: string;
+    name?: string | null;
+    email: string;
+    avatarUrl?: string | null;
+    role?: string;
+    department?: string | null;
+  };
   createdAt: string;
   updatedAt: string;
 }

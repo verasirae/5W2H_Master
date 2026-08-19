@@ -1,33 +1,24 @@
 import crypto from 'crypto';
+import {
+  SESSION_COOKIE_NAME,
+  SESSION_COOKIE_OPTIONS,
+  CLEAR_SESSION_COOKIE_OPTIONS,
+  UserRole,
+  UserStatus,
+  ImpersonationInfo,
+  UserSessionPayload,
+  normalizeRole,
+  normalizeStatus,
+} from './session-constants';
 
-export interface UserSessionPayload {
-  userId: string;
-  email: string;
-  name?: string | null;
-  role?: string;
-  avatarUrl?: string | null;
-  department?: string | null;
-  exp: number;
-}
-
-export const SESSION_COOKIE_NAME = '5w2h_session';
-
-export const SESSION_COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: true,
-  sameSite: 'none' as const,
-  path: '/',
-  maxAge: 60 * 60 * 24 * 7, // 7 days
+export {
+  SESSION_COOKIE_NAME,
+  SESSION_COOKIE_OPTIONS,
+  CLEAR_SESSION_COOKIE_OPTIONS,
+  normalizeRole,
+  normalizeStatus,
 };
-
-export const CLEAR_SESSION_COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: true,
-  sameSite: 'none' as const,
-  path: '/',
-  maxAge: 0,
-  expires: new Date(0),
-};
+export type { UserRole, UserStatus, ImpersonationInfo, UserSessionPayload };
 
 /**
  * Applies expiration headers to remove session cookie across all environments
@@ -56,7 +47,12 @@ export function createSessionToken(
   expiresInSeconds: number = 60 * 60 * 24 * 7
 ): string {
   const exp = Math.floor(Date.now() / 1000) + expiresInSeconds;
-  const fullPayload: UserSessionPayload = { ...payload, exp };
+  const fullPayload: UserSessionPayload = {
+    ...payload,
+    role: normalizeRole(payload.role),
+    status: normalizeStatus(payload.status),
+    exp,
+  };
   
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
   const body = Buffer.from(JSON.stringify(fullPayload)).toString('base64url');
@@ -97,6 +93,10 @@ export function verifySessionToken(token: string): UserSessionPayload | null {
     if (payload.exp && payload.exp < now) {
       return null;
     }
+    
+    // Normalize role & status on read
+    payload.role = normalizeRole(payload.role);
+    payload.status = normalizeStatus(payload.status);
     
     return payload;
   } catch {
