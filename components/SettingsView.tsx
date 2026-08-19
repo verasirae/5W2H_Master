@@ -22,12 +22,15 @@ import {
   Code,
   ShieldCheck,
   ExternalLink,
+  User,
+  LogOut,
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth/auth-context';
 
 interface SettingsViewProps {
   workspaceConfig: WorkspaceConfig;
   setWorkspaceConfig: React.Dispatch<React.SetStateAction<WorkspaceConfig>>;
-  resetToSampleData: () => void;
+  resetToSampleData?: () => void;
   clearAllData: () => void;
   showToast: (type: 'success' | 'error' | 'info', title: string, message: string) => void;
   syncTasksToDatabase?: () => Promise<void>;
@@ -37,20 +40,24 @@ interface SettingsViewProps {
 export const SettingsView: React.FC<SettingsViewProps> = ({
   workspaceConfig,
   setWorkspaceConfig,
-  resetToSampleData,
   clearAllData,
   showToast,
   syncTasksToDatabase,
   dbStatus,
 }) => {
+  const { user, getUserDisplayName, getUserInitials, signOut } = useAuth();
   const [activeDeptForCat, setActiveDeptForCat] = useState<string>(
     workspaceConfig.departments[0] || 'RH/DP'
   );
+
+  const [departmentsList, setDepartmentsList] = useState<Array<{ id?: string; name: string; description?: string; color?: string }>>([]);
+  const [categoriesList, setCategoriesList] = useState<Array<{ id?: string; name: string; departmentName: string }>>([]);
 
   const [newDepartmentName, setNewDepartmentName] = useState('');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isTestingDb, setIsTestingDb] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
+  const [isSavingGeneral, setIsSavingGeneral] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
   const [sqlContent, setSqlContent] = useState<string>('');
   const [dbHealth, setDbHealth] = useState<{
@@ -60,6 +67,45 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     message?: string;
     error?: string;
   } | null>(null);
+
+  // Fetch real departments and categories from DB
+  const fetchDbDepartmentsAndCategories = useCallback(async () => {
+    try {
+      const [deptRes, catRes] = await Promise.all([
+        fetch('/api/departments'),
+        fetch('/api/categories'),
+      ]);
+
+      if (deptRes.ok) {
+        const deptData = await deptRes.json();
+        if (Array.isArray(deptData.departments) && deptData.departments.length > 0) {
+          setDepartmentsList(deptData.departments);
+          const deptNames = deptData.departments.map((d: any) => d.name);
+          setWorkspaceConfig((prev) => ({
+            ...prev,
+            departments: deptNames,
+            departmentName: deptNames.includes(prev.departmentName) ? prev.departmentName : deptNames[0],
+          }));
+        }
+      }
+
+      if (catRes.ok) {
+        const catData = await catRes.json();
+        if (Array.isArray(catData.categories)) {
+          setCategoriesList(catData.categories);
+        }
+      }
+    } catch (e) {
+      console.warn('Could not load DB departments/categories:', e);
+    }
+  }, [setWorkspaceConfig]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchDbDepartmentsAndCategories();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchDbDepartmentsAndCategories]);
 
   const handleCopySql = async () => {
     try {
@@ -87,6 +133,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       if (data.success) {
         showToast('success', 'Migração Concluída', data.message || 'Tabelas criadas com sucesso no PostgreSQL Local.');
         checkDbHealth(false);
+        fetchDbDepartmentsAndCategories();
       } else {
         showToast('info', 'Execução de Migração', data.message || data.error || 'Copie o script SQL e execute no PostgreSQL.');
       }
@@ -138,19 +185,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   const handleSaveGeneral = async (e: React.FormEvent) => {
     e.preventDefault();
-    showToast('success', 'Configurações Salvas', 'As preferências do workspace foram salvas com sucesso.');
+    setIsSavingGeneral(true);
     try {
-      await fetch('/api/settings', {
+      const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(workspaceConfig),
       });
-    } catch (err) {
-      console.warn('Could not persist settings to DB:', err);
+      const data = await res.json();
+      if (data.success) {
+        showToast('success', 'Configurações Salvas', 'As preferências do workspace foram salvas no banco de dados local com sucesso.');
+      } else {
+        showToast('info', 'Configurações Salvas Localmente', 'Preferências salvas no navegador.');
+      }
+    } catch (err: any) {
+      showToast('error', 'Erro ao salvar', err.message);
+    } finally {
+      setIsSavingGeneral(false);
     }
   };
 
-  const handleAddDepartment = () => {
+  const handleAddDepartment = async () => {
     const trimmed = newDepartmentName.trim();
     if (!trimmed) return;
 
@@ -159,46 +214,71 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       return;
     }
 
+    // Update local state immediately
+    const updatedDepartments = [...workspaceConfig.departments, trimmed];
+    const updatedCategories = {
+      ...workspaceConfig.categoriesByDepartment,
+      [trimmed]: workspaceConfig.categoriesByDepartment[trimmed] || ['Geral', 'Processos Internos'],
+    };
+
     setWorkspaceConfig((prev) => ({
       ...prev,
-      departments: [...prev.departments, trimmed],
-      categoriesByDepartment: {
-        ...prev.categoriesByDepartment,
-        [trimmed]: prev.categoriesByDepartment[trimmed] || ['Geral', 'Processos Internos'],
-      },
+      departments: updatedDepartments,
+      categoriesByDepartment: updatedCategories,
     }));
 
     setNewDepartmentName('');
     setActiveDeptForCat(trimmed);
-    showToast('success', 'Departamento Adicionado', `O departamento "${trimmed}" foi criado.`);
+
+    // Save to PostgreSQL database
+    try {
+      await fetch('/api/departments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmed }),
+      });
+      showToast('success', 'Departamento Salvo', `O departamento "${trimmed}" foi salvo no banco de dados.`);
+      fetchDbDepartmentsAndCategories();
+    } catch (e) {
+      console.warn('Error saving department to DB:', e);
+    }
   };
 
-  const handleDeleteDepartment = (dept: string) => {
+  const handleDeleteDepartment = async (dept: string) => {
     if (workspaceConfig.departments.length <= 1) {
       showToast('error', 'Ação Não Permitida', 'É necessário manter ao menos 1 departamento no workspace.');
       return;
     }
 
-    if (confirm(`Deseja remover o departamento "${dept}" e suas categorias associadas?`)) {
-      setWorkspaceConfig((prev) => {
-        const nextDeps = prev.departments.filter((d) => d !== dept);
-        const nextCats = { ...prev.categoriesByDepartment };
-        delete nextCats[dept];
+    if (confirm(`Deseja remover o departamento "${dept}" e suas categorias associadas do banco de dados?`)) {
+      const nextDeps = workspaceConfig.departments.filter((d) => d !== dept);
+      const nextCats = { ...workspaceConfig.categoriesByDepartment };
+      delete nextCats[dept];
 
-        return {
-          ...prev,
-          departments: nextDeps,
-          categoriesByDepartment: nextCats,
-          departmentName: prev.departmentName === dept ? nextDeps[0] : prev.departmentName,
-        };
-      });
+      setWorkspaceConfig((prev) => ({
+        ...prev,
+        departments: nextDeps,
+        categoriesByDepartment: nextCats,
+        departmentName: prev.departmentName === dept ? nextDeps[0] : prev.departmentName,
+      }));
 
-      setActiveDeptForCat(workspaceConfig.departments.find((d) => d !== dept) || '');
-      showToast('info', 'Departamento Removido', `O departamento "${dept}" foi removido.`);
+      setActiveDeptForCat(nextDeps[0] || '');
+
+      // Delete from DB
+      const targetDbDept = departmentsList.find((d) => d.name === dept);
+      if (targetDbDept?.id) {
+        try {
+          await fetch(`/api/departments/${targetDbDept.id}`, { method: 'DELETE' });
+        } catch (e) {
+          console.warn('Error deleting department from DB:', e);
+        }
+      }
+      showToast('info', 'Departamento Removido', `O departamento "${dept}" foi removido do banco.`);
+      fetchDbDepartmentsAndCategories();
     }
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     const trimmed = newCategoryName.trim();
     if (!trimmed) return;
 
@@ -208,29 +288,59 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       return;
     }
 
+    const updatedCategories = {
+      ...workspaceConfig.categoriesByDepartment,
+      [activeDeptForCat]: [...currentCats, trimmed],
+    };
+
     setWorkspaceConfig((prev) => ({
       ...prev,
-      categoriesByDepartment: {
-        ...prev.categoriesByDepartment,
-        [activeDeptForCat]: [...currentCats, trimmed],
-      },
+      categoriesByDepartment: updatedCategories,
     }));
 
     setNewCategoryName('');
-    showToast('success', 'Categoria Adicionada', `Nova categoria "${trimmed}" adicionada em ${activeDeptForCat}.`);
+
+    // Save category to DB
+    try {
+      await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: trimmed,
+          departmentName: activeDeptForCat,
+        }),
+      });
+      showToast('success', 'Categoria Salva', `Nova rotina "${trimmed}" salva no banco de dados.`);
+      fetchDbDepartmentsAndCategories();
+    } catch (e) {
+      console.warn('Error saving category to DB:', e);
+    }
   };
 
-  const handleDeleteCategory = (catToDelete: string) => {
+  const handleDeleteCategory = async (catToDelete: string) => {
     const currentCats = workspaceConfig.categoriesByDepartment[activeDeptForCat] || [];
+    const updatedCategories = {
+      ...workspaceConfig.categoriesByDepartment,
+      [activeDeptForCat]: currentCats.filter((c) => c !== catToDelete),
+    };
+
     setWorkspaceConfig((prev) => ({
       ...prev,
-      categoriesByDepartment: {
-        ...prev.categoriesByDepartment,
-        [activeDeptForCat]: currentCats.filter((c) => c !== catToDelete),
-      },
+      categoriesByDepartment: updatedCategories,
     }));
 
-    showToast('info', 'Categoria Removida', `Categoria "${catToDelete}" removida de ${activeDeptForCat}.`);
+    // Delete category from DB
+    const targetDbCat = categoriesList.find((c) => c.name === catToDelete && c.departmentName === activeDeptForCat);
+    if (targetDbCat?.id) {
+      try {
+        await fetch(`/api/categories/${targetDbCat.id}`, { method: 'DELETE' });
+      } catch (e) {
+        console.warn('Error deleting category from DB:', e);
+      }
+    }
+
+    showToast('info', 'Categoria Removida', `Categoria "${catToDelete}" removida do banco.`);
+    fetchDbDepartmentsAndCategories();
   };
 
   return (
@@ -245,6 +355,60 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <p className="text-[11px] text-muted-foreground font-body-md mt-0.5">
             Personalize departamentos, categorias de rotina, banco de dados PostgreSQL Local e parâmetros do SLA de prazo.
           </p>
+        </div>
+      </div>
+
+      {/* User Session & Account Card */}
+      <div className="bg-card border border-border p-4 md:p-5 rounded-md space-y-3.5 shadow-sm">
+        <div className="flex items-center justify-between border-b border-border pb-2.5 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <User className="w-4 h-4 text-primary" />
+            <h3 className="text-xs font-bold text-foreground font-mono-data uppercase">
+              Sessão do Usuário & Autenticação
+            </h3>
+          </div>
+          <span className="px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-md text-[10px] font-mono-data font-bold uppercase">
+            {user ? 'Sessão Ativa' : 'Convidado'}
+          </span>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-background border-2 border-primary flex items-center justify-center font-bold text-primary text-base shrink-0 shadow-inner">
+              {getUserInitials()}
+            </div>
+            <div className="space-y-0.5">
+              <p className="font-bold text-sm text-foreground">
+                {getUserDisplayName()}
+              </p>
+              <p className="text-xs text-muted-foreground font-mono-data">
+                {user?.email || 'iraeveras@outlook.com.br'}
+              </p>
+              <div className="flex items-center gap-2 pt-0.5">
+                <span className="text-[10px] bg-muted px-2 py-0.5 text-foreground uppercase font-mono-data font-semibold">
+                  Perfil: {user?.role || 'admin'}
+                </span>
+                {user?.department && (
+                  <span className="text-[10px] bg-muted px-2 py-0.5 text-muted-foreground uppercase font-mono-data">
+                    Depto: {user.department}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            id="btn-settings-logout"
+            onClick={async () => {
+              await signOut();
+            }}
+            className="flex items-center gap-2 px-3.5 py-2 bg-destructive/10 text-destructive border border-destructive/30 hover:bg-destructive hover:text-destructive-foreground font-mono-data font-bold text-xs uppercase rounded-md transition-colors cursor-pointer shrink-0 shadow-xs"
+            title="Encerrar sessão atual e voltar para a tela de login"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sair da Conta (Logout)</span>
+          </button>
         </div>
       </div>
 
@@ -271,7 +435,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         <p className="text-xs text-muted-foreground leading-relaxed">
-          O ambiente está conectado ao seu <strong>PostgreSQL Local</strong> (banco <code>5w2h</code>) utilizando <strong>Prisma ORM</strong> com suporte completo a autenticação local com criptografia de senhas e autenticação com o Google.
+          O ambiente está conectado ao seu <strong>PostgreSQL Local</strong> (banco <code>5w2h</code>) utilizando <strong>Prisma ORM</strong> com suporte completo a autenticação local com criptografia de senhas e sincronização em tempo real.
         </p>
 
         <div className="bg-background border border-border rounded-md p-3 text-[11px] font-mono-data space-y-1.5">
@@ -297,71 +461,51 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
           <button
             type="button"
-            onClick={handleCopySql}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border hover:border-primary text-foreground font-mono-data text-xs rounded-md transition-colors cursor-pointer"
-          >
-            {copiedSql ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-primary" />}
-            <span className="font-bold">{copiedSql ? 'Script Copiado!' : 'Copiar Script SQL Completo'}</span>
-          </button>
-
-          <button
-            type="button"
             onClick={handleRunMigration}
             disabled={isMigrating}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border hover:border-primary text-foreground font-mono-data text-xs rounded-md transition-colors cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground font-mono-data font-bold text-xs rounded-md shadow-xs hover:bg-primary/90 transition-colors cursor-pointer disabled:opacity-50"
           >
-            <Code className={`w-3.5 h-3.5 ${isMigrating ? 'animate-spin text-primary' : 'text-primary'}`} />
-            <span>{isMigrating ? 'Criando Tabelas...' : 'Executar Migração / Criar Tabelas'}</span>
+            <ShieldCheck className={`w-3.5 h-3.5 ${isMigrating ? 'animate-spin' : ''}`} />
+            <span>{isMigrating ? 'Executando Migração...' : 'Criar Tabelas / Migrar Banco'}</span>
           </button>
 
           {syncTasksToDatabase && (
             <button
               type="button"
               onClick={syncTasksToDatabase}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 font-mono-data font-bold text-xs rounded-md transition-colors cursor-pointer shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border hover:border-primary text-foreground font-mono-data text-xs rounded-md transition-colors cursor-pointer"
             >
-              <Database className="w-3.5 h-3.5" />
-              <span>Sincronizar Tarefas Locais com o Banco</span>
+              <Database className="w-3.5 h-3.5 text-primary" />
+              <span>Sincronizar Tarefas com Banco</span>
             </button>
           )}
-        </div>
 
-        {/* Instructions Collapsible Box */}
-        <div className="border border-border/80 bg-background/50 rounded-md p-3.5 text-xs space-y-2.5">
-          <div className="flex items-center gap-2 font-bold font-mono-data text-foreground text-[11px] uppercase">
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span>Instruções de Configuração (PostgreSQL Local & Google OAuth)</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] text-muted-foreground leading-relaxed">
-            <div className="space-y-1 bg-card/60 p-2.5 border border-border/60 rounded">
-              <strong className="text-foreground block font-mono-data">1. Banco de Dados Local:</strong>
-              <p>
-                As tabelas (<code>User</code>, <code>Task</code>, <code>Department</code>, <code>Category</code>, <code>WorkspaceConfig</code>) são sincronizadas com o banco <code>5w2h</code> através do botão &quot;Executar Migração / Criar Tabelas&quot; ou do comando <code>npx prisma db push</code>.
-              </p>
-            </div>
-
-            <div className="space-y-1 bg-card/60 p-2.5 border border-border/60 rounded">
-              <strong className="text-foreground block font-mono-data">2. Login com Google:</strong>
-              <p>
-                Configure as variáveis <code>GOOGLE_CLIENT_ID</code> e <code>GOOGLE_CLIENT_SECRET</code> obtidas no Google Cloud Console com o redirect URI apontando para <code>/auth/callback</code>.
-              </p>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={handleCopySql}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-muted text-foreground border border-border hover:bg-muted/80 font-mono-data text-xs rounded-md transition-colors cursor-pointer"
+          >
+            {copiedSql ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+            <span>{copiedSql ? 'Script Copiado!' : 'Copiar Script SQL Completo (DDL)'}</span>
+          </button>
         </div>
       </div>
 
-      {/* General Settings */}
-      <div className="bg-card border border-border p-4 md:p-5 space-y-4 w-full rounded-md">
-        <h3 className="text-xs font-bold text-foreground font-mono-data uppercase flex items-center gap-2 border-b border-border pb-2">
-          <Building className="w-4 h-4 text-info" />
-          <span>Parâmetros Gerais do Espaço de Trabalho</span>
-        </h3>
+      {/* General Settings Form */}
+      <form onSubmit={handleSaveGeneral} className="bg-card border border-border p-4 md:p-5 rounded-md space-y-4">
+        <div className="flex items-center justify-between border-b border-border pb-2.5">
+          <div className="flex items-center gap-2">
+            <Building className="w-4 h-4 text-primary" />
+            <h3 className="text-xs font-bold text-foreground font-mono-data uppercase">
+              Parâmetros Gerais do Espaço de Trabalho
+            </h3>
+          </div>
+        </div>
 
-        <form onSubmit={handleSaveGeneral} className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-body-md">
-          <div>
-            <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
-              Nome do Espaço de Trabalho:
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono-data">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-foreground uppercase">
+              Nome da Empresa / Workspace
             </label>
             <input
               type="text"
@@ -369,229 +513,238 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               onChange={(e) =>
                 setWorkspaceConfig((prev) => ({ ...prev, workspaceName: e.target.value }))
               }
-              className="w-full bg-background border border-input text-foreground text-xs p-2.5 rounded-md focus:border-primary focus:outline-none"
+              className="w-full bg-background border border-border text-foreground px-3 py-2 rounded focus:outline-none focus:border-primary text-xs"
+              placeholder="Ex: 5W2H Master - Control Center"
             />
           </div>
 
-          <div>
-            <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
-              Departamento Padrão Inicial:
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-foreground uppercase">
+              Departamento Padrão Selecionado
             </label>
             <select
               value={workspaceConfig.departmentName}
               onChange={(e) =>
                 setWorkspaceConfig((prev) => ({ ...prev, departmentName: e.target.value }))
               }
-              className="w-full bg-background border border-input text-foreground text-xs p-2.5 rounded-md focus:border-primary focus:outline-none cursor-pointer"
+              className="w-full bg-background border border-border text-foreground px-3 py-2 rounded focus:outline-none focus:border-primary text-xs"
             >
               {workspaceConfig.departments.map((d) => (
-                <option key={d} value={d} className="bg-popover text-foreground">
+                <option key={d} value={d}>
                   {d}
                 </option>
               ))}
             </select>
           </div>
 
-          <div>
-            <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
-              Símbolo da Moeda (Orçamentos):
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-foreground uppercase flex items-center gap-1.5">
+              <DollarSign className="w-3.5 h-3.5 text-primary" />
+              <span>Símbolo Monetário (Custo / How Much)</span>
             </label>
+            <input
+              type="text"
+              value={workspaceConfig.currencySymbol}
+              onChange={(e) =>
+                setWorkspaceConfig((prev) => ({ ...prev, currencySymbol: e.target.value }))
+              }
+              className="w-full bg-background border border-border text-foreground px-3 py-2 rounded focus:outline-none focus:border-primary text-xs"
+              placeholder="R$, $, €..."
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-foreground uppercase flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-amber-500" />
+              <span>Gatilho de Atenção do SLA (Dias antes do prazo)</span>
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="30"
+              value={workspaceConfig.attentionThresholdDays}
+              onChange={(e) =>
+                setWorkspaceConfig((prev) => ({
+                  ...prev,
+                  attentionThresholdDays: Math.max(1, parseInt(e.target.value) || 3),
+                }))
+              }
+              className="w-full bg-background border border-border text-foreground px-3 py-2 rounded focus:outline-none focus:border-primary text-xs"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-2">
+          <button
+            type="submit"
+            disabled={isSavingGeneral}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-bold font-mono-data text-xs uppercase rounded shadow-xs hover:bg-primary/90 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <Save className="w-4 h-4" />
+            <span>{isSavingGeneral ? 'Salvando...' : 'Salvar Preferências'}</span>
+          </button>
+        </div>
+      </form>
+
+      {/* Departments & Categories Manager */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Departments Column */}
+        <div className="bg-card border border-border p-4 rounded-md space-y-3">
+          <div className="flex items-center justify-between border-b border-border pb-2">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={workspaceConfig.currencySymbol}
-                onChange={(e) =>
-                  setWorkspaceConfig((prev) => ({ ...prev, currencySymbol: e.target.value }))
-                }
-                className="w-24 bg-background border border-input text-foreground text-xs p-2.5 rounded-md focus:border-primary focus:outline-none font-mono-data"
-              />
+              <Building className="w-4 h-4 text-primary" />
+              <h3 className="text-xs font-bold text-foreground font-mono-data uppercase">
+                Departamentos ({workspaceConfig.departments.length})
+              </h3>
             </div>
           </div>
 
-          <div>
-            <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
-              Alerta de Atenção de Prazo (Dias Antes):
-            </label>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-warning" />
-              <input
-                type="number"
-                min="1"
-                max="30"
-                value={workspaceConfig.attentionThresholdDays}
-                onChange={(e) =>
-                  setWorkspaceConfig((prev) => ({
-                    ...prev,
-                    attentionThresholdDays: Number(e.target.value) || 3,
-                  }))
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newDepartmentName}
+              onChange={(e) => setNewDepartmentName(e.target.value)}
+              placeholder="Novo Departamento..."
+              className="flex-1 bg-background border border-border text-foreground px-3 py-1.5 rounded focus:outline-none focus:border-primary text-xs font-mono-data"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddDepartment();
                 }
-                className="w-24 bg-background border border-input text-foreground text-xs p-2.5 rounded-md focus:border-primary focus:outline-none font-mono-data"
-              />
-              <span className="text-[11px] text-muted-foreground">dias antes do vencimento</span>
-            </div>
-          </div>
-
-          <div className="md:col-span-2 pt-2 border-t border-border flex justify-end">
+              }}
+            />
             <button
-              type="submit"
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-bold text-xs uppercase font-mono-data hover:bg-primary/90 transition-colors cursor-pointer rounded-md shadow-sm"
+              type="button"
+              onClick={handleAddDepartment}
+              className="px-3 py-1.5 bg-primary text-primary-foreground font-bold text-xs uppercase font-mono-data rounded hover:bg-primary/90 flex items-center gap-1 cursor-pointer"
             >
-              <Save className="w-3.5 h-3.5" />
-              <span>Salvar Preferências</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span>Adicionar</span>
             </button>
           </div>
-        </form>
-      </div>
 
-      {/* Departments and Categories Master Data */}
-      <div className="bg-card border border-border p-4 md:p-5 space-y-4 rounded-md">
-        <h3 className="text-xs font-bold text-foreground font-mono-data uppercase flex items-center gap-2 border-b border-border pb-2">
-          <Layers className="w-4 h-4 text-info" />
-          <span>Estrutura Organizacional: Departamentos e Rotinas</span>
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-body-md">
-          {/* Departamentos */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold text-foreground font-mono-data uppercase">
-              Departamentos Cadastrados ({workspaceConfig.departments.length})
-            </h4>
-
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Nome do Novo Departamento..."
-                value={newDepartmentName}
-                onChange={(e) => setNewDepartmentName(e.target.value)}
-                className="flex-1 bg-background border border-input text-foreground text-xs p-2 rounded-md focus:border-primary focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={handleAddDepartment}
-                className="px-3 py-2 bg-primary text-primary-foreground font-bold text-xs uppercase font-mono-data hover:bg-primary/90 cursor-pointer rounded-md"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="bg-background border border-border divide-y divide-border max-h-60 overflow-y-auto rounded-md">
-              {workspaceConfig.departments.map((dept) => (
+          <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+            {workspaceConfig.departments.map((dept) => {
+              const isSelected = activeDeptForCat === dept;
+              return (
                 <div
                   key={dept}
                   onClick={() => setActiveDeptForCat(dept)}
-                  className={`p-2.5 flex items-center justify-between text-xs cursor-pointer transition-colors ${
-                    activeDeptForCat === dept
-                      ? 'bg-primary/10 text-primary font-bold'
-                      : 'hover:bg-muted/50 text-foreground'
+                  className={`flex items-center justify-between p-2.5 rounded border text-xs font-mono-data cursor-pointer transition-all ${
+                    isSelected
+                      ? 'bg-accent border-primary text-foreground font-bold shadow-xs'
+                      : 'bg-background border-border text-muted-foreground hover:text-foreground hover:bg-muted'
                   }`}
                 >
-                  <span className="flex items-center gap-2">
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        activeDeptForCat === dept ? 'bg-primary' : 'bg-muted-foreground'
-                      }`}
-                    />
-                    {dept}
-                  </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteDepartment(dept);
-                    }}
-                    title="Excluir Departamento"
-                    className="text-muted-foreground hover:text-destructive p-1 cursor-pointer transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Categorias por Departamento */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold text-foreground font-mono-data uppercase">
-              Rotinas / Categorias de: <span className="text-primary">{activeDeptForCat}</span>
-            </h4>
-
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder={`Nova Categoria para ${activeDeptForCat}...`}
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                className="flex-1 bg-background border border-input text-foreground text-xs p-2 rounded-md focus:border-primary focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={handleAddCategory}
-                className="px-3 py-2 bg-info text-info-foreground font-bold text-xs uppercase font-mono-data hover:bg-info/90 cursor-pointer rounded-md"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="bg-background border border-border divide-y divide-border max-h-60 overflow-y-auto rounded-md">
-              {(workspaceConfig.categoriesByDepartment[activeDeptForCat] || []).length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground text-xs font-mono-data">
-                  Nenhuma categoria cadastrada neste departamento.
-                </div>
-              ) : (
-                (workspaceConfig.categoriesByDepartment[activeDeptForCat] || []).map((cat) => (
-                  <div
-                    key={cat}
-                    className="p-2.5 flex items-center justify-between text-xs text-foreground hover:bg-muted/50"
-                  >
-                    <span>{cat}</span>
+                  <span className="truncate">{dept}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+                      {(workspaceConfig.categoriesByDepartment[dept] || []).length} rotinas
+                    </span>
                     <button
-                      onClick={() => handleDeleteCategory(cat)}
-                      title="Excluir Categoria"
-                      className="text-muted-foreground hover:text-destructive p-1 cursor-pointer transition-colors"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteDepartment(dept);
+                      }}
+                      className="text-muted-foreground hover:text-destructive p-1 rounded"
+                      title="Excluir Departamento"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                ))
-              )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Categories / Rotinas Column */}
+        <div className="bg-card border border-border p-4 rounded-md space-y-3">
+          <div className="flex items-center justify-between border-b border-border pb-2">
+            <div className="flex items-center gap-2">
+              <Layers className="w-4 h-4 text-primary" />
+              <h3 className="text-xs font-bold text-foreground font-mono-data uppercase truncate">
+                Rotinas de: <span className="text-primary">{activeDeptForCat}</span>
+              </h3>
             </div>
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder={`Nova rotina para ${activeDeptForCat}...`}
+              className="flex-1 bg-background border border-border text-foreground px-3 py-1.5 rounded focus:outline-none focus:border-primary text-xs font-mono-data"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddCategory();
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleAddCategory}
+              className="px-3 py-1.5 bg-primary text-primary-foreground font-bold text-xs uppercase font-mono-data rounded hover:bg-primary/90 flex items-center gap-1 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Adicionar</span>
+            </button>
+          </div>
+
+          <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+            {(workspaceConfig.categoriesByDepartment[activeDeptForCat] || []).length === 0 ? (
+              <div className="py-6 text-center text-muted-foreground text-xs font-mono-data">
+                Nenhuma rotina cadastrada para este departamento.
+              </div>
+            ) : (
+              (workspaceConfig.categoriesByDepartment[activeDeptForCat] || []).map((cat) => (
+                <div
+                  key={cat}
+                  className="flex items-center justify-between p-2.5 rounded border border-border bg-background text-foreground text-xs font-mono-data"
+                >
+                  <span>{cat}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteCategory(cat)}
+                    className="text-muted-foreground hover:text-destructive p-1 rounded"
+                    title="Excluir Rotina"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
 
-      {/* Data Management & Resets */}
-      <div className="bg-card border border-border p-5 space-y-4 rounded-md">
-        <h3 className="text-xs font-bold text-foreground font-mono-data uppercase flex items-center gap-2 border-b border-border pb-2">
-          <RotateCcw className="w-4 h-4 text-destructive" />
-          <span>Gestão de Dados e Restauração</span>
-        </h3>
+      {/* Danger Zone */}
+      <div className="bg-destructive/5 border border-destructive/20 p-4 rounded-md space-y-3">
+        <div className="flex items-center gap-2 text-destructive">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <h3 className="text-xs font-bold font-mono-data uppercase">Zona de Manutenção de Dados</h3>
+        </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="text-xs text-muted-foreground font-body-md">
-            <p className="font-bold text-foreground">Restaurar Dados de Exemplo ou Limpar Banco:</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              Se desejar redefinir os dados para o estado inicial de demonstração ou limpar todas as tarefas.
-            </p>
-          </div>
+        <p className="text-xs text-muted-foreground">
+          Limpe as tarefas cadastradas na memória da aplicação e no banco de dados quando necessário.
+        </p>
 
-          <div className="flex gap-2 shrink-0">
-            <button
-              onClick={resetToSampleData}
-              className="px-3 py-2 bg-background border border-border hover:border-primary text-foreground font-bold text-xs uppercase font-mono-data transition-colors cursor-pointer rounded-md"
-            >
-              Restaurar Exemplo
-            </button>
-            <button
-              onClick={() => {
-                if (confirm('Atenção: Deseja apagar TODAS as tarefas cadastradas? Esta ação não pode ser desfeita.')) {
-                  clearAllData();
-                }
-              }}
-              className="px-3 py-2 bg-destructive text-destructive-foreground border border-destructive hover:bg-destructive/90 font-bold text-xs uppercase font-mono-data transition-colors cursor-pointer rounded-md"
-            >
-              Limpar Tudo
-            </button>
-          </div>
+        <div className="flex flex-wrap gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm('Tem certeza que deseja apagar todas as tarefas? Esta ação é irreversível.')) {
+                clearAllData();
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive hover:text-destructive-foreground font-mono-data text-xs rounded transition-colors cursor-pointer font-bold"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Limpar Todas as Tarefas</span>
+          </button>
         </div>
       </div>
     </div>

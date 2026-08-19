@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPrisma } from '@/lib/prisma';
+import { getPrisma, isDatabaseConfigured } from '@/lib/prisma';
 import { hashPassword, createSessionToken, SESSION_COOKIE_NAME, SESSION_COOKIE_OPTIONS } from '@/lib/auth/session';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,6 +23,17 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
+
+    if (!isDatabaseConfigured()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Banco de dados PostgreSQL não configurado ou offline. Conecte o banco para cadastrar novos usuários.',
+        },
+        { status: 400 }
+      );
+    }
+
     const prisma = getPrisma();
 
     const existingUser = await prisma.user.findUnique({
@@ -76,7 +89,6 @@ export async function POST(req: NextRequest) {
     response.cookies.set(SESSION_COOKIE_NAME, token, SESSION_COOKIE_OPTIONS);
     return response;
   } catch (error: any) {
-    console.error('Signup error:', error);
     return NextResponse.json(
       { success: false, error: error.message || 'Erro ao criar conta' },
       { status: 500 }

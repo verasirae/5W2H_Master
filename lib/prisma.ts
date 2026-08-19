@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 
@@ -9,14 +9,12 @@ declare global {
 
 /**
  * Helper to get clean sanitized database URL without quotes or whitespace.
+ * Returns empty string if DATABASE_URL or POSTGRES_URL is not set.
  */
 export function getSanitizedDatabaseUrl(): string {
-  const raw =
-    process.env.DATABASE_URL ||
-    process.env.POSTGRES_URL ||
-    'postgresql://postgres:db_postgre_root@localhost:5432/5w2h?schema=public';
-  if (typeof raw !== 'string') {
-    return 'postgresql://postgres:db_postgre_root@localhost:5432/5w2h?schema=public';
+  const raw = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
+  if (typeof raw !== 'string' || !raw.trim()) {
+    return '';
   }
   return raw.trim().replace(/^["']+|["']+$/g, '');
 }
@@ -75,16 +73,14 @@ export function getPrisma(): PrismaClient {
     }
 
     const adapter = new PrismaPg(global.pgPoolGlobal);
-    const { PrismaClient: PrismaClientConstructor } = require('@prisma/client');
     
-    global.prismaGlobal = new PrismaClientConstructor({
+    global.prismaGlobal = new (PrismaClient as any)({
       adapter,
-      log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+      log: [], // Keep empty to avoid raw prisma:error stdout dumping
     });
 
     return global.prismaGlobal as PrismaClient;
   } catch (err: any) {
-    console.error('Failed to initialize Prisma client:', err);
     throw new Error(`Database client initialization failed: ${err.message}`);
   }
 }

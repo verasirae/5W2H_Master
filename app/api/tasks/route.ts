@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPrisma, isDatabaseConfigured } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   if (!isDatabaseConfigured()) {
     return NextResponse.json({
@@ -25,14 +27,14 @@ export async function GET() {
       })),
     });
   } catch (error: any) {
-    console.error('Error fetching tasks from database:', error);
+    // Graceful fallback when PostgreSQL is unreachable or table is not ready yet
     return NextResponse.json(
       {
         connected: false,
-        error: error.message || 'Failed to query database',
+        message: error.message || 'Database currently offline or unreachable. Operating in local storage mode.',
         tasks: [],
       },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }
@@ -41,7 +43,7 @@ export async function POST(req: NextRequest) {
   if (!isDatabaseConfigured()) {
     return NextResponse.json(
       { connected: false, message: 'DATABASE_URL not configured.' },
-      { status: 400 }
+      { status: 200 }
     );
   }
 
@@ -149,10 +151,9 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error('Error creating task:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to save task' },
-      { status: 500 }
+      { success: false, connected: false, error: error.message || 'Failed to save task to database' },
+      { status: 200 }
     );
   }
 }

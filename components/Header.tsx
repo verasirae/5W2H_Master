@@ -6,8 +6,6 @@ import { Task5W2H, WorkspaceConfig } from '@/types/5w2h';
 import { exportTasksToExcel } from '@/lib/5w2h-utils';
 import {
   Search,
-  Plus,
-  BarChart2,
   Bell,
   Sun,
   Moon,
@@ -17,11 +15,9 @@ import {
   CheckCircle,
   AlertTriangle,
   Settings,
-  Sparkles,
-  Download,
-  Database,
-  RefreshCw,
   LogOut,
+  Users,
+  UserCheck,
 } from 'lucide-react';
 import { DatabaseStatus } from '@/hooks/use5w2h';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -53,11 +49,8 @@ export const Header: React.FC<HeaderProps> = ({
   showToast,
   isSidebarExpanded,
   setIsSidebarExpanded,
-  isSyncing = false,
-  dbStatus,
-  onRefresh,
 }) => {
-  const { user, getUserDisplayName, getUserInitials, signOut, isConfigured } = useAuth();
+  const { user, getUserDisplayName, getUserInitials, signOut } = useAuth();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [colorMode, setColorMode] = useState<'dark' | 'light'>('dark');
@@ -103,20 +96,6 @@ export const Header: React.FC<HeaderProps> = ({
     (t) => t.status === 'Atrasado'
   ).length;
 
-  const handleExport = () => {
-    if (filteredTasks.length === 0) {
-      showToast('info', 'Sem dados', 'Não há tarefas filtradas para exportar.');
-      return;
-    }
-    try {
-      exportTasksToExcel(filteredTasks, workspaceConfig.attentionThresholdDays);
-      showToast('success', 'Exportação Concluída', `${filteredTasks.length} tarefas exportadas para Excel.`);
-    } catch (error) {
-      console.error('Export error:', error);
-      showToast('error', 'Erro na Exportação', 'Não foi possível gerar a planilha Excel.');
-    }
-  };
-
   return (
     <header className="ml-1 md:ml-2 mr-3 md:mr-4 mt-3 mb-3.5 bg-card border border-border h-14 px-3 md:px-4 flex items-center justify-between gap-3 shrink-0 z-30 relative select-none shadow-md">
       {/* Left Section: Expand/Collapse Sidebar Button + Brand Logo */}
@@ -148,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Center Section: Search Bar (Hidden on Mobile/Tablet < lg to prioritize Notification, Color Mode, User) */}
+      {/* Center Section: Search Bar */}
       <div className="hidden lg:flex flex-1 max-w-xl mx-2 md:mx-6 relative">
         <div className="relative flex items-center w-full">
           <Search className="w-4 h-4 absolute left-3 text-muted-foreground pointer-events-none" />
@@ -156,7 +135,7 @@ export const Header: React.FC<HeaderProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search tasks, processes..."
+            placeholder="Buscar ações 5W2H, responsáveis, motivos..."
             className="w-full bg-background border border-input text-foreground text-xs font-mono-data pl-9 pr-8 py-2 focus:border-primary focus:outline-none transition-colors placeholder:text-muted-foreground"
           />
           {searchQuery && (
@@ -171,34 +150,8 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Right Section: DB Status, Notifications, Color Mode, User Profile */}
+      {/* Right Section: Notifications, Color Mode, User Profile */}
       <div className="flex items-center gap-1.5 md:gap-2">
-        {/* Database Status & Refresh Trigger */}
-        {dbStatus && (
-          <button
-            onClick={onRefresh}
-            disabled={isSyncing}
-            className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono-data border rounded transition-colors ${
-              dbStatus.connected
-                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
-                : 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20'
-            }`}
-            title={
-              dbStatus.connected
-                ? 'PostgreSQL Local Conectado - Clique para sincronizar'
-                : 'Modo Offline - Verifique a conexão com PostgreSQL'
-            }
-          >
-            <Database className="w-3 h-3 shrink-0" />
-            <span className="hidden md:inline font-medium">
-              {dbStatus.connected ? 'PostgreSQL' : 'Offline'}
-            </span>
-            <RefreshCw
-              className={`w-3 h-3 shrink-0 ${isSyncing ? 'animate-spin text-primary' : 'opacity-70'}`}
-            />
-          </button>
-        )}
-
         {/* 1. Notifications Icon */}
         <div className="relative">
           <button
@@ -260,7 +213,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* 2. Color Mode / Theme Toggle */}
         <button
           onClick={toggleColorMode}
-          className="p-2 border border-transparent text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="p-2 border border-transparent text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
           title={`Alternar Modo de Cor (${colorMode === 'dark' ? 'Escuro' : 'Claro'})`}
         >
           {colorMode === 'dark' ? (
@@ -273,12 +226,13 @@ export const Header: React.FC<HeaderProps> = ({
         {/* 3. User Profile Icon */}
         <div className="relative">
           <button
+            id="btn-header-user-menu"
             onClick={() => {
               setIsUserMenuOpen((prev) => !prev);
               setIsNotificationsOpen(false);
             }}
-            className="w-8 h-8 rounded-full bg-background border border-border hover:border-primary flex items-center justify-center text-foreground transition-colors ml-1 font-bold text-xs"
-            title="Perfil de Usuário"
+            className="w-8 h-8 rounded-full bg-background border border-border hover:border-primary flex items-center justify-center text-foreground transition-colors ml-1 font-bold text-xs cursor-pointer"
+            title="Menu do Usuário"
           >
             {user ? (
               <span className="text-primary">{getUserInitials()}</span>
@@ -286,6 +240,17 @@ export const Header: React.FC<HeaderProps> = ({
               <User className="w-4 h-4 text-foreground" />
             )}
           </button>
+
+          {/* Backdrop for click outside */}
+          {(isUserMenuOpen || isNotificationsOpen) && (
+            <div
+              className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[0.5px]"
+              onClick={() => {
+                setIsUserMenuOpen(false);
+                setIsNotificationsOpen(false);
+              }}
+            />
+          )}
 
           {/* User Profile Dropdown Popover */}
           {isUserMenuOpen && (
@@ -302,12 +267,37 @@ export const Header: React.FC<HeaderProps> = ({
                     {user?.email || 'iraeveras@outlook.com.br'}
                   </p>
                   <span className="text-[9px] bg-accent text-primary px-1.5 py-0.2 uppercase font-mono-data mt-1 inline-block">
-                    {user ? 'Autenticado' : 'Gestor 5W2H'}
+                    {user ? `Perfil: ${user.role || 'admin'}` : 'Gestor 5W2H'}
                   </span>
                 </div>
               </div>
               <div className="space-y-1 font-mono-data">
                 <button
+                  id="btn-header-profile-view"
+                  onClick={() => {
+                    setCurrentView('profile');
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="w-full text-left px-2 py-1.5 text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-2 cursor-pointer transition-colors"
+                >
+                  <UserCheck className="w-3.5 h-3.5 text-primary" />
+                  <span>Meu Perfil & Atividades</span>
+                </button>
+
+                <button
+                  id="btn-header-users-management"
+                  onClick={() => {
+                    setCurrentView('users');
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="w-full text-left px-2 py-1.5 text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-2 cursor-pointer transition-colors"
+                >
+                  <Users className="w-3.5 h-3.5 text-primary" />
+                  <span>Gerenciamento de Usuários</span>
+                </button>
+
+                <button
+                  id="btn-header-profile-settings"
                   onClick={() => {
                     setCurrentView('settings');
                     setIsUserMenuOpen(false);
@@ -315,14 +305,16 @@ export const Header: React.FC<HeaderProps> = ({
                   className="w-full text-left px-2 py-1.5 text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-2 cursor-pointer transition-colors"
                 >
                   <Settings className="w-3.5 h-3.5" />
-                  <span>Configurações da Conta</span>
+                  <span>Configurações do Workspace</span>
                 </button>
+
                 <button
+                  id="btn-header-logout"
                   onClick={async () => {
                     setIsUserMenuOpen(false);
                     await signOut();
                   }}
-                  className="w-full text-left px-2 py-1.5 text-destructive hover:bg-destructive/10 flex items-center gap-2 cursor-pointer transition-colors pt-1 border-t border-border mt-1"
+                  className="w-full text-left px-2 py-1.5 text-destructive hover:bg-destructive/10 flex items-center gap-2 cursor-pointer transition-colors pt-1 border-t border-border mt-1 font-semibold"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Sair da Conta (Logout)</span>
@@ -335,4 +327,3 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
-

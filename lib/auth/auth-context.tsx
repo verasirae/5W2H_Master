@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshSession = useCallback(async () => {
     try {
-      const res = await fetch('/api/auth/me');
+      const res = await fetch('/api/auth/me', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data.authenticated && data.user) {
@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
-    fetch('/api/auth/me')
+    fetch('/api/auth/me', { cache: 'no-store' })
       .then((res) => (res.ok ? res.json() : { authenticated: false, user: null }))
       .then((data) => {
         if (!isMounted) return;
@@ -160,13 +160,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    setIsLoading(true);
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+      });
     } catch (err) {
       console.error('Error signing out:', err);
+    } finally {
+      setUser(null);
+      setIsLoading(false);
+      try {
+        localStorage.removeItem('5w2h_session');
+        localStorage.removeItem('5w2h_auth_user');
+        sessionStorage.clear();
+      } catch {}
+      window.location.href = '/login';
     }
-    setUser(null);
-    window.location.replace('/login');
   };
 
   const getUserDisplayName = (): string => {

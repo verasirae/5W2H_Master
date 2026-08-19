@@ -20,6 +20,29 @@ export const SESSION_COOKIE_OPTIONS = {
   maxAge: 60 * 60 * 24 * 7, // 7 days
 };
 
+export const CLEAR_SESSION_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'none' as const,
+  path: '/',
+  maxAge: 0,
+  expires: new Date(0),
+};
+
+/**
+ * Applies expiration headers to remove session cookie across all environments
+ */
+export function applyClearSessionCookie(response: { cookies: { set: (name: string, val: string, options: any) => void; delete: (name: string) => void } }) {
+  response.cookies.set(SESSION_COOKIE_NAME, '', CLEAR_SESSION_COOKIE_OPTIONS);
+  response.cookies.set(SESSION_COOKIE_NAME, '', {
+    httpOnly: true,
+    path: '/',
+    maxAge: 0,
+    expires: new Date(0),
+  });
+  response.cookies.delete(SESSION_COOKIE_NAME);
+}
+
 const SECRET_KEY =
   process.env.SESSION_SECRET ||
   process.env.NEXTAUTH_SECRET ||

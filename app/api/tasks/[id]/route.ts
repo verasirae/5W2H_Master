@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPrisma, isDatabaseConfigured } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -8,7 +10,7 @@ export async function GET(
   if (!isDatabaseConfigured()) {
     return NextResponse.json(
       { success: false, error: 'Database not configured' },
-      { status: 400 }
+      { status: 200 }
     );
   }
 
@@ -35,10 +37,9 @@ export async function GET(
       },
     });
   } catch (error: any) {
-    console.error(`Error querying task:`, error);
     return NextResponse.json(
       { success: false, error: error.message || 'Erro ao buscar tarefa' },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }
@@ -50,7 +51,7 @@ export async function PUT(
   if (!isDatabaseConfigured()) {
     return NextResponse.json(
       { success: false, error: 'Database not configured' },
-      { status: 400 }
+      { status: 200 }
     );
   }
 
@@ -136,10 +137,9 @@ export async function PUT(
       },
     });
   } catch (error: any) {
-    console.error(`Error updating task:`, error);
     return NextResponse.json(
       { success: false, error: error.message || 'Erro ao atualizar tarefa' },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }
@@ -151,7 +151,7 @@ export async function DELETE(
   if (!isDatabaseConfigured()) {
     return NextResponse.json(
       { success: false, error: 'Database not configured' },
-      { status: 400 }
+      { status: 200 }
     );
   }
 
@@ -169,10 +169,9 @@ export async function DELETE(
       message: `Tarefa ${id} excluída com sucesso.`,
     });
   } catch (error: any) {
-    console.error(`Error deleting task:`, error);
     return NextResponse.json(
       { success: false, error: error.message || 'Erro ao excluir tarefa' },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }

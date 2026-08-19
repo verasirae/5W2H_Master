@@ -11,6 +11,8 @@ import { TaskCardsView } from '@/components/TaskCardsView';
 import { TaskKanbanView } from '@/components/TaskKanbanView';
 import { AiGeneratorView } from '@/components/AiGeneratorView';
 import { SettingsView } from '@/components/SettingsView';
+import { UserManagementView } from '@/components/UserManagementView';
+import { ProfileView } from '@/components/ProfileView';
 import { TaskFormModal } from '@/components/TaskFormModal';
 import { MatrixModal } from '@/components/MatrixModal';
 import { NotificationToast } from '@/components/NotificationToast';
@@ -48,7 +50,6 @@ export default function HomePage() {
     openMatrixModal,
     toast,
     showToast,
-    resetToSampleData,
     clearAllData,
     isLoading,
     isSyncing,
@@ -162,11 +163,26 @@ export default function HomePage() {
             />
           )}
 
+          {currentView === 'users' && (
+            <UserManagementView
+              departments={availableDepartments}
+              showToast={showToast}
+            />
+          )}
+
+          {currentView === 'profile' && (
+            <ProfileView
+              departments={availableDepartments}
+              showToast={showToast}
+              openEditModal={openEditModal}
+              openMatrixModal={openMatrixModal}
+            />
+          )}
+
           {currentView === 'settings' && (
             <SettingsView
               workspaceConfig={workspaceConfig}
               setWorkspaceConfig={setWorkspaceConfig}
-              resetToSampleData={resetToSampleData}
               clearAllData={clearAllData}
               showToast={showToast}
               dbStatus={dbStatus}

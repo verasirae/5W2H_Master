@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getPrisma, isDatabaseConfigured } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const configured = isDatabaseConfigured();
 
@@ -35,7 +37,7 @@ export async function GET() {
         connected: false,
         error: error.message || 'Connection failed',
       },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }

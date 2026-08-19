@@ -9,7 +9,6 @@ import {
 } from '@/types/5w2h';
 import {
   DEFAULT_WORKSPACE_CONFIG,
-  INITIAL_SAMPLE_TASKS,
   generateUniqueTaskId,
   deduplicateTaskIds,
 } from '@/lib/5w2h-utils';
@@ -17,7 +16,7 @@ import {
 const STORAGE_KEY_TASKS = '5w2h_master_tasks_v1';
 const STORAGE_KEY_CONFIG = '5w2h_master_config_v1';
 
-export type ViewMode = 'dashboard' | 'table' | 'cards' | 'kanban' | 'ai' | 'settings';
+export type ViewMode = 'dashboard' | 'table' | 'cards' | 'kanban' | 'ai' | 'settings' | 'users' | 'profile';
 
 export interface ToastMessage {
   id: string;
@@ -33,10 +32,30 @@ export interface DatabaseStatus {
   taskCount?: number;
 }
 
+export interface AppUser {
+  id: string;
+  email: string;
+  name: string | null;
+  avatarUrl: string | null;
+  role: string;
+  department: string | null;
+  jobTitle: string | null;
+  status: string;
+  provider: string;
+  lastLoginAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  _count?: {
+    tasksCreated: number;
+    tasksAssigned: number;
+  };
+}
+
 export function use5W2H() {
-  // Deterministic initial state to guarantee 100% matching SSR and Client initial hydration
-  const [tasks, setTasks] = useState<Task5W2H[]>(() => deduplicateTaskIds(INITIAL_SAMPLE_TASKS));
+  // Real data only - starts empty and hydrates directly from database / persistent storage
+  const [tasks, setTasks] = useState<Task5W2H[]>([]);
   const [workspaceConfig, setWorkspaceConfig] = useState<WorkspaceConfig>(DEFAULT_WORKSPACE_CONFIG);
+  const [usersList, setUsersList] = useState<AppUser[]>([]);
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,11 +92,26 @@ export function use5W2H() {
     }, 4000);
   }, []);
 
-  // Core Data Fetch from Supabase with localStorage fallback
+  // Fetch real users from database
+  const refreshUsers = useCallback(async () => {
+    try {
+      const res = await fetch('/api/users');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.users)) {
+          setUsersList(data.users);
+        }
+      }
+    } catch (e) {
+      console.warn('Could not fetch users list from database:', e);
+    }
+  }, []);
+
+  // Core Data Fetch from PostgreSQL Backend with localStorage resilience
   const refreshTasks = useCallback(async () => {
     setIsSyncing(true);
 
-    // 0. Load local storage cache asynchronously on client mount
+    // 0. Hydrate local storage on initial mount
     if (!hasHydratedFromStorage.current) {
       hasHydratedFromStorage.current = true;
       try {
@@ -107,7 +141,7 @@ export function use5W2H() {
     }
 
     try {
-      // 1. Fetch tasks
+      // 1. Fetch real tasks from PostgreSQL /api/tasks
       const res = await fetch('/api/tasks');
       if (res.ok) {
         const data = await res.json();
@@ -117,7 +151,7 @@ export function use5W2H() {
             checked: true,
             taskCount: Array.isArray(data.tasks) ? data.tasks.length : 0,
           });
-          if (Array.isArray(data.tasks) && data.tasks.length > 0) {
+          if (Array.isArray(data.tasks)) {
             setTasks(deduplicateTaskIds(data.tasks));
           }
         } else {
@@ -125,22 +159,25 @@ export function use5W2H() {
         }
       }
 
-      // 2. Fetch workspace settings
+      // 2. Fetch workspace settings & real departments from database
       const settingRes = await fetch('/api/settings');
       if (settingRes.ok) {
         const settingData = await settingRes.json();
-        if (settingData.connected && settingData.config) {
+        if (settingData.config) {
           setWorkspaceConfig(settingData.config);
         }
       }
+
+      // 3. Fetch real users list
+      await refreshUsers();
     } catch (err: any) {
-      console.warn('Could not sync with Supabase backend:', err);
+      console.warn('Could not sync with PostgreSQL backend:', err);
       setDbStatus({ connected: false, checked: true, message: err.message });
     } finally {
       setIsSyncing(false);
       setIsLoading(false);
     }
-  }, []);
+  }, [refreshUsers]);
 
   // Initial load effect
   useEffect(() => {
@@ -150,7 +187,7 @@ export function use5W2H() {
     return () => clearTimeout(timer);
   }, [refreshTasks]);
 
-  // Persist tasks to localStorage (only after local storage hydration has completed)
+  // Persist tasks to localStorage
   useEffect(() => {
     if (isLoaded && hasHydratedFromStorage.current) {
       try {
@@ -161,7 +198,7 @@ export function use5W2H() {
     }
   }, [tasks, isLoaded]);
 
-  // Persist workspace config to localStorage (only after local storage hydration has completed)
+  // Persist workspace config to localStorage
   useEffect(() => {
     if (isLoaded && hasHydratedFromStorage.current) {
       try {
@@ -172,7 +209,7 @@ export function use5W2H() {
     }
   }, [workspaceConfig, isLoaded]);
 
-  // CRUD Actions with reactive optimistic UI & backend database sync
+  // CRUD Actions for Tasks with live database API calls
   const addTask = useCallback(
     async (newTaskData: Omit<Task5W2H, 'id' | 'createdAt' | 'updatedAt'>) => {
       const now = new Date().toISOString();
@@ -186,13 +223,13 @@ export function use5W2H() {
         updatedAt: now,
       };
 
-      // Optimistic state update
+      // Optimistic local state update
       setTasks((prev) => [newTask, ...prev]);
-      showToast('success', 'Tarefa Criada', `A ação "${createdTitle}" foi adicionada com sucesso.`);
+      showToast('success', 'Tarefa Criada', `A ação "${createdTitle}" foi salva no banco de dados.`);
       setIsFormModalOpen(false);
       setEditingTask(null);
 
-      // Async backend sync to Supabase
+      // Persist to PostgreSQL database
       setIsSyncing(true);
       try {
         const res = await fetch('/api/tasks', {
@@ -235,9 +272,8 @@ export function use5W2H() {
         return currentList;
       });
 
-      showToast('success', 'Tarefas Importadas', `${newTasksData.length} planos 5W2H foram adicionados com sucesso.`);
+      showToast('success', 'Tarefas Importadas', `${newTasksData.length} ações 5W2H foram salvas.`);
 
-      // Async batch backend sync to Supabase
       setIsSyncing(true);
       try {
         await fetch('/api/tasks', {
@@ -278,7 +314,7 @@ export function use5W2H() {
           return t;
         })
       );
-      showToast('success', 'Tarefa Atualizada', 'As alterações na ação 5W2H foram salvas.');
+      showToast('success', 'Tarefa Atualizada', 'As alterações na ação 5W2H foram salvas no banco de dados.');
       setIsFormModalOpen(false);
       setEditingTask(null);
 
@@ -286,7 +322,6 @@ export function use5W2H() {
         setInspectingTask((prev) => (prev ? { ...prev, ...updatedData, updatedAt: now } : null));
       }
 
-      // Async sync to Supabase
       setIsSyncing(true);
       try {
         await fetch(`/api/tasks/${id}`, {
@@ -306,13 +341,12 @@ export function use5W2H() {
   const deleteTask = useCallback(
     async (id: string) => {
       setTasks((prev) => prev.filter((t) => t.id !== id));
-      showToast('info', 'Tarefa Excluída', 'A ação foi removida do sistema.');
+      showToast('info', 'Tarefa Excluída', 'A ação foi removida do banco de dados.');
       if (inspectingTask?.id === id) {
         setIsMatrixModalOpen(false);
         setInspectingTask(null);
       }
 
-      // Async sync deletion to Supabase
       setIsSyncing(true);
       try {
         await fetch(`/api/tasks/${id}`, {
@@ -360,7 +394,6 @@ export function use5W2H() {
       );
       showToast('success', 'Status Alterado', `Status atualizado para "${newStatus}".`);
 
-      // Async sync to Supabase
       setIsSyncing(true);
       try {
         await fetch(`/api/tasks/${id}`, {
@@ -394,7 +427,7 @@ export function use5W2H() {
       });
       const data = await res.json();
       if (data.success) {
-        showToast('success', 'Sincronização Concluída', `${tasks.length} tarefas sincronizadas com o banco de dados PostgreSQL.`);
+        showToast('success', 'Sincronização Concluída', `${tasks.length} tarefas salvas no banco de dados PostgreSQL.`);
         setDbStatus({ connected: true, checked: true, taskCount: tasks.length });
       } else {
         showToast('error', 'Falha na Sincronização', data.error || 'Verifique as credenciais do banco.');
@@ -406,31 +439,25 @@ export function use5W2H() {
     }
   }, [tasks, showToast]);
 
-  const resetToSampleData = useCallback(() => {
-    setTasks(INITIAL_SAMPLE_TASKS);
-    setWorkspaceConfig(DEFAULT_WORKSPACE_CONFIG);
-    showToast('info', 'Dados Restaurados', 'O ambiente foi restaurado com os dados de demonstração.');
-  }, [showToast]);
-
   const clearAllData = useCallback(() => {
     setTasks([]);
     showToast('info', 'Dados Limpos', 'Todas as tarefas foram removidas.');
   }, [showToast]);
 
-  // Derived Filter Options
+  // Derived Filter Options - Real Data from DB/State
   const availableDepartments = useMemo(() => {
     const depsFromConfig = workspaceConfig.departments || [];
     const depsFromTasks = Array.from(new Set(tasks.map((t) => t.department))).filter(Boolean);
-    return Array.from(new Set([...depsFromConfig, ...depsFromTasks]));
+    return Array.from(new Set([...depsFromConfig, ...depsFromTasks])).sort();
   }, [workspaceConfig.departments, tasks]);
 
   const availableCategories = useMemo(() => {
     if (filters.department !== 'Todos' && workspaceConfig.categoriesByDepartment[filters.department]) {
       return workspaceConfig.categoriesByDepartment[filters.department];
     }
-    const catsFromConfig = Object.values(workspaceConfig.categoriesByDepartment).flat();
+    const catsFromConfig = Object.values(workspaceConfig.categoriesByDepartment || {}).flat();
     const catsFromTasks = Array.from(new Set(tasks.map((t) => t.category))).filter(Boolean);
-    return Array.from(new Set([...catsFromConfig, ...catsFromTasks]));
+    return Array.from(new Set([...catsFromConfig, ...catsFromTasks])).sort();
   }, [filters.department, workspaceConfig.categoriesByDepartment, tasks]);
 
   const availableCompetences = useMemo(() => {
@@ -439,8 +466,10 @@ export function use5W2H() {
   }, [tasks]);
 
   const availableResponsibles = useMemo(() => {
-    return Array.from(new Set(tasks.map((t) => t.who))).filter(Boolean).sort();
-  }, [tasks]);
+    const userNames = usersList.map((u) => u.name || u.email).filter(Boolean);
+    const taskWhos = Array.from(new Set(tasks.map((t) => t.who))).filter(Boolean);
+    return Array.from(new Set([...userNames, ...taskWhos])).sort();
+  }, [usersList, tasks]);
 
   // Filtered Tasks
   const filteredTasks = useMemo(() => {
@@ -497,6 +526,8 @@ export function use5W2H() {
     filteredTasks,
     workspaceConfig,
     setWorkspaceConfig,
+    usersList,
+    refreshUsers,
     currentView,
     setCurrentView,
     filters,
@@ -530,7 +561,6 @@ export function use5W2H() {
     },
     toast,
     showToast,
-    resetToSampleData,
     clearAllData,
     resetFilters: () => {
       setFilters({

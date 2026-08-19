@@ -12,12 +12,14 @@ import {
   HelpCircle,
   ChevronRight,
   ChevronLeft,
+  Users,
+  UserCheck,
 } from 'lucide-react';
 
 interface NavbarProps {
   currentView: ViewMode;
   setCurrentView: (view: ViewMode) => void;
-  openCreateModal: () => void;
+  openCreateModal?: () => void;
   isSidebarExpanded: boolean;
   setIsSidebarExpanded: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -34,6 +36,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'kanban' as ViewMode, label: 'Quadro Kanban', icon: Kanban },
     { id: 'cards' as ViewMode, label: 'Matriz 5W2H', icon: LayoutGrid },
     { id: 'ai' as ViewMode, label: 'Gerador IA', icon: Sparkles, badge: 'AI' },
+    { id: 'users' as ViewMode, label: 'Usuários', icon: Users },
+    { id: 'profile' as ViewMode, label: 'Meu Perfil', icon: UserCheck },
     { id: 'settings' as ViewMode, label: 'Configurações', icon: Settings },
   ];
 
@@ -77,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               key={item.id}
               onClick={() => setCurrentView(item.id)}
               title={!isSidebarExpanded ? item.label : undefined}
-              className={`w-full flex items-center h-9 transition-all relative group rounded-none ${
+              className={`w-full flex items-center h-9 transition-all relative group rounded-none cursor-pointer ${
                 isSidebarExpanded ? 'px-2.5 justify-start' : 'justify-center px-0'
               } ${
                 isActive
@@ -117,7 +121,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           onClick={() => setCurrentView('settings')}
           title={!isSidebarExpanded ? 'Manual & Guia 5W2H' : undefined}
-          className={`w-full flex items-center h-9 text-muted-foreground hover:text-primary hover:bg-muted transition-all group relative ${
+          className={`w-full flex items-center h-9 text-muted-foreground hover:text-primary hover:bg-muted transition-all group relative cursor-pointer ${
             isSidebarExpanded ? 'px-2.5 justify-start' : 'justify-center px-0'
           }`}
         >
@@ -138,19 +142,22 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           onClick={() => setIsSidebarExpanded((prev) => !prev)}
           title={isSidebarExpanded ? 'Recolher Sidebar' : 'Expandir Sidebar'}
-          className="w-full flex items-center justify-center h-8 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border-t border-border mt-1"
+          className={`w-full flex items-center h-9 text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer ${
+            isSidebarExpanded ? 'px-2.5 justify-start' : 'justify-center px-0'
+          }`}
         >
           {isSidebarExpanded ? (
-            <div className="flex items-center gap-2 text-[11px] font-mono-data uppercase">
-              <ChevronLeft className="w-4 h-4" />
-              <span>Recolher</span>
-            </div>
+            <>
+              <ChevronLeft className="w-4 h-4 shrink-0 text-muted-foreground" />
+              <span className="ml-2.5 text-xs text-muted-foreground uppercase tracking-wider truncate">
+                Recolher
+              </span>
+            </>
           ) : (
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground" />
           )}
         </button>
       </div>
     </aside>
   );
 };
-
