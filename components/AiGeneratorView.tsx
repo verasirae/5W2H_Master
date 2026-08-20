@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Task5W2H, WorkspaceConfig } from '@/types/5w2h';
+import { Task5W2H, WorkspaceConfig, TaskPriority } from '@/types/5w2h';
 import {
   Sparkles,
   Plus,
@@ -15,6 +15,14 @@ import {
   Calendar,
   User,
   MapPin,
+  Tag,
+  Flag,
+  Layers,
+  Edit3,
+  Trash2,
+  RotateCcw,
+  FileText,
+  Info,
 } from 'lucide-react';
 
 interface AiGeneratorViewProps {
@@ -80,11 +88,34 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
       }
 
       if (data?.tasks && Array.isArray(data.tasks) && data.tasks.length > 0) {
-        setAiDrafts(data.tasks);
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const deadlineDefault = new Date();
+        deadlineDefault.setDate(deadlineDefault.getDate() + 30);
+        const deadlineStr = deadlineDefault.toISOString().slice(0, 10);
+        const competenceStr = `${(new Date().getMonth() + 1).toString().padStart(2, '0')}/${new Date().getFullYear()}`;
+
+        const normalizedTasks: Partial<Task5W2H>[] = data.tasks.map((t: any) => ({
+          ...t,
+          title: t.title || 'Nova Ação 5W2H',
+          why: t.why || 'Melhoria de processo',
+          where: t.where || selectedDept,
+          startDate: t.startDate || todayStr,
+          deadlineDate: t.deadlineDate || deadlineStr,
+          who: t.who || 'Responsável Definido',
+          how: t.how || 'Ações operacionais',
+          howMuch: typeof t.howMuch === 'number' ? t.howMuch : (Number(t.howMuch) || 0),
+          department: t.department || selectedDept,
+          category: t.category || (workspaceConfig.categoriesByDepartment[t.department || selectedDept]?.[0] || 'Geral'),
+          competence: t.competence || competenceStr,
+          priority: (t.priority as TaskPriority) || 'Média',
+          observations: t.observations || 'Gerado via Inteligência Artificial Gemini',
+        }));
+
+        setAiDrafts(normalizedTasks);
         showToast(
           data.notice ? 'info' : 'success',
           data.notice ? 'Plano 5W2H Estruturado' : 'Plano 5W2H Gerado!',
-          data.notice || `A IA criou ${data.tasks.length} rascunhos de plano de ação 5W2H.`
+          data.notice || `A IA criou ${data.tasks.length} rascunhos de plano de ação 5W2H editáveis.`
         );
       } else {
         showToast('error', 'Resposta Inválida', 'A IA não retornou um plano estruturado.');
@@ -97,6 +128,26 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
     }
   };
 
+  const handleUpdateDraft = (index: number, field: keyof Task5W2H, value: any) => {
+    setAiDrafts((prev) => {
+      const copy = [...prev];
+      copy[index] = {
+        ...copy[index],
+        [field]: value,
+      };
+      return copy;
+    });
+  };
+
+  const handleRemoveDraft = (index: number) => {
+    setAiDrafts((prev) => prev.filter((_, idx) => idx !== index));
+    setAddedIndexes((prev) =>
+      prev
+        .filter((idx) => idx !== index)
+        .map((idx) => (idx > index ? idx - 1 : idx))
+    );
+  };
+
   const buildTaskFromDraft = (draft: Partial<Task5W2H>): Omit<Task5W2H, 'id' | 'createdAt' | 'updatedAt'> => {
     const todayStr = new Date().toISOString().slice(0, 10);
     const deadlineDefault = new Date();
@@ -104,21 +155,21 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
     const deadlineStr = deadlineDefault.toISOString().slice(0, 10);
 
     return {
-      title: draft.title || 'Nova Ação 5W2H',
-      why: draft.why || 'Melhoria de processo',
-      where: draft.where || selectedDept,
+      title: draft.title?.trim() || 'Nova Ação 5W2H',
+      why: draft.why?.trim() || 'Melhoria de processo',
+      where: draft.where?.trim() || selectedDept,
       startDate: draft.startDate || todayStr,
       deadlineDate: draft.deadlineDate || deadlineStr,
-      who: draft.who || 'Responsável Definido',
-      how: draft.how || 'Ações operacionais',
+      who: draft.who?.trim() || 'Responsável Definido',
+      how: draft.how?.trim() || 'Ações operacionais',
       howMuch: Number(draft.howMuch) || 0,
       department: draft.department || selectedDept,
       category: draft.category || 'Geral',
       competence: draft.competence || `${(new Date().getMonth() + 1).toString().padStart(2, '0')}/${new Date().getFullYear()}`,
-      priority: (draft.priority as any) || 'Média',
+      priority: (draft.priority as TaskPriority) || 'Média',
       status: 'Não iniciado',
       progressPercent: 0,
-      observations: draft.observations || 'Gerado via Inteligência Artificial Gemini',
+      observations: draft.observations?.trim() || 'Gerado via Inteligência Artificial Gemini',
     };
   };
 
@@ -128,6 +179,7 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
     const newTask = buildTaskFromDraft(draft);
     addTask(newTask);
     setAddedIndexes((prev) => [...prev, index]);
+    showToast('success', 'Ação Adicionada', `"${newTask.title}" foi convertida em tarefa.`);
   };
 
   const handleAddAll = () => {
@@ -150,6 +202,7 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
     }
 
     setAddedIndexes((prev) => [...prev, ...pendingIndexes]);
+    showToast('success', 'Ações Adicionadas', `${pendingTasks.length} tarefas foram criadas com sucesso.`);
   };
 
   return (
@@ -166,8 +219,8 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
             </h2>
             <p className="text-[11px] text-muted-foreground font-body-md mt-0.5 leading-relaxed">
               Descreva em linguagem natural o problema corporativo, desafio ou meta desejada. A IA
-              irá estruturar automaticamente todos os 7 pilares 5W2H (O quê, Por quê, Onde, Quando, Quem, Como e Quanto)
-              prontos para conversão em tarefas no seu workspace.
+              irá estruturar automaticamente todos os 7 pilares 5W2H (O quê, Por quê, Onde, Quando, Quem, Como e Quanto).
+              Todos os campos gerados são <strong className="text-foreground">100% editáveis</strong> antes de salvar no seu workspace.
             </p>
           </div>
         </div>
@@ -270,107 +323,278 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
       {/* Generated Results Section */}
       {aiDrafts.length > 0 && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-border pb-2">
-            <h3 className="text-sm font-bold text-foreground font-mono-data uppercase">
-              Rascunhos 5W2H Gerados ({aiDrafts.length})
-            </h3>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-border pb-2">
+            <div>
+              <h3 className="text-sm font-bold text-foreground font-mono-data uppercase flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-primary" />
+                Rascunhos 5W2H Gerados ({aiDrafts.length})
+              </h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Revise, complemente ou edite os textos diretamente abaixo antes de adicionar às tarefas.
+              </p>
+            </div>
             {aiDrafts.length > 1 && (
               <button
                 onClick={handleAddAll}
-                className="px-3 py-1 bg-primary text-primary-foreground font-bold text-xs font-mono-data uppercase hover:bg-primary/90 cursor-pointer"
+                className="px-3 py-1.5 bg-primary text-primary-foreground font-bold text-xs font-mono-data uppercase hover:bg-primary/90 cursor-pointer flex items-center gap-1.5"
               >
-                Adicionar Todos ao Plano ({aiDrafts.length})
+                <Plus className="w-3.5 h-3.5" />
+                Adicionar Todos ao Plano ({aiDrafts.length - addedIndexes.length})
               </button>
             )}
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             {aiDrafts.map((draft, idx) => {
               const isAdded = addedIndexes.includes(idx);
+              const availableCategories = workspaceConfig.categoriesByDepartment[draft.department || selectedDept] || [];
+
               return (
                 <div
                   key={idx}
                   className={`bg-card border ${
-                    isAdded ? 'border-primary' : 'border-border'
-                  } p-5 space-y-4 relative transition-colors`}
+                    isAdded ? 'border-primary/80 bg-card/60' : 'border-border'
+                  } p-4 md:p-5 space-y-4 relative transition-colors shadow-sm`}
                 >
-                  <div className="flex flex-col sm:flex-row justify-between items-start gap-2 border-b border-border pb-3">
-                    <div>
-                      <span className="text-[10px] font-mono-data text-muted-foreground uppercase block">
-                        Ação Sugerida #{idx + 1} • {draft.department || selectedDept}
+                  {/* Top Bar with Number, Status and Action Buttons */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-border pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 bg-muted text-foreground text-[10px] font-mono-data font-bold uppercase border border-border">
+                        Ação #{idx + 1}
                       </span>
-                      <h4 className="text-base font-bold text-foreground">{draft.title}</h4>
-                    </div>
-                    <button
-                      onClick={() => handleConvertDraftToTask(draft, idx)}
-                      disabled={isAdded}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono-data uppercase font-bold tracking-wider transition-colors shrink-0 cursor-pointer ${
-                        isAdded
-                          ? 'bg-card border border-primary text-primary cursor-default'
-                          : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                      }`}
-                    >
-                      {isAdded ? (
-                        <>
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>Adicionado ao Workspace</span>
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-4 h-4" />
-                          <span>Converter em Tarefa (1-Clique)</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* 5W2H Matrix Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                    <div className="bg-background p-3 border border-border">
-                      <span className="text-[10px] font-mono-data text-info uppercase block font-bold mb-1">
-                        Por quê (Justificativa)
-                      </span>
-                      <p className="text-muted-foreground">{draft.why}</p>
-                    </div>
-
-                    <div className="bg-background p-3 border border-border">
-                      <span className="text-[10px] font-mono-data text-foreground uppercase block font-bold mb-1">
-                        Como (Metodologia)
-                      </span>
-                      <p className="text-muted-foreground whitespace-pre-line">{draft.how}</p>
-                    </div>
-
-                    <div className="bg-background p-2.5 border border-border grid grid-cols-2 gap-2 text-[11px] font-mono-data">
-                      <div>
-                        <span className="text-[9px] text-muted-foreground block uppercase">Onde</span>
-                        <span className="text-foreground">{draft.where}</span>
-                      </div>
-                      <div>
-                        <span className="text-[9px] text-muted-foreground block uppercase">Quem</span>
-                        <span className="text-foreground font-bold">{draft.who}</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-background p-2.5 border border-border grid grid-cols-2 gap-2 text-[11px] font-mono-data">
-                      <div>
-                        <span className="text-[9px] text-muted-foreground block uppercase">Quando (Prazo)</span>
-                        <span className="text-foreground">{draft.deadlineDate}</span>
-                      </div>
-                      <div>
-                        <span className="text-[9px] text-muted-foreground block uppercase">Quanto</span>
-                        <span className="text-primary font-bold">
-                          {workspaceConfig.currencySymbol} {draft.howMuch || 0}
+                      {isAdded && (
+                        <span className="px-2 py-0.5 bg-primary/20 text-primary text-[10px] font-mono-data font-bold uppercase border border-primary/40 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Adicionado
                         </span>
-                      </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveDraft(idx)}
+                        className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-muted transition-colors border border-transparent hover:border-border cursor-pointer"
+                        title="Remover este rascunho"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleConvertDraftToTask(draft, idx)}
+                        disabled={isAdded}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono-data uppercase font-bold tracking-wider transition-colors shrink-0 cursor-pointer ${
+                          isAdded
+                            ? 'bg-card border border-primary text-primary cursor-default'
+                            : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                        }`}
+                      >
+                        {isAdded ? (
+                          <>
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Adicionado ao Workspace</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Converter em Tarefa</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
 
-                  {draft.observations && (
-                    <div className="text-[11px] text-muted-foreground font-mono-data bg-background p-2 border border-border">
-                      <span className="text-muted-foreground font-bold uppercase mr-1">Observação IA:</span>
-                      {draft.observations}
+                  {/* 1. O QUÊ (What / Title) - Full Width Editable Input */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-mono-data text-primary font-bold uppercase flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5" />
+                      1. O QUÊ (Título da Ação / Objetivo)
+                    </label>
+                    <input
+                      type="text"
+                      value={draft.title || ''}
+                      onChange={(e) => handleUpdateDraft(idx, 'title', e.target.value)}
+                      placeholder="Descreva o que será feito..."
+                      className="w-full bg-background border border-input text-foreground text-xs font-bold p-2.5 focus:border-primary focus:outline-none"
+                    />
+                  </div>
+
+                  {/* 2. POR QUÊ & COMO (Why & How) - 2 Columns Textareas */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-mono-data text-info font-bold uppercase flex items-center gap-1.5">
+                        <HelpCircle className="w-3.5 h-3.5" />
+                        2. POR QUÊ (Justificativa & Impacto)
+                      </label>
+                      <textarea
+                        value={draft.why || ''}
+                        onChange={(e) => handleUpdateDraft(idx, 'why', e.target.value)}
+                        placeholder="Por que esta ação é necessária..."
+                        rows={3}
+                        className="w-full bg-background border border-input text-foreground text-xs p-2.5 focus:border-info focus:outline-none leading-relaxed"
+                      />
                     </div>
-                  )}
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-mono-data text-foreground font-bold uppercase flex items-center gap-1.5">
+                        <Wrench className="w-3.5 h-3.5" />
+                        3. COMO (Metodologia & Etapas Operacionais)
+                      </label>
+                      <textarea
+                        value={draft.how || ''}
+                        onChange={(e) => handleUpdateDraft(idx, 'how', e.target.value)}
+                        placeholder="Como será executado (passo a passo)..."
+                        rows={3}
+                        className="w-full bg-background border border-input text-foreground text-xs p-2.5 focus:border-primary focus:outline-none leading-relaxed font-mono-data"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 3. ONDE, QUEM, QUANDO, QUANTO (Where, Who, When, How Much) - 4 Columns Responsive */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-mono-data text-muted-foreground font-bold uppercase flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-muted-foreground" />
+                        4. ONDE (Local / Setor)
+                      </label>
+                      <input
+                        type="text"
+                        value={draft.where || ''}
+                        onChange={(e) => handleUpdateDraft(idx, 'where', e.target.value)}
+                        placeholder="Ex: Almoxarifado / Filial"
+                        className="w-full bg-background border border-input text-foreground text-xs p-2 focus:border-primary focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-mono-data text-muted-foreground font-bold uppercase flex items-center gap-1">
+                        <User className="w-3 h-3 text-muted-foreground" />
+                        5. QUEM (Responsável)
+                      </label>
+                      <input
+                        type="text"
+                        value={draft.who || ''}
+                        onChange={(e) => handleUpdateDraft(idx, 'who', e.target.value)}
+                        placeholder="Nome do responsável..."
+                        className="w-full bg-background border border-input text-foreground text-xs font-semibold p-2 focus:border-primary focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-mono-data text-muted-foreground font-bold uppercase flex items-center gap-1">
+                        <Calendar className="w-3 h-3 text-muted-foreground" />
+                        6. QUANDO (Prazo Limite)
+                      </label>
+                      <input
+                        type="date"
+                        value={draft.deadlineDate || ''}
+                        onChange={(e) => handleUpdateDraft(idx, 'deadlineDate', e.target.value)}
+                        className="w-full bg-background border border-input text-foreground text-xs p-2 focus:border-primary focus:outline-none font-mono-data"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-mono-data text-muted-foreground font-bold uppercase flex items-center gap-1">
+                        <DollarSign className="w-3 h-3 text-primary" />
+                        7. QUANTO (Custo em {workspaceConfig.currencySymbol})
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        step={10}
+                        value={draft.howMuch ?? 0}
+                        onChange={(e) => handleUpdateDraft(idx, 'howMuch', Number(e.target.value) || 0)}
+                        placeholder="0.00"
+                        className="w-full bg-background border border-input text-foreground text-xs font-bold p-2 focus:border-primary focus:outline-none font-mono-data"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 4. Categorização & Metadados (Departamento, Categoria, Prioridade, Observação) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-border/60 text-xs">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-mono-data text-muted-foreground font-bold uppercase flex items-center gap-1">
+                        <Layers className="w-3 h-3" />
+                        Departamento
+                      </label>
+                      <select
+                        value={draft.department || selectedDept}
+                        onChange={(e) => {
+                          const newDept = e.target.value;
+                          handleUpdateDraft(idx, 'department', newDept);
+                          // Update category to first available if previous category is invalid
+                          const deptsCats = workspaceConfig.categoriesByDepartment[newDept] || [];
+                          if (deptsCats.length > 0 && (!draft.category || !deptsCats.includes(draft.category))) {
+                            handleUpdateDraft(idx, 'category', deptsCats[0]);
+                          }
+                        }}
+                        className="w-full bg-background border border-input text-foreground text-xs font-mono-data p-2 focus:border-primary focus:outline-none cursor-pointer"
+                      >
+                        {workspaceConfig.departments.map((d) => (
+                          <option key={d} value={d} className="bg-popover text-foreground">
+                            {d}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-mono-data text-muted-foreground font-bold uppercase flex items-center gap-1">
+                        <Tag className="w-3 h-3" />
+                        Categoria
+                      </label>
+                      <select
+                        value={draft.category || availableCategories[0] || 'Geral'}
+                        onChange={(e) => handleUpdateDraft(idx, 'category', e.target.value)}
+                        className="w-full bg-background border border-input text-foreground text-xs font-mono-data p-2 focus:border-primary focus:outline-none cursor-pointer"
+                      >
+                        {availableCategories.length > 0 ? (
+                          availableCategories.map((c) => (
+                            <option key={c} value={c} className="bg-popover text-foreground">
+                              {c}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="Geral" className="bg-popover text-foreground">
+                            Geral
+                          </option>
+                        )}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-mono-data text-muted-foreground font-bold uppercase flex items-center gap-1">
+                        <Flag className="w-3 h-3" />
+                        Prioridade
+                      </label>
+                      <select
+                        value={draft.priority || 'Média'}
+                        onChange={(e) => handleUpdateDraft(idx, 'priority', e.target.value as TaskPriority)}
+                        className="w-full bg-background border border-input text-foreground text-xs font-mono-data p-2 focus:border-primary focus:outline-none cursor-pointer"
+                      >
+                        <option value="Baixa" className="bg-popover text-foreground">Baixa</option>
+                        <option value="Média" className="bg-popover text-foreground">Média</option>
+                        <option value="Alta" className="bg-popover text-foreground">Alta</option>
+                        <option value="Urgente" className="bg-popover text-foreground">Urgente</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* 5. Observações Adicionais */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-mono-data text-muted-foreground font-bold uppercase flex items-center gap-1">
+                      <Info className="w-3 h-3" />
+                      Observações / Anotações Complementares
+                    </label>
+                    <input
+                      type="text"
+                      value={draft.observations || ''}
+                      onChange={(e) => handleUpdateDraft(idx, 'observations', e.target.value)}
+                      placeholder="Observações complementares..."
+                      className="w-full bg-background border border-input text-muted-foreground text-xs p-2 focus:border-primary focus:outline-none font-mono-data"
+                    />
+                  </div>
                 </div>
               );
             })}
@@ -380,3 +604,4 @@ export const AiGeneratorView: React.FC<AiGeneratorViewProps> = ({
     </div>
   );
 };
+
