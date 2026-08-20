@@ -65,8 +65,9 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
   const isOwner = list?.ownerId === currentUser?.id || isAdmin;
   const listId = list?.id;
 
-  // Refetch members and invites after user interactions (inviting, removing, cancelling)
+  // Refetch members and invites after user interactions (inviting, removing, cancelling, or manual refresh)
   const reloadData = React.useCallback(async (targetListId: string) => {
+    setIsLoadingData(true);
     try {
       const [membersRes, usersRes] = await Promise.all([
         fetch(`/api/lists/${targetListId}/members`),
@@ -85,6 +86,8 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
       }
     } catch (err: any) {
       console.error('Erro ao recarregar dados de compartilhamento:', err);
+    } finally {
+      setIsLoadingData(false);
     }
   }, []);
 
@@ -320,7 +323,9 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
           </button>
 
           <button
-            onClick={fetchModalData}
+            onClick={() => {
+              if (listId) reloadData(listId);
+            }}
             disabled={isLoadingData}
             className="ml-auto p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             title="Atualizar lista de membros"
