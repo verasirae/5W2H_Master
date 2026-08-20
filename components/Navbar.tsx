@@ -7,6 +7,7 @@ import {
   ListTodo,
   Kanban,
   LayoutGrid,
+  FolderKanban,
   Sparkles,
   Settings,
   HelpCircle,
@@ -39,6 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'table' as ViewMode, label: 'Lista (Tabela)', icon: ListTodo },
     { id: 'kanban' as ViewMode, label: 'Quadro Kanban', icon: Kanban },
     { id: 'cards' as ViewMode, label: 'Matriz 5W2H', icon: LayoutGrid },
+    { id: 'groups' as ViewMode, label: 'Grupos & Listas', icon: FolderKanban, badge: 'GRUPO' },
     // Minha Equipe is available for Gestor and Admin
     ...((isManager || isAdmin)
       ? [

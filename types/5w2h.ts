@@ -48,6 +48,7 @@ export interface Task5W2H {
   categoryId?: string;
   assignedUserId?: string;
   createdById?: string;
+  listId?: string | null;
   assignedUser?: {
     id: string;
     name?: string | null;
@@ -58,6 +59,121 @@ export interface Task5W2H {
   };
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TaskListMember {
+  id: string;
+  listId: string;
+  userId: string;
+  role: 'owner' | 'member';
+  joinedAt: string;
+  user?: {
+    id: string;
+    name?: string | null;
+    email: string;
+    avatarUrl?: string | null;
+    role: string;
+    department?: string | null;
+    jobTitle?: string | null;
+  };
+}
+
+export interface TaskListInvite {
+  id: string;
+  listId: string;
+  inviterId: string;
+  inviteeId: string;
+  status: 'pendente' | 'aceito' | 'recusado';
+  message?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  inviter?: {
+    id: string;
+    name?: string | null;
+    email: string;
+    avatarUrl?: string | null;
+  };
+  invitee?: {
+    id: string;
+    name?: string | null;
+    email: string;
+    avatarUrl?: string | null;
+  };
+  list?: {
+    id: string;
+    title: string;
+    groupId: string;
+    groupTitle?: string;
+  };
+}
+
+export interface TaskList {
+  id: string;
+  title: string;
+  description?: string | null;
+  color?: string | null;
+  groupId: string;
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+  owner?: {
+    id: string;
+    name?: string | null;
+    email: string;
+    avatarUrl?: string | null;
+    role?: string;
+  };
+  tasks?: Task5W2H[];
+  members?: TaskListMember[];
+  invites?: TaskListInvite[];
+  _count?: {
+    tasks: number;
+    members: number;
+  };
+  isOwner?: boolean;
+}
+
+export interface TaskGroup {
+  id: string;
+  title: string;
+  description?: string | null;
+  color?: string | null;
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+  owner?: {
+    id: string;
+    name?: string | null;
+    email: string;
+    avatarUrl?: string | null;
+  };
+  lists?: TaskList[];
+  _count?: {
+    lists: number;
+  };
+  isOwner?: boolean;
+}
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  type: 'list_invite' | 'info' | 'system';
+  title: string;
+  message: string;
+  data?: {
+    listId?: string;
+    listTitle?: string;
+    groupId?: string;
+    groupTitle?: string;
+    inviteId?: string;
+    inviterId?: string;
+    inviterName?: string;
+    inviterEmail?: string;
+    [key: string]: any;
+  } | null;
+  isRead: boolean;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface WorkspaceConfig {

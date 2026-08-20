@@ -30,6 +30,14 @@ model User {
   memberDepartments  MemberDepartment[]
   memberTeams        MemberTeam[]
 
+  // Grupos e Listas Compartilhadas
+  groupsOwned        TaskGroup[]        @relation("GroupOwner")
+  listsOwned         TaskList[]         @relation("ListOwner")
+  listMemberships    TaskListMember[]
+  invitesSent        TaskListInvite[]   @relation("InvitesSent")
+  invitesReceived    TaskListInvite[]   @relation("InvitesReceived")
+  notifications      Notification[]     @relation("UserNotifications")
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -169,6 +177,9 @@ model Task {
   assignedUserId  String?
   assignedUser    User?       @relation("TaskAssignee", fields: [assignedUserId], references: [id], onDelete: SetNull)
 
+  listId          String?
+  listRel         TaskList?   @relation(fields: [listId], references: [id], onDelete: SetNull)
+
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -181,6 +192,92 @@ model Task {
   @@index([priority])
   @@index([createdById])
   @@index([assignedUserId])
+  @@index([listId])
+}
+
+model TaskGroup {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  color       String?
+  ownerId     String
+  owner       User       @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  lists       TaskList[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([ownerId])
+}
+
+model TaskList {
+  id          String           @id @default(cuid())
+  title       String           // Nome da Lista
+  description String?
+  color       String?
+  groupId     String
+  group       TaskGroup        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  ownerId     String
+  owner       User             @relation("ListOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  tasks       Task[]
+  members     TaskListMember[]
+  invites     TaskListInvite[]
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([groupId])
+  @@index([ownerId])
+}
+
+model TaskListMember {
+  id        String    @id @default(cuid())
+  listId    String
+  list      TaskList  @relation(fields: [listId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String    @default("member") // "owner", "member"
+  joinedAt  DateTime  @default(now())
+
+  @@unique([listId, userId])
+  @@index([listId])
+  @@index([userId])
+}
+
+model TaskListInvite {
+  id        String    @id @default(cuid())
+  listId    String
+  list      TaskList  @relation(fields: [listId], references: [id], onDelete: Cascade)
+  inviterId String
+  inviter   User      @relation("InvitesSent", fields: [inviterId], references: [id], onDelete: Cascade)
+  inviteeId String
+  invitee   User      @relation("InvitesReceived", fields: [inviteeId], references: [id], onDelete: Cascade)
+  status    String    @default("pendente") // "pendente", "aceito", "recusado"
+  message   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([listId])
+  @@index([inviterId])
+  @@index([inviteeId])
+  @@index([status])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  type      String    @default("list_invite") // "list_invite", "info", "system"
+  title     String
+  message   String
+  data      Json?     // { listId, listTitle, groupTitle, inviteId, inviterName, inviterEmail }
+  isRead    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
 }
 
 model WorkspaceConfig {

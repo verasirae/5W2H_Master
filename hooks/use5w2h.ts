@@ -16,7 +16,7 @@ import {
 const STORAGE_KEY_TASKS = '5w2h_master_tasks_v1';
 const STORAGE_KEY_CONFIG = '5w2h_master_config_v1';
 
-export type ViewMode = 'dashboard' | 'table' | 'cards' | 'kanban' | 'team' | 'ai' | 'settings' | 'users' | 'profile';
+export type ViewMode = 'dashboard' | 'table' | 'cards' | 'kanban' | 'groups' | 'team' | 'ai' | 'settings' | 'users' | 'profile';
 
 export interface ToastMessage {
   id: string;

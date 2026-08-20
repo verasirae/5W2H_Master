@@ -25,6 +25,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const currentCompDefault = `${(new Date().getMonth() + 1).toString().padStart(2, '0')}/${new Date().getFullYear()}`;
 
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [availableLists, setAvailableLists] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -34,6 +35,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     deadlineDate: todayStr,
     who: '',
     assignedUserId: undefined as string | undefined,
+    listId: undefined as string | undefined,
     how: '',
     howMuch: 0,
     department: workspaceConfig.departments[0] || 'RH/DP',
@@ -51,7 +53,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const [prevOpen, setPrevOpen] = useState(false);
   const [prevEditingTask, setPrevEditingTask] = useState<Task5W2H | null>(null);
 
-  // Fetch real users from DB on mount
+  // Fetch real users and accessible lists from DB on mount
   useEffect(() => {
     if (isOpen) {
       fetch('/api/users')
@@ -59,6 +61,15 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
         .then((data) => {
           if (Array.isArray(data.users)) {
             setAvailableUsers(data.users.filter((u: any) => u.status === 'ativo' || u.status === 'active'));
+          }
+        })
+        .catch(() => {});
+
+      fetch('/api/lists')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.lists)) {
+            setAvailableLists(data.lists);
           }
         })
         .catch(() => {});
@@ -78,6 +89,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           deadlineDate: editingTask.deadlineDate || todayStr,
           who: editingTask.who || '',
           assignedUserId: editingTask.assignedUserId,
+          listId: editingTask.listId,
           how: editingTask.how || '',
           howMuch: editingTask.howMuch || 0,
           department: editingTask.department || workspaceConfig.departments[0] || 'RH/DP',
@@ -98,6 +110,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           deadlineDate: todayStr,
           who: '',
           assignedUserId: undefined,
+          listId: undefined,
           how: '',
           howMuch: 0,
           department: workspaceConfig.departments[0] || 'RH/DP',
@@ -480,17 +493,37 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             </div>
 
             {/* Observações */}
-            <div className="mt-3">
-              <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
-                Observações / Anotações de Acompanhamento
-              </label>
-              <input
-                type="text"
-                value={formData.observations}
-                onChange={(e) => setFormData((prev) => ({ ...prev, observations: e.target.value }))}
-                placeholder="Ex: Aguardando aprovação da diretoria ou envio de nota fiscal..."
-                className="w-full bg-background border border-input text-foreground text-xs p-2 focus:border-primary focus:outline-none font-body-md"
-              />
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
+                  Observações / Anotações
+                </label>
+                <input
+                  type="text"
+                  value={formData.observations}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, observations: e.target.value }))}
+                  placeholder="Ex: Aguardando envio de nota fiscal..."
+                  className="w-full bg-background border border-input text-foreground text-xs p-2 focus:border-primary focus:outline-none font-body-md"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-mono-data text-muted-foreground uppercase block mb-1">
+                  Vincular a Grupo / Lista Compartilhada (Opcional)
+                </label>
+                <select
+                  value={formData.listId || ''}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, listId: e.target.value || undefined }))}
+                  className="w-full bg-background border border-input text-foreground text-xs p-2 focus:border-primary focus:outline-none font-mono-data"
+                >
+                  <option value="">(Nenhuma lista - Ação Individual)</option>
+                  {availableLists.map((l: any) => (
+                    <option key={l.id} value={l.id}>
+                      {l.group?.title ? `${l.group.title} › ${l.title}` : l.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 

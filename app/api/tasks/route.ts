@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
   const whoParam = searchParams.get('who');
   const categoryParam = searchParams.get('category');
   const statusParam = searchParams.get('status');
+  const listIdParam = searchParams.get('listId');
 
   const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
   const session = token ? verifySessionToken(token) : null;
@@ -102,6 +103,9 @@ export async function GET(req: NextRequest) {
     }
     if (statusParam && statusParam !== 'all') {
       whereClause.status = statusParam;
+    }
+    if (listIdParam) {
+      whereClause.listId = listIdParam;
     }
 
     const tasks = await prisma.task.findMany({
@@ -220,6 +224,7 @@ export async function POST(req: NextRequest) {
         departmentId,
         categoryId,
         assignedUserId,
+        listId: item.listId || null,
         createdById: item.createdById || session?.userId || null,
       };
     };

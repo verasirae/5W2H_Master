@@ -155,18 +155,97 @@ CREATE TABLE IF NOT EXISTS "Task" (
 -- Garantir colunas em Task caso a tabela já existisse
 ALTER TABLE "Task" ADD COLUMN IF NOT EXISTS "createdById" TEXT REFERENCES "User"("id") ON DELETE SET NULL;
 ALTER TABLE "Task" ADD COLUMN IF NOT EXISTS "assignedUserId" TEXT REFERENCES "User"("id") ON DELETE SET NULL;
+ALTER TABLE "Task" ADD COLUMN IF NOT EXISTS "listId" TEXT;
 
-CREATE INDEX IF NOT EXISTS "Task_department_idx" ON "Task"("department");
-CREATE INDEX IF NOT EXISTS "Task_category_idx" ON "Task"("category");
-CREATE INDEX IF NOT EXISTS "Task_status_idx" ON "Task"("status");
-CREATE INDEX IF NOT EXISTS "Task_deadlineDate_idx" ON "Task"("deadlineDate");
-CREATE INDEX IF NOT EXISTS "Task_competence_idx" ON "Task"("competence");
-CREATE INDEX IF NOT EXISTS "Task_who_idx" ON "Task"("who");
-CREATE INDEX IF NOT EXISTS "Task_priority_idx" ON "Task"("priority");
-CREATE INDEX IF NOT EXISTS "Task_createdById_idx" ON "Task"("createdById");
-CREATE INDEX IF NOT EXISTS "Task_assignedUserId_idx" ON "Task"("assignedUserId");
+-- 8. Tabela de Grupos de Tarefas
+CREATE TABLE IF NOT EXISTS "TaskGroup" (
+  "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "title" TEXT NOT NULL,
+  "description" TEXT,
+  "color" TEXT,
+  "ownerId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
--- 8. Tabela de Configurações de Workspace
+CREATE INDEX IF NOT EXISTS "TaskGroup_ownerId_idx" ON "TaskGroup"("ownerId");
+
+-- 9. Tabela de Listas de Tarefas (Pertence a um Grupo)
+CREATE TABLE IF NOT EXISTS "TaskList" (
+  "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "title" TEXT NOT NULL,
+  "description" TEXT,
+  "color" TEXT,
+  "groupId" TEXT NOT NULL REFERENCES "TaskGroup"("id") ON DELETE CASCADE,
+  "ownerId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS "TaskList_groupId_idx" ON "TaskList"("groupId");
+CREATE INDEX IF NOT EXISTS "TaskList_ownerId_idx" ON "TaskList"("ownerId");
+
+-- Chave estrangeira de Task -> TaskList
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints 
+    WHERE constraint_name = 'Task_listId_fkey'
+  ) THEN
+    ALTER TABLE "Task" ADD CONSTRAINT "Task_listId_fkey" FOREIGN KEY ("listId") REFERENCES "TaskList"("id") ON DELETE SET NULL;
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS "Task_listId_idx" ON "Task"("listId");
+
+-- 10. Membros da Lista (Proprietário e Membros Convidados que aceitaram)
+CREATE TABLE IF NOT EXISTS "TaskListMember" (
+  "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "listId" TEXT NOT NULL REFERENCES "TaskList"("id") ON DELETE CASCADE,
+  "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
+  "role" TEXT NOT NULL DEFAULT 'member', -- 'owner', 'member'
+  "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "TaskListMember_listId_userId_key" UNIQUE ("listId", "userId")
+);
+
+CREATE INDEX IF NOT EXISTS "TaskListMember_listId_idx" ON "TaskListMember"("listId");
+CREATE INDEX IF NOT EXISTS "TaskListMember_userId_idx" ON "TaskListMember"("userId");
+
+-- 11. Convites para Lista de Tarefas
+CREATE TABLE IF NOT EXISTS "TaskListInvite" (
+  "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "listId" TEXT NOT NULL REFERENCES "TaskList"("id") ON DELETE CASCADE,
+  "inviterId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
+  "inviteeId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
+  "status" TEXT NOT NULL DEFAULT 'pendente', -- 'pendente', 'aceito', 'recusado'
+  "message" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS "TaskListInvite_listId_idx" ON "TaskListInvite"("listId");
+CREATE INDEX IF NOT EXISTS "TaskListInvite_inviterId_idx" ON "TaskListInvite"("inviterId");
+CREATE INDEX IF NOT EXISTS "TaskListInvite_inviteeId_idx" ON "TaskListInvite"("inviteeId");
+CREATE INDEX IF NOT EXISTS "TaskListInvite_status_idx" ON "TaskListInvite"("status");
+
+-- 12. Notificações do Sistema e Convites
+CREATE TABLE IF NOT EXISTS "Notification" (
+  "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
+  "type" TEXT NOT NULL DEFAULT 'list_invite', -- 'list_invite', 'info', 'system'
+  "title" TEXT NOT NULL,
+  "message" TEXT NOT NULL,
+  "data" JSONB,
+  "isRead" BOOLEAN NOT NULL DEFAULT FALSE,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS "Notification_userId_idx" ON "Notification"("userId");
+CREATE INDEX IF NOT EXISTS "Notification_isRead_idx" ON "Notification"("isRead");
+CREATE INDEX IF NOT EXISTS "Notification_createdAt_idx" ON "Notification"("createdAt");
+
+-- 13. Tabela de Configurações de Workspace
 CREATE TABLE IF NOT EXISTS "WorkspaceConfig" (
   "id" TEXT PRIMARY KEY DEFAULT 'default',
   "workspaceName" TEXT NOT NULL DEFAULT '5W2H Gerenciamento de Rotinas',

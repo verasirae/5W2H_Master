@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPrisma, isDatabaseConfigured } from '@/lib/prisma';
+import { getPrisma, isDatabaseConfigured, ensureDatabaseSchema } from '@/lib/prisma';
 import {
   hashPassword,
   createSessionToken,
@@ -41,11 +41,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const prisma = getPrisma();
+    let prisma = getPrisma();
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email: cleanEmail },
-    });
+    let existingUser = null;
+    try {
+      existingUser = await prisma.user.findUnique({
+        where: { email: cleanEmail },
+      });
+    } catch (dbErr: any) {
+      if (dbErr?.message?.includes('does not exist') || dbErr?.message?.includes('relation')) {
+        await ensureDatabaseSchema();
+        prisma = getPrisma();
+        existingUser = await prisma.user.findUnique({
+          where: { email: cleanEmail },
+        });
+      } else {
+        throw dbErr;
+      }
+    }
 
     if (existingUser) {
       return NextResponse.json(
@@ -54,7 +67,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const isFirstUser = (await prisma.user.count()) === 0;
+    let isFirstUser = false;
+    try {
+      isFirstUser = (await prisma.user.count()) === 0;
+    } catch {
+      isFirstUser = false;
+    }
+
     const isMasterAdmin = cleanEmail === 'iraeveras@outlook.com.br' || cleanEmail === 'admin@5w2h.local';
     
     // First user or explicit admin email gets active admin, otherwise new users enter as 'pendente'

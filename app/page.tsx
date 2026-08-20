@@ -10,6 +10,7 @@ import { DashboardView } from '@/components/DashboardView';
 import { TaskTableView } from '@/components/TaskTableView';
 import { TaskCardsView } from '@/components/TaskCardsView';
 import { TaskKanbanView } from '@/components/TaskKanbanView';
+import { TaskGroupsView } from '@/components/TaskGroupsView';
 import { TeamMonitoringView } from '@/components/TeamMonitoringView';
 import { AiGeneratorView } from '@/components/AiGeneratorView';
 import { SettingsView } from '@/components/SettingsView';
@@ -178,6 +179,20 @@ export default function HomePage() {
                 changeTaskStatus={changeTaskStatus}
                 openCreateModal={openCreateModal}
                 isLoading={isLoading}
+              />
+            )}
+
+            {currentView === 'groups' && (
+              <TaskGroupsView
+                workspaceConfig={workspaceConfig}
+                allTasks={tasks}
+                openCreateTaskModal={openCreateModal}
+                openEditTaskModal={openEditModal}
+                openMatrixModal={openMatrixModal}
+                deleteTask={deleteTask}
+                changeTaskStatus={changeTaskStatus}
+                showToast={showToast}
+                onRefreshAllTasks={refreshTasks}
               />
             )}
 
