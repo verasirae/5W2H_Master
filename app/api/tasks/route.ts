@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPrisma, isDatabaseConfigured } from '@/lib/prisma';
+import { getPrisma, isDatabaseConfigured, isDatabaseTemporarilyUnreachable, markDatabaseUnreachable } from '@/lib/prisma';
 import {
   verifySessionToken,
   SESSION_COOKIE_NAME,
@@ -21,10 +21,10 @@ export async function GET(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
   const session = token ? verifySessionToken(token) : null;
 
-  if (!isDatabaseConfigured()) {
+  if (!isDatabaseConfigured() || isDatabaseTemporarilyUnreachable()) {
     return NextResponse.json({
       connected: false,
-      message: 'DATABASE_URL not configured. Running in client-storage mode.',
+      message: 'DATABASE_URL não configurada ou inacessível. Modo local ativo.',
       tasks: [],
     });
   }
@@ -134,6 +134,7 @@ export async function GET(req: NextRequest) {
       })),
     });
   } catch (error: any) {
+    markDatabaseUnreachable();
     return NextResponse.json(
       {
         connected: false,
@@ -149,9 +150,9 @@ export async function POST(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
   const session = token ? verifySessionToken(token) : null;
 
-  if (!isDatabaseConfigured()) {
+  if (!isDatabaseConfigured() || isDatabaseTemporarilyUnreachable()) {
     return NextResponse.json(
-      { connected: false, message: 'DATABASE_URL not configured.' },
+      { connected: false, message: 'DATABASE_URL not configured or offline.' },
       { status: 200 }
     );
   }
@@ -265,9 +266,10 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
+    markDatabaseUnreachable();
     return NextResponse.json(
       { success: false, error: error.message || 'Erro ao salvar tarefa no banco' },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }
@@ -280,7 +282,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'ID da tarefa é obrigatório.' }, { status: 400 });
   }
 
-  if (!isDatabaseConfigured()) {
+  if (!isDatabaseConfigured() || isDatabaseTemporarilyUnreachable()) {
     return NextResponse.json({ success: true, message: 'Tarefa deletada no modo local.' });
   }
 
@@ -292,6 +294,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Tarefa excluída do banco com sucesso.' });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    markDatabaseUnreachable();
+    return NextResponse.json({ success: true, message: 'Tarefa deletada localmente.' });
   }
 }

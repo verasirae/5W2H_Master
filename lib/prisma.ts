@@ -55,12 +55,35 @@ function hashSeedPassword(password: string): string {
   return `${salt}:${hash}`;
 }
 
+let lastDbFailureTime = 0;
+const DB_RETRY_INTERVAL_MS = 30000; // 30s cache for failed connection attempts
+
+export function markDatabaseUnreachable() {
+  lastDbFailureTime = Date.now();
+}
+
+export function isDatabaseTemporarilyUnreachable(): boolean {
+  if (lastDbFailureTime === 0) return false;
+  if (Date.now() - lastDbFailureTime < DB_RETRY_INTERVAL_MS) {
+    return true;
+  }
+  return false;
+}
+
+export function resetDatabaseReachability() {
+  lastDbFailureTime = 0;
+  global.schemaEnsuredGlobal = false;
+  global.prismaGlobal = undefined;
+  global.pgPoolGlobal = undefined;
+}
+
 /**
  * Ensures all PostgreSQL database tables, relations, and initial admin users exist.
  * Runs idempotently (using CREATE TABLE IF NOT EXISTS / ALTER TABLE ADD COLUMN IF NOT EXISTS).
  */
 export async function ensureDatabaseSchema(): Promise<boolean> {
   if (!isDatabaseConfigured()) return false;
+  if (isDatabaseTemporarilyUnreachable()) return false;
   if (global.schemaEnsuredGlobal) return true;
 
   const connectionString = getSanitizedDatabaseUrl();
@@ -70,7 +93,7 @@ export async function ensureDatabaseSchema(): Promise<boolean> {
   const pool = new Pool({
     connectionString,
     ssl: isLocal ? false : { rejectUnauthorized: false },
-    connectionTimeoutMillis: 8000,
+    connectionTimeoutMillis: 3000,
   });
 
   try {
@@ -121,9 +144,20 @@ export async function ensureDatabaseSchema(): Promise<boolean> {
     `).catch(() => {});
 
     global.schemaEnsuredGlobal = true;
+    lastDbFailureTime = 0;
     return true;
   } catch (err: any) {
-    console.error('ensureDatabaseSchema error:', err?.message || err);
+    const isConnRefused =
+      err?.code === 'ECONNREFUSED' ||
+      err?.message?.includes('ECONNREFUSED') ||
+      err?.message?.includes('connect ECONNREFUSED') ||
+      err?.message?.includes('ETIMEDOUT');
+
+    if (isConnRefused) {
+      markDatabaseUnreachable();
+    } else {
+      console.warn('ensureDatabaseSchema notice:', err?.message || err);
+    }
     return false;
   } finally {
     try {

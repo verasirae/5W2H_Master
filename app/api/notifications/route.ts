@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPrisma, isDatabaseConfigured } from '@/lib/prisma';
+import { getPrisma, isDatabaseConfigured, markDatabaseUnreachable, isDatabaseTemporarilyUnreachable } from '@/lib/prisma';
 import { verifySessionToken, SESSION_COOKIE_NAME } from '@/lib/auth/session';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Não autenticado' }, { status: 401 });
   }
 
-  if (!isDatabaseConfigured()) {
+  if (!isDatabaseConfigured() || isDatabaseTemporarilyUnreachable()) {
     return NextResponse.json({
       success: true,
       notifications: [],
@@ -69,7 +69,14 @@ export async function GET(req: NextRequest) {
       pendingInvitesCount: pendingInvites.length,
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    markDatabaseUnreachable();
+    return NextResponse.json({
+      success: true,
+      notifications: [],
+      pendingInvites: [],
+      unreadCount: 0,
+      pendingInvitesCount: 0,
+    });
   }
 }
 
@@ -87,7 +94,7 @@ export async function PUT(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const { notificationId, markAll } = body;
 
-    if (!isDatabaseConfigured()) {
+    if (!isDatabaseConfigured() || isDatabaseTemporarilyUnreachable()) {
       return NextResponse.json({ success: true, message: 'Notificações marcadas como lidas' });
     }
 
@@ -107,7 +114,8 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Atualizado com sucesso' });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    markDatabaseUnreachable();
+    return NextResponse.json({ success: true, message: 'Atualizado' });
   }
 }
 
@@ -128,7 +136,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'ID da notificação é obrigatório' }, { status: 400 });
   }
 
-  if (!isDatabaseConfigured()) {
+  if (!isDatabaseConfigured() || isDatabaseTemporarilyUnreachable()) {
     return NextResponse.json({ success: true, message: 'Notificação excluída' });
   }
 
@@ -140,6 +148,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Notificação removida' });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    markDatabaseUnreachable();
+    return NextResponse.json({ success: true, message: 'Notificação removida' });
   }
 }

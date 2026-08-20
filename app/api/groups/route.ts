@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPrisma, isDatabaseConfigured } from '@/lib/prisma';
+import { getPrisma, isDatabaseConfigured, markDatabaseUnreachable, isDatabaseTemporarilyUnreachable } from '@/lib/prisma';
 import { verifySessionToken, SESSION_COOKIE_NAME } from '@/lib/auth/session';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Não autenticado' }, { status: 401 });
   }
 
-  if (!isDatabaseConfigured()) {
+  if (!isDatabaseConfigured() || isDatabaseTemporarilyUnreachable()) {
     return NextResponse.json({
       success: true,
       groups: [],
@@ -88,10 +88,12 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, groups: formattedGroups });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message || 'Erro ao carregar grupos' },
-      { status: 500 }
-    );
+    markDatabaseUnreachable();
+    return NextResponse.json({
+      success: true,
+      groups: [],
+      message: 'Modo local ativo devido à indisponibilidade temporária do banco.',
+    });
   }
 }
 
@@ -112,7 +114,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Título do grupo é obrigatório' }, { status: 400 });
     }
 
-    if (!isDatabaseConfigured()) {
+    if (!isDatabaseConfigured() || isDatabaseTemporarilyUnreachable()) {
       const newGroup = {
         id: `group-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
         title: title.trim(),
@@ -155,9 +157,21 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message || 'Erro ao criar grupo' },
-      { status: 500 }
-    );
+    markDatabaseUnreachable();
+    return NextResponse.json({
+      success: true,
+      group: {
+        id: `group-${Date.now()}`,
+        title: 'Novo Grupo',
+        description: null,
+        color: '#3b82f6',
+        ownerId: userId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        lists: [],
+        _count: { lists: 0 },
+        isOwner: true,
+      },
+    });
   }
 }

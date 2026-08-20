@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getPrisma, isDatabaseConfigured } from '@/lib/prisma';
+import { getPrisma, isDatabaseConfigured, isDatabaseTemporarilyUnreachable, markDatabaseUnreachable } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const configured = isDatabaseConfigured();
+  const configured = isDatabaseConfigured() && !isDatabaseTemporarilyUnreachable();
 
   if (!configured) {
     return NextResponse.json({
@@ -12,7 +12,7 @@ export async function GET() {
       provider: 'postgresql-local',
       orm: 'prisma-v7',
       connected: false,
-      message: 'DATABASE_URL environment variable is not defined.',
+      message: 'DATABASE_URL não configurada ou inacessível no ambiente. Operando com armazenamento local.',
     });
   }
 
@@ -29,12 +29,14 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
+    markDatabaseUnreachable();
     return NextResponse.json(
       {
-        status: 'error',
+        status: 'offline',
         provider: 'postgresql-local',
         orm: 'prisma-v7',
         connected: false,
+        message: 'Servidor de banco de dados offline ou inacessível.',
         error: error.message || 'Connection failed',
       },
       { status: 200 }
