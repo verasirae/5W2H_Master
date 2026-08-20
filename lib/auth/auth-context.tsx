@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { safeFetchJson } from '@/lib/utils';
 
 export type UserRole = 'admin' | 'gestor' | 'membro';
 export type UserStatus = 'pendente' | 'ativo' | 'inativo';
@@ -59,18 +60,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshSession = useCallback(async () => {
     try {
       const res = await fetch('/api/auth/me', { cache: 'no-store' });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.authenticated && data.user) {
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
+      const { ok, data } = await safeFetchJson(res);
+      if (ok && data?.authenticated && data.user) {
+        setUser(data.user);
       } else {
         setUser(null);
       }
-    } catch (e) {
-      console.error('Error fetching current session:', e);
+    } catch {
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -79,26 +75,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
-    fetch('/api/auth/me', { cache: 'no-store' })
-      .then((res) => (res.ok ? res.json() : { authenticated: false, user: null }))
-      .then((data) => {
+    const initSession = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { cache: 'no-store' });
+        const { ok, data } = await safeFetchJson(res);
         if (!isMounted) return;
-        if (data.authenticated && data.user) {
+        if (ok && data?.authenticated && data.user) {
           setUser(data.user);
         } else {
           setUser(null);
         }
-      })
-      .catch((e) => {
+      } catch {
         if (!isMounted) return;
-        console.error('Error fetching current session:', e);
         setUser(null);
-      })
-      .finally(() => {
+      } finally {
         if (isMounted) {
           setIsLoading(false);
         }
-      });
+      }
+    };
+
+    initSession();
 
     return () => {
       isMounted = false;
@@ -129,14 +126,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
-      if (res.ok && data.success && data.user) {
+      const { ok, data, error } = await safeFetchJson(res);
+      if (ok && data?.success && data.user) {
         setUser(data.user);
         return { success: true, user: data.user };
       }
-      return { success: false, error: data.error || 'Credenciais inválidas' };
+      return { success: false, error: data?.error || error || 'Credenciais inválidas' };
     } catch (e: any) {
-      return { success: false, error: e.message || 'Erro ao conectar ao servidor' };
+      return { success: false, error: e?.message || 'Erro ao conectar ao servidor' };
     }
   };
 
@@ -147,25 +144,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, name }),
       });
-      const data = await res.json();
-      if (res.ok && data.success && data.user) {
+      const { ok, data, error } = await safeFetchJson(res);
+      if (ok && data?.success && data.user) {
         setUser(data.user);
         return { success: true, user: data.user };
       }
-      return { success: false, error: data.error || 'Erro ao criar conta' };
+      return { success: false, error: data?.error || error || 'Erro ao criar conta' };
     } catch (e: any) {
-      return { success: false, error: e.message || 'Erro ao conectar ao servidor' };
+      return { success: false, error: e?.message || 'Erro ao conectar ao servidor' };
     }
   };
 
   const signInWithGoogle = async () => {
     try {
       const res = await fetch('/api/auth/google/url');
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Falha ao obter URL de autenticação do Google');
+      const { ok, data, error } = await safeFetchJson(res);
+      if (!ok || !data?.url) {
+        throw new Error(data?.error || error || 'Falha ao obter URL de autenticação do Google');
       }
-      const { url } = await res.json();
+      const url = data.url;
       
       const authWindow = window.open(
         url,
@@ -190,14 +187,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ targetUserId }),
       });
-      const data = await res.json();
-      if (res.ok && data.success && data.user) {
+      const { ok, data, error } = await safeFetchJson(res);
+      if (ok && data?.success && data.user) {
         setUser(data.user);
         return { success: true };
       }
-      return { success: false, error: data.error || 'Falha ao impersonar usuário' };
+      return { success: false, error: data?.error || error || 'Falha ao impersonar usuário' };
     } catch (err: any) {
-      return { success: false, error: err.message || 'Erro ao conectar ao servidor' };
+      return { success: false, error: err?.message || 'Erro ao conectar ao servidor' };
     }
   };
 
@@ -207,14 +204,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
-      const data = await res.json();
-      if (res.ok && data.success && data.user) {
+      const { ok, data, error } = await safeFetchJson(res);
+      if (ok && data?.success && data.user) {
         setUser(data.user);
         return { success: true };
       }
-      return { success: false, error: data.error || 'Falha ao encerrar impersonação' };
+      return { success: false, error: data?.error || error || 'Falha ao encerrar impersonação' };
     } catch (err: any) {
-      return { success: false, error: err.message || 'Erro ao conectar ao servidor' };
+      return { success: false, error: err?.message || 'Erro ao conectar ao servidor' };
     }
   };
 

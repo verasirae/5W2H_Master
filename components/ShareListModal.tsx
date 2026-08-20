@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { TaskList, TaskListMember, TaskListInvite } from '@/types/5w2h';
 import { useAuth } from '@/lib/auth/auth-context';
+import { safeFetchJson } from '@/lib/utils';
 import {
   X,
   Users,
@@ -73,16 +74,16 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
         fetch(`/api/lists/${targetListId}/members`),
         fetch('/api/users'),
       ]);
-      const [membersJson, usersJson] = await Promise.all([
-        membersRes.json().catch(() => ({ success: false })),
-        usersRes.json().catch(() => ({ users: [] })),
+      const [membersResult, usersResult] = await Promise.all([
+        safeFetchJson(membersRes),
+        safeFetchJson(usersRes),
       ]);
-      if (membersJson?.success) {
-        setMembers(membersJson.members || []);
-        setInvites(membersJson.invites || []);
+      if (membersResult.ok && membersResult.data?.success) {
+        setMembers(membersResult.data.members || []);
+        setInvites(membersResult.data.invites || []);
       }
-      if (Array.isArray(usersJson?.users)) {
-        setSystemUsers(usersJson.users);
+      if (usersResult.ok && Array.isArray(usersResult.data?.users)) {
+        setSystemUsers(usersResult.data.users);
       }
     } catch (err: any) {
       console.error('Erro ao recarregar dados de compartilhamento:', err);
@@ -105,17 +106,17 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
     let isMounted = true;
 
     Promise.all([
-      fetch(`/api/lists/${listId}/members`).then((r) => r.json()).catch(() => ({ success: false })),
-      fetch('/api/users').then((r) => r.json()).catch(() => ({ users: [] })),
+      fetch(`/api/lists/${listId}/members`).then(safeFetchJson),
+      fetch('/api/users').then(safeFetchJson),
     ])
-      .then(([membersJson, usersJson]) => {
+      .then(([membersResult, usersResult]) => {
         if (!isMounted) return;
-        if (membersJson?.success) {
-          setMembers(membersJson.members || []);
-          setInvites(membersJson.invites || []);
+        if (membersResult.ok && membersResult.data?.success) {
+          setMembers(membersResult.data.members || []);
+          setInvites(membersResult.data.invites || []);
         }
-        if (Array.isArray(usersJson?.users)) {
-          setSystemUsers(usersJson.users);
+        if (usersResult.ok && Array.isArray(usersResult.data?.users)) {
+          setSystemUsers(usersResult.data.users);
         }
         setIsLoadingData(false);
       })

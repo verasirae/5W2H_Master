@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { ViewMode } from '@/hooks/use5w2h';
 import { Task5W2H, WorkspaceConfig } from '@/types/5w2h';
 import { exportTasksToExcel } from '@/lib/5w2h-utils';
+import { safeFetchJson } from '@/lib/utils';
 import {
   Search,
   Bell,
@@ -62,14 +63,29 @@ export const Header: React.FC<HeaderProps> = ({
   const [isRespondingInvite, setIsRespondingInvite] = useState<string | null>(null);
 
   // Fetch notifications
-  React.useEffect(() => {
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await fetch('/api/notifications');
+      const { ok, data } = await safeFetchJson(res);
+      if (ok && data?.success) {
+        setNotifications(data.notifications || []);
+        setPendingInvites(data.pendingInvites || []);
+        setUnreadNotificationsCount(data.unreadCount || 0);
+      }
+    } catch (e) {
+      console.error('Erro ao buscar notificações:', e);
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (!user) return;
     let isMounted = true;
-    const fetchNotifs = async () => {
+    const loadNotifs = async () => {
       try {
         const res = await fetch('/api/notifications');
-        const data = await res.json();
-        if (isMounted && data.success) {
+        const { ok, data } = await safeFetchJson(res);
+        if (isMounted && ok && data?.success) {
           setNotifications(data.notifications || []);
           setPendingInvites(data.pendingInvites || []);
           setUnreadNotificationsCount(data.unreadCount || 0);
@@ -78,8 +94,8 @@ export const Header: React.FC<HeaderProps> = ({
         console.error('Erro ao buscar notificações:', e);
       }
     };
-    fetchNotifs();
-    const interval = setInterval(fetchNotifs, 10000); // 10s poll
+    loadNotifs();
+    const interval = setInterval(loadNotifs, 10000); // 10s poll
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -94,8 +110,8 @@ export const Header: React.FC<HeaderProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       });
-      const data = await res.json();
-      if (data.success) {
+      const { ok, data, error } = await safeFetchJson(res);
+      if (ok && data?.success) {
         if (action === 'accept') {
           showToast('success', 'Convite Aceito!', `Você agora faz parte da lista compartilhada "${listTitle}".`);
           setCurrentView('groups');
@@ -105,10 +121,10 @@ export const Header: React.FC<HeaderProps> = ({
         fetchNotifications();
         if (onRefresh) onRefresh();
       } else {
-        showToast('error', 'Erro', data.error || 'Não foi possível responder ao convite.');
+        showToast('error', 'Erro', data?.error || error || 'Não foi possível responder ao convite.');
       }
     } catch (err: any) {
-      showToast('error', 'Erro', err.message);
+      showToast('error', 'Erro', err?.message || 'Falha na requisição');
     } finally {
       setIsRespondingInvite(null);
     }

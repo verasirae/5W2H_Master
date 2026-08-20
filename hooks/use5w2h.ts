@@ -12,6 +12,7 @@ import {
   generateUniqueTaskId,
   deduplicateTaskIds,
 } from '@/lib/5w2h-utils';
+import { safeFetchJson } from '@/lib/utils';
 
 const STORAGE_KEY_TASKS = '5w2h_master_tasks_v1';
 const STORAGE_KEY_CONFIG = '5w2h_master_config_v1';
@@ -96,11 +97,9 @@ export function use5W2H() {
   const refreshUsers = useCallback(async () => {
     try {
       const res = await fetch('/api/users');
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.users)) {
-          setUsersList(data.users);
-        }
+      const { ok, data } = await safeFetchJson(res);
+      if (ok && data && Array.isArray(data.users)) {
+        setUsersList(data.users);
       }
     } catch (e) {
       console.warn('Could not fetch users list from database:', e);
@@ -143,8 +142,8 @@ export function use5W2H() {
     try {
       // 1. Fetch real tasks from PostgreSQL /api/tasks
       const res = await fetch('/api/tasks');
-      if (res.ok) {
-        const data = await res.json();
+      const { ok, data } = await safeFetchJson(res);
+      if (ok && data) {
         if (data.connected) {
           setDbStatus({
             connected: true,
@@ -161,18 +160,16 @@ export function use5W2H() {
 
       // 2. Fetch workspace settings & real departments from database
       const settingRes = await fetch('/api/settings');
-      if (settingRes.ok) {
-        const settingData = await settingRes.json();
-        if (settingData.config) {
-          setWorkspaceConfig(settingData.config);
-        }
+      const { ok: settingOk, data: settingData } = await safeFetchJson(settingRes);
+      if (settingOk && settingData?.config) {
+        setWorkspaceConfig(settingData.config);
       }
 
       // 3. Fetch real users list
       await refreshUsers();
     } catch (err: any) {
       console.warn('Could not sync with PostgreSQL backend:', err);
-      setDbStatus({ connected: false, checked: true, message: err.message });
+      setDbStatus({ connected: false, checked: true, message: err?.message });
     } finally {
       setIsSyncing(false);
       setIsLoading(false);
