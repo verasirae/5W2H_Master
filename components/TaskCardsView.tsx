@@ -11,6 +11,8 @@ import {
   Edit2,
   Trash2,
   Plus,
+  Archive,
+  ArchiveRestore,
 } from 'lucide-react';
 
 import { Skeleton } from '@/components/ui/skeleton';
@@ -32,6 +34,7 @@ export const TaskCardsView: React.FC<TaskCardsViewProps> = ({
   openEditModal,
   openMatrixModal,
   deleteTask,
+  changeTaskStatus,
   openCreateModal,
   isLoading = false,
 }) => {
@@ -246,6 +249,23 @@ export const TaskCardsView: React.FC<TaskCardsViewProps> = ({
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
+                    {t.status === 'Arquivado' ? (
+                      <button
+                        onClick={() => changeTaskStatus(t.id, 'Em andamento')}
+                        title="Desarquivar"
+                        className="p-1.5 bg-background border border-border hover:border-amber-500 text-muted-foreground hover:text-amber-500 transition-colors cursor-pointer rounded-md"
+                      >
+                        <ArchiveRestore className="w-3.5 h-3.5" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => changeTaskStatus(t.id, 'Arquivado')}
+                        title="Arquivar"
+                        className="p-1.5 bg-background border border-border hover:border-amber-500 text-muted-foreground hover:text-amber-500 transition-colors cursor-pointer rounded-md"
+                      >
+                        <Archive className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         if (confirm(`Deseja excluir "${t.title}"?`)) {

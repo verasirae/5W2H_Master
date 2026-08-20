@@ -36,7 +36,7 @@ export const GroupFormModal: React.FC<GroupFormModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [prevOpen, setPrevOpen] = useState(false);
-  const [prevGroup, setPrevGroup] = useState<TaskGroup | null>(null);
+  const [prevGroup, setPrevGroup] = useState<TaskGroup | null | undefined>(null);
 
   if (isOpen !== prevOpen || groupToEdit !== prevGroup) {
     setPrevOpen(isOpen);

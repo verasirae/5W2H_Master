@@ -88,8 +88,8 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           startDate: editingTask.startDate || todayStr,
           deadlineDate: editingTask.deadlineDate || todayStr,
           who: editingTask.who || '',
-          assignedUserId: editingTask.assignedUserId,
-          listId: editingTask.listId,
+          assignedUserId: editingTask.assignedUserId || undefined,
+          listId: editingTask.listId || undefined,
           how: editingTask.how || '',
           howMuch: editingTask.howMuch || 0,
           department: editingTask.department || workspaceConfig.departments[0] || 'RH/DP',
@@ -452,6 +452,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   <option value="Concluído">Concluído</option>
                   <option value="Atrasado">Atrasado</option>
                   <option value="Cancelado">Cancelado</option>
+                  <option value="Arquivado">Arquivado</option>
                 </select>
               </div>
 

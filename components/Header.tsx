@@ -50,6 +50,9 @@ export const Header: React.FC<HeaderProps> = ({
   showToast,
   isSidebarExpanded,
   setIsSidebarExpanded,
+  isSyncing,
+  dbStatus,
+  onRefresh,
 }) => {
   const { user, getUserDisplayName, getUserInitials, signOut } = useAuth();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);

@@ -36,6 +36,7 @@ interface SystemUser {
   role: string;
   department: string | null;
   jobTitle: string | null;
+  status?: string | null;
 }
 
 export const ShareListModal: React.FC<ShareListModalProps> = ({

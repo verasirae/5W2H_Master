@@ -11,8 +11,8 @@ import {
   DEFAULT_WORKSPACE_CONFIG,
   generateUniqueTaskId,
   deduplicateTaskIds,
+  calculateTaskDeadlineInfo,
 } from '@/lib/5w2h-utils';
-import { safeFetchJson } from '@/lib/utils';
 
 const STORAGE_KEY_TASKS = '5w2h_master_tasks_v1';
 const STORAGE_KEY_CONFIG = '5w2h_master_config_v1';
@@ -81,6 +81,7 @@ export function use5W2H() {
     priority: 'Todas',
     who: 'Todos',
     deadlineSituation: 'Todas',
+    scope: 'active',
   });
 
   const hasHydratedFromStorage = useRef(false);
@@ -97,9 +98,11 @@ export function use5W2H() {
   const refreshUsers = useCallback(async () => {
     try {
       const res = await fetch('/api/users');
-      const { ok, data } = await safeFetchJson(res);
-      if (ok && data && Array.isArray(data.users)) {
-        setUsersList(data.users);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.users)) {
+          setUsersList(data.users);
+        }
       }
     } catch (e) {
       console.warn('Could not fetch users list from database:', e);
@@ -142,8 +145,8 @@ export function use5W2H() {
     try {
       // 1. Fetch real tasks from PostgreSQL /api/tasks
       const res = await fetch('/api/tasks');
-      const { ok, data } = await safeFetchJson(res);
-      if (ok && data) {
+      if (res.ok) {
+        const data = await res.json();
         if (data.connected) {
           setDbStatus({
             connected: true,
@@ -160,16 +163,18 @@ export function use5W2H() {
 
       // 2. Fetch workspace settings & real departments from database
       const settingRes = await fetch('/api/settings');
-      const { ok: settingOk, data: settingData } = await safeFetchJson(settingRes);
-      if (settingOk && settingData?.config) {
-        setWorkspaceConfig(settingData.config);
+      if (settingRes.ok) {
+        const settingData = await settingRes.json();
+        if (settingData.config) {
+          setWorkspaceConfig(settingData.config);
+        }
       }
 
       // 3. Fetch real users list
       await refreshUsers();
     } catch (err: any) {
       console.warn('Could not sync with PostgreSQL backend:', err);
-      setDbStatus({ connected: false, checked: true, message: err?.message });
+      setDbStatus({ connected: false, checked: true, message: err.message });
     } finally {
       setIsSyncing(false);
       setIsLoading(false);
@@ -414,6 +419,20 @@ export function use5W2H() {
     [showToast]
   );
 
+  const archiveTask = useCallback(
+    (id: string) => {
+      changeTaskStatus(id, 'Arquivado');
+    },
+    [changeTaskStatus]
+  );
+
+  const unarchiveTask = useCallback(
+    (id: string) => {
+      changeTaskStatus(id, 'Em andamento');
+    },
+    [changeTaskStatus]
+  );
+
   const syncTasksToDatabase = useCallback(async () => {
     setIsSyncing(true);
     try {
@@ -470,7 +489,29 @@ export function use5W2H() {
 
   // Filtered Tasks
   const filteredTasks = useMemo(() => {
+    const scope = filters.scope || 'active';
+
     return tasks.filter((t) => {
+      // Active vs Archived Scope filtering
+      if (filters.status === 'Arquivado') {
+        // If user specifically filtered by status="Arquivado", allow it
+        if (t.status !== 'Arquivado') return false;
+      } else if (filters.status === 'Todos') {
+        if (scope === 'active' && t.status === 'Arquivado') {
+          return false;
+        } else if (scope === 'archived' && t.status !== 'Arquivado') {
+          return false;
+        }
+      } else {
+        // Specific non-archived status filter (e.g. 'Em andamento')
+        if (scope === 'archived' && t.status !== 'Arquivado') {
+          return false;
+        }
+        if (t.status !== filters.status) {
+          return false;
+        }
+      }
+
       // Search Query
       if (filters.searchQuery.trim()) {
         const query = filters.searchQuery.toLowerCase();
@@ -499,11 +540,6 @@ export function use5W2H() {
         return false;
       }
 
-      // Status
-      if (filters.status !== 'Todos' && t.status !== filters.status) {
-        return false;
-      }
-
       // Priority
       if (filters.priority !== 'Todas' && t.priority !== filters.priority) {
         return false;
@@ -514,9 +550,17 @@ export function use5W2H() {
         return false;
       }
 
+      // Deadline Situation
+      if (filters.deadlineSituation !== 'Todas') {
+        const calc = calculateTaskDeadlineInfo(t.deadlineDate, t.status, workspaceConfig.attentionThresholdDays);
+        if (calc.deadlineSituation !== filters.deadlineSituation) {
+          return false;
+        }
+      }
+
       return true;
     });
-  }, [tasks, filters]);
+  }, [tasks, filters, workspaceConfig.attentionThresholdDays]);
 
   return {
     tasks,
@@ -549,6 +593,8 @@ export function use5W2H() {
     updateTask,
     deleteTask,
     changeTaskStatus,
+    archiveTask,
+    unarchiveTask,
     isMatrixModalOpen,
     setIsMatrixModalOpen,
     inspectingTask,
@@ -569,6 +615,7 @@ export function use5W2H() {
         priority: 'Todas',
         who: 'Todos',
         deadlineSituation: 'Todas',
+        scope: 'active',
       });
     },
     isLoading,

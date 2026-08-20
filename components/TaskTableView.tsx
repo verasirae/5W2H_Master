@@ -12,6 +12,8 @@ import {
   ChevronRight,
   AlertCircle,
   Plus,
+  Archive,
+  ArchiveRestore,
 } from 'lucide-react';
 
 import { Skeleton } from '@/components/ui/skeleton';
@@ -305,6 +307,7 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({
                           <option value="Concluído" className="bg-popover text-foreground">Concluído</option>
                           <option value="Atrasado" className="bg-popover text-foreground">Atrasado</option>
                           <option value="Cancelado" className="bg-popover text-foreground">Cancelado</option>
+                          <option value="Arquivado" className="bg-popover text-foreground">Arquivado</option>
                         </select>
                         <div className="w-24 bg-muted h-1.5 border border-border">
                           <div
@@ -313,6 +316,8 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({
                                 ? 'bg-primary'
                                 : t.status === 'Atrasado'
                                 ? 'bg-destructive'
+                                : t.status === 'Arquivado'
+                                ? 'bg-zinc-500'
                                 : 'bg-info'
                             }`}
                             style={{ width: `${t.progressPercent}%` }}
@@ -343,6 +348,23 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
+                        {t.status === 'Arquivado' ? (
+                          <button
+                            onClick={() => changeTaskStatus(t.id, 'Em andamento')}
+                            title="Desarquivar Tarefa"
+                            className="p-1 hover:bg-muted text-muted-foreground hover:text-amber-500 transition-colors cursor-pointer"
+                          >
+                            <ArchiveRestore className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => changeTaskStatus(t.id, 'Arquivado')}
+                            title="Arquivar Tarefa"
+                            className="p-1 hover:bg-muted text-muted-foreground hover:text-amber-500 transition-colors cursor-pointer"
+                          >
+                            <Archive className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             if (confirm(`Deseja excluir a tarefa "${t.title}"?`)) {

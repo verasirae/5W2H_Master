@@ -40,7 +40,7 @@ export const ListFormModal: React.FC<ListFormModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [prevOpen, setPrevOpen] = useState(false);
-  const [prevList, setPrevList] = useState<TaskList | null>(null);
+  const [prevList, setPrevList] = useState<TaskList | null | undefined>(null);
 
   if (isOpen !== prevOpen || listToEdit !== prevList) {
     setPrevOpen(isOpen);

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { FilterState } from '@/types/5w2h';
-import { Filter, RotateCcw, ChevronDown, SlidersHorizontal, X } from 'lucide-react';
+import { Filter, RotateCcw, ChevronDown, SlidersHorizontal, X, Archive, Inbox, Layers } from 'lucide-react';
 
 interface FiltersBarProps {
   filters: FilterState;
@@ -125,6 +125,46 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
             </button>
           </div>
 
+          {/* Mobile Scope Tabs */}
+          <div className="flex items-center bg-background border border-border rounded-md p-1 gap-1 font-mono-data mb-3">
+            <button
+              type="button"
+              onClick={() => setFilters((prev) => ({ ...prev, scope: 'active', status: prev.status === 'Arquivado' ? 'Todos' : prev.status }))}
+              className={`flex-1 flex items-center justify-center gap-1 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
+                (filters.scope || 'active') === 'active'
+                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              <Inbox className="w-3 h-3" />
+              <span>Ativas</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilters((prev) => ({ ...prev, scope: 'archived', status: 'Todos' }))}
+              className={`flex-1 flex items-center justify-center gap-1 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
+                filters.scope === 'archived'
+                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              <Archive className="w-3 h-3" />
+              <span>Arquivadas</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilters((prev) => ({ ...prev, scope: 'all' }))}
+              className={`flex-1 flex items-center justify-center gap-1 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
+                filters.scope === 'all'
+                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              <Layers className="w-3 h-3" />
+              <span>Todas</span>
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
             {/* Department */}
             <div className="flex flex-col gap-1 bg-background border border-border rounded-md px-2.5 py-1.5">
@@ -199,6 +239,7 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
                 <option value="Concluído" className="bg-popover text-foreground">Concluído</option>
                 <option value="Atrasado" className="bg-popover text-foreground">Atrasado</option>
                 <option value="Cancelado" className="bg-popover text-foreground">Cancelado</option>
+                <option value="Arquivado" className="bg-popover text-foreground">Arquivado</option>
               </select>
             </div>
 
@@ -266,6 +307,49 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
         ========================================================================
       */}
       <section className="hidden lg:flex ml-1 md:ml-2 mr-3 md:mr-4 mb-2 bg-card border border-border px-3.5 py-2 flex-wrap items-center gap-3 text-xs shrink-0 shadow-sm rounded-md">
+        {/* Scope Tabs: Ativas / Arquivadas / Todas */}
+        <div className="flex items-center bg-background border border-border rounded-md p-0.5 gap-0.5 font-mono-data">
+          <button
+            type="button"
+            onClick={() => setFilters((prev) => ({ ...prev, scope: 'active', status: prev.status === 'Arquivado' ? 'Todos' : prev.status }))}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
+              (filters.scope || 'active') === 'active'
+                ? 'bg-primary text-primary-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
+            title="Exibir tarefas ativas"
+          >
+            <Inbox className="w-3 h-3" />
+            <span>Ativas</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilters((prev) => ({ ...prev, scope: 'archived', status: 'Todos' }))}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
+              filters.scope === 'archived'
+                ? 'bg-primary text-primary-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
+            title="Exibir tarefas arquivadas"
+          >
+            <Archive className="w-3 h-3" />
+            <span>Arquivadas</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilters((prev) => ({ ...prev, scope: 'all' }))}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
+              filters.scope === 'all'
+                ? 'bg-primary text-primary-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
+            title="Exibir todas as tarefas (ativas e arquivadas)"
+          >
+            <Layers className="w-3 h-3" />
+            <span>Todas</span>
+          </button>
+        </div>
+
         {/* Label */}
         <div className="flex items-center gap-1.5 text-muted-foreground font-medium uppercase tracking-wider pr-2 border-r border-border font-mono-data">
           <Filter className="w-3.5 h-3.5 text-primary" />
@@ -343,6 +427,7 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
             <option value="Concluído" className="bg-popover text-foreground">Concluído</option>
             <option value="Atrasado" className="bg-popover text-foreground">Atrasado</option>
             <option value="Cancelado" className="bg-popover text-foreground">Cancelado</option>
+            <option value="Arquivado" className="bg-popover text-foreground">Arquivado</option>
           </select>
         </div>
 

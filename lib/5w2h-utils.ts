@@ -189,6 +189,9 @@ export function calculateTaskDeadlineInfo(
   if (status === 'Cancelado') {
     return { daysRemaining: 0, deadlineSituation: 'Cancelado' };
   }
+  if (status === 'Arquivado') {
+    return { daysRemaining: 0, deadlineSituation: 'Arquivado' };
+  }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -216,6 +219,8 @@ export function getStatusColor(status: string): string {
       return 'bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/30';
     case 'Atrasado':
       return 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30';
+    case 'Arquivado':
+      return 'bg-zinc-500/15 text-zinc-500 dark:text-zinc-400 border-zinc-500/30';
     case 'Cancelado':
       return 'bg-muted text-muted-foreground border-border line-through';
     case 'Não iniciado':

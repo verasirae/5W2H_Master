@@ -1,8 +1,8 @@
 export type TaskPriority = 'Baixa' | 'Média' | 'Alta' | 'Urgente';
 
-export type TaskStatus = 'Não iniciado' | 'Em andamento' | 'Concluído' | 'Atrasado' | 'Cancelado';
+export type TaskStatus = 'Não iniciado' | 'Em andamento' | 'Concluído' | 'Atrasado' | 'Cancelado' | 'Arquivado';
 
-export type DeadlineSituation = 'No Prazo' | 'Atenção' | 'Atrasado' | 'Concluído' | 'Cancelado';
+export type DeadlineSituation = 'No Prazo' | 'Atenção' | 'Atrasado' | 'Concluído' | 'Cancelado' | 'Arquivado';
 
 export type UserRole = 'admin' | 'gestor' | 'membro';
 export type UserStatus = 'pendente' | 'ativo' | 'inativo';
@@ -194,6 +194,7 @@ export interface FilterState {
   priority: string;       // 'Todas' or specific
   who: string;            // 'Todos' or specific
   deadlineSituation: string; // 'Todas' or specific
+  scope?: 'active' | 'archived' | 'all'; // 'active' (default), 'archived', or 'all'
 }
 
 export interface TaskCalculatedInfo {

@@ -211,6 +211,7 @@ export default function HomePage() {
                 addTask={addTask}
                 addMultipleTasks={addMultipleTasks}
                 showToast={showToast}
+                activeTasks={tasks}
               />
             )}
 
