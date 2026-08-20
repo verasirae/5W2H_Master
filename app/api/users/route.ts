@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
 
   if (!isDatabaseConfigured()) {
     return NextResponse.json({
+      success: true,
       connected: false,
       users: [
         {
@@ -120,6 +121,7 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({
+      success: true,
       connected: true,
       users: users.map((u) => {
         const managedDepts = Array.from(

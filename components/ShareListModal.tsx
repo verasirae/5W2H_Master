@@ -51,7 +51,7 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
   const [members, setMembers] = useState<TaskListMember[]>([]);
   const [invites, setInvites] = useState<TaskListInvite[]>([]);
   const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
-  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   
   // Invite form state
   const [searchUserQuery, setSearchUserQuery] = useState('');
@@ -74,14 +74,14 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
         fetch('/api/users'),
       ]);
       const [membersJson, usersJson] = await Promise.all([
-        membersRes.json(),
-        usersRes.json(),
+        membersRes.json().catch(() => ({ success: false })),
+        usersRes.json().catch(() => ({ users: [] })),
       ]);
-      if (membersJson.success) {
+      if (membersJson?.success) {
         setMembers(membersJson.members || []);
         setInvites(membersJson.invites || []);
       }
-      if (usersJson.success && Array.isArray(usersJson.users)) {
+      if (Array.isArray(usersJson?.users)) {
         setSystemUsers(usersJson.users);
       }
     } catch (err: any) {
@@ -96,6 +96,7 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
     setInviteMessage('');
     setSearchUserQuery('');
     setActiveTab('invite');
+    setIsLoadingData(true);
     onClose();
   };
 
@@ -104,8 +105,8 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
     let isMounted = true;
 
     Promise.all([
-      fetch(`/api/lists/${listId}/members`).then((r) => r.json()),
-      fetch('/api/users').then((r) => r.json()),
+      fetch(`/api/lists/${listId}/members`).then((r) => r.json()).catch(() => ({ success: false })),
+      fetch('/api/users').then((r) => r.json()).catch(() => ({ users: [] })),
     ])
       .then(([membersJson, usersJson]) => {
         if (!isMounted) return;
@@ -113,14 +114,13 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
           setMembers(membersJson.members || []);
           setInvites(membersJson.invites || []);
         }
-        if (usersJson?.success && Array.isArray(usersJson.users)) {
+        if (Array.isArray(usersJson?.users)) {
           setSystemUsers(usersJson.users);
         }
+        setIsLoadingData(false);
       })
       .catch((err) => {
         console.error('Erro ao carregar dados de compartilhamento:', err);
-      })
-      .finally(() => {
         if (isMounted) setIsLoadingData(false);
       });
 
@@ -132,16 +132,34 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
   if (!isOpen || !list) return null;
 
   // Filter available users to invite (exclude current user and already existing members)
-  const existingMemberUserIds = new Set(members.map((m) => m.userId).concat([list.ownerId]));
+  const existingMemberUserIds = new Set(
+    members
+      .map((m) => m.userId || m.user?.id)
+      .concat([list.ownerId, list.owner?.id, currentUser?.id])
+      .filter(Boolean) as string[]
+  );
+
+  const existingMemberEmails = new Set(
+    members
+      .map((m) => m.user?.email)
+      .concat([list.owner?.email, currentUser?.email])
+      .filter(Boolean)
+      .map((e) => (e as string).toLowerCase())
+  );
+
   const availableUsers = systemUsers.filter((u) => {
-    if (u.id === currentUser?.id) return false;
-    if (existingMemberUserIds.has(u.id)) return false;
+    if (u.id && existingMemberUserIds.has(u.id)) return false;
+    if (u.email && existingMemberEmails.has(u.email.toLowerCase())) return false;
+    if (u.id === currentUser?.id || (currentUser?.email && u.email.toLowerCase() === currentUser.email.toLowerCase())) return false;
+    if (u.status && u.status !== 'ativo' && u.status !== 'active') return false;
+
     if (!searchUserQuery.trim()) return true;
-    const q = searchUserQuery.toLowerCase();
+    const q = searchUserQuery.toLowerCase().trim();
     return (
       (u.name && u.name.toLowerCase().includes(q)) ||
-      u.email.toLowerCase().includes(q) ||
-      (u.department && u.department.toLowerCase().includes(q))
+      (u.email && u.email.toLowerCase().includes(q)) ||
+      (u.department && u.department.toLowerCase().includes(q)) ||
+      (u.jobTitle && u.jobTitle.toLowerCase().includes(q))
     );
   });
 
@@ -367,9 +385,13 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
                   <div className="border border-border bg-background/50 max-h-48 overflow-y-auto divide-y divide-border/50">
                     {availableUsers.length === 0 ? (
                       <div className="p-4 text-center text-muted-foreground text-xs">
-                        {systemUsers.length === 0
+                        {isLoadingData
                           ? 'Carregando lista de usuários do sistema...'
-                          : 'Nenhum usuário disponível para convidar com o filtro atual.'}
+                          : systemUsers.length === 0
+                          ? 'Nenhum outro colaborador encontrado no sistema.'
+                          : searchUserQuery.trim()
+                          ? 'Nenhum usuário encontrado para esta busca.'
+                          : 'Todos os outros usuários já são membros ou possuem convite pendente nesta lista.'}
                       </div>
                     ) : (
                       availableUsers.map((u) => {
