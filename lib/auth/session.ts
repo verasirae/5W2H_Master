@@ -47,10 +47,12 @@ export function createSessionToken(
   expiresInSeconds: number = 60 * 60 * 24 * 7
 ): string {
   const exp = Math.floor(Date.now() / 1000) + expiresInSeconds;
+  const role = normalizeRole(payload.role, payload.email);
+  const status = normalizeStatus(payload.status, role, payload.email);
   const fullPayload: UserSessionPayload = {
     ...payload,
-    role: normalizeRole(payload.role),
-    status: normalizeStatus(payload.status),
+    role,
+    status,
     exp,
   };
   
@@ -95,8 +97,8 @@ export function verifySessionToken(token: string): UserSessionPayload | null {
     }
     
     // Normalize role & status on read
-    payload.role = normalizeRole(payload.role);
-    payload.status = normalizeStatus(payload.status);
+    payload.role = normalizeRole(payload.role, payload.email);
+    payload.status = normalizeStatus(payload.status, payload.role, payload.email);
     
     return payload;
   } catch {

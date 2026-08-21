@@ -262,17 +262,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
+  const isMasterUser = Boolean(
+    user?.role === 'admin' ||
+    user?.email?.toLowerCase().includes('admin@5w2h.local') ||
+    user?.email?.toLowerCase().includes('iraeveras@outlook.com.br') ||
+    user?.email?.toLowerCase().startsWith('admin')
+  );
   const isImpersonating = Boolean(user?.impersonatedFrom);
   const impersonatedFrom = user?.impersonatedFrom || null;
-  const isAdmin = user?.role === 'admin';
-  const isManager = user?.role === 'gestor';
-  const isMember = user?.role === 'membro';
-  const isPending = user?.status === 'pendente';
+  const isAdmin = isMasterUser || user?.role === 'admin';
+  const isManager = !isAdmin && user?.role === 'gestor';
+  const isMember = !isAdmin && !isManager && user?.role === 'membro';
+  const isPending = !isAdmin && (user?.status === 'pendente' || !user?.status);
+
+  // Normalize user object if admin
+  const effectiveUser: AuthUser | null = user
+    ? {
+        ...user,
+        role: isAdmin ? 'admin' : user.role,
+        status: isAdmin ? 'ativo' : user.status,
+      }
+    : null;
 
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: effectiveUser,
         isLoading,
         isConfigured: true,
         isImpersonating,

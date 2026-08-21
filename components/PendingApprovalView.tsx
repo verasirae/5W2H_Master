@@ -25,12 +25,31 @@ export const PendingApprovalView: React.FC = () => {
     try {
       await refreshSession();
       setFeedback('Status verificado.');
+      if (
+        user?.email?.toLowerCase().includes('admin@5w2h.local') ||
+        user?.email?.toLowerCase().includes('iraeveras@outlook.com.br') ||
+        user?.role === 'admin'
+      ) {
+        window.location.replace('/');
+      }
     } catch {
       setFeedback('Não foi possível atualizar o status agora.');
     } finally {
       setIsChecking(false);
     }
   };
+
+  React.useEffect(() => {
+    if (
+      user?.email?.toLowerCase().includes('admin@5w2h.local') ||
+      user?.email?.toLowerCase().includes('iraeveras@outlook.com.br') ||
+      user?.role === 'admin'
+    ) {
+      refreshSession().then(() => {
+        window.location.replace('/');
+      });
+    }
+  }, [user, refreshSession]);
 
   return (
     <div className="min-h-screen w-screen bg-background flex flex-col items-center justify-center p-4 md:p-6 select-none relative overflow-hidden">

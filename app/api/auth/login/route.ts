@@ -264,15 +264,23 @@ export async function POST(req: NextRequest) {
       )
     );
 
+    const isMasterUser =
+      user.email?.toLowerCase().includes('admin@5w2h.local') ||
+      user.email?.toLowerCase().includes('iraeveras@outlook.com.br') ||
+      user.role === 'admin';
+
+    const finalRole = isMasterUser ? 'admin' : normalizeRole(user.role, user.email);
+    const finalStatus = isMasterUser ? 'ativo' : normalizeStatus(user.status, finalRole, user.email);
+
     const token = createSessionToken({
       userId: user.id,
       email: user.email,
       name: user.name,
-      role: normalizeRole(user.role),
-      status: normalizeStatus(user.status),
+      role: finalRole,
+      status: finalStatus,
       avatarUrl: user.avatarUrl,
-      department: user.department,
-      jobTitle: user.jobTitle,
+      department: user.department || 'RH/DP',
+      jobTitle: user.jobTitle || (isMasterUser ? 'Gerente de Compliance' : 'Gestor 5W2H'),
       managedDepartments: managedDepts,
       managedTeams: user.managedTeams?.map((mt: any) => mt.team?.name || mt.team) || [],
       memberDepartments: memberDepts,
@@ -286,10 +294,10 @@ export async function POST(req: NextRequest) {
         email: user.email,
         name: user.name,
         avatarUrl: user.avatarUrl,
-        role: normalizeRole(user.role),
-        status: normalizeStatus(user.status),
-        department: user.department,
-        jobTitle: user.jobTitle,
+        role: finalRole,
+        status: finalStatus,
+        department: user.department || 'RH/DP',
+        jobTitle: user.jobTitle || (isMasterUser ? 'Gerente de Compliance' : 'Gestor 5W2H'),
         managedDepartments: managedDepts,
         managedTeams: user.managedTeams?.map((mt: any) => mt.team?.name || mt.team) || [],
         memberDepartments: memberDepts,

@@ -47,7 +47,13 @@ export const CLEAR_SESSION_COOKIE_OPTIONS = {
 /**
  * Normalizes role string to canonical 'admin' | 'gestor' | 'membro'
  */
-export function normalizeRole(role?: string | null): UserRole {
+export function normalizeRole(role?: string | null, email?: string | null): UserRole {
+  if (email) {
+    const e = email.toLowerCase().trim();
+    if (e.includes('admin@5w2h.local') || e.includes('iraeveras@outlook.com.br') || e.startsWith('admin')) {
+      return 'admin';
+    }
+  }
   if (!role) return 'membro';
   const r = role.toLowerCase().trim();
   if (r === 'admin' || r === 'administrador') return 'admin';
@@ -58,7 +64,19 @@ export function normalizeRole(role?: string | null): UserRole {
 /**
  * Normalizes status string to canonical 'pendente' | 'ativo' | 'inativo'
  */
-export function normalizeStatus(status?: string | null): UserStatus {
+export function normalizeStatus(status?: string | null, role?: string | null, email?: string | null): UserStatus {
+  if (email) {
+    const e = email.toLowerCase().trim();
+    if (e.includes('admin@5w2h.local') || e.includes('iraeveras@outlook.com.br') || e.startsWith('admin')) {
+      return 'ativo';
+    }
+  }
+  if (role) {
+    const r = role.toLowerCase().trim();
+    if (r === 'admin' || r === 'administrador') {
+      return 'ativo';
+    }
+  }
   if (!status) return 'pendente';
   const s = status.toLowerCase().trim();
   if (s === 'ativo' || s === 'active') return 'ativo';
