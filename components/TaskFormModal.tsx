@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Task5W2H, WorkspaceConfig, TaskPriority, TaskStatus } from '@/types/5w2h';
 import { X, Save, AlertCircle, User, Users } from 'lucide-react';
+import { useAuth } from '@/lib/auth/auth-context';
 
 interface TaskFormModalProps {
   isOpen: boolean;
@@ -21,11 +22,33 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   onSave,
   onUpdate,
 }) => {
+  const { user, isAdmin, isManager, isMember } = useAuth();
   const todayStr = new Date().toISOString().slice(0, 10);
   const currentCompDefault = `${(new Date().getMonth() + 1).toString().padStart(2, '0')}/${new Date().getFullYear()}`;
 
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
   const [availableLists, setAvailableLists] = useState<any[]>([]);
+
+  const allowedDepartments = useMemo(() => {
+    if (isAdmin) {
+      return workspaceConfig.departments || ['RH/DP'];
+    }
+    if (isManager) {
+      const depts = user?.managedDepartments && user.managedDepartments.length > 0
+        ? user.managedDepartments
+        : user?.department ? [user.department] : [];
+      return depts.length > 0 ? depts : workspaceConfig.departments;
+    }
+    if (isMember) {
+      const depts = user?.memberDepartments && user.memberDepartments.length > 0
+        ? user.memberDepartments
+        : user?.department ? [user.department] : [];
+      return depts.length > 0 ? depts : workspaceConfig.departments;
+    }
+    return workspaceConfig.departments || ['RH/DP'];
+  }, [isAdmin, isManager, isMember, user, workspaceConfig.departments]);
+
+  const defaultDept = allowedDepartments[0] || workspaceConfig.departments[0] || 'RH/DP';
 
   const [formData, setFormData] = useState({
     title: '',
@@ -38,7 +61,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     listId: undefined as string | undefined,
     how: '',
     howMuch: 0,
-    department: workspaceConfig.departments[0] || 'RH/DP',
+    department: defaultDept,
     category: 'Geral',
     competence: currentCompDefault,
     priority: 'Média' as TaskPriority,
@@ -92,7 +115,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           listId: editingTask.listId || undefined,
           how: editingTask.how || '',
           howMuch: editingTask.howMuch || 0,
-          department: editingTask.department || workspaceConfig.departments[0] || 'RH/DP',
+          department: editingTask.department || defaultDept,
           category: editingTask.category || 'Geral',
           competence: editingTask.competence || currentCompDefault,
           priority: editingTask.priority || 'Média',
@@ -113,8 +136,8 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           listId: undefined,
           how: '',
           howMuch: 0,
-          department: workspaceConfig.departments[0] || 'RH/DP',
-          category: (workspaceConfig.categoriesByDepartment[workspaceConfig.departments[0]] || [])[0] || 'Geral',
+          department: defaultDept,
+          category: (workspaceConfig.categoriesByDepartment[defaultDept] || [])[0] || 'Geral',
           competence: currentCompDefault,
           priority: 'Média',
           status: 'Não iniciado',
@@ -195,7 +218,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 }}
                 className="w-full bg-background border border-input text-foreground text-xs p-2 focus:border-primary focus:outline-none font-mono-data"
               >
-                {workspaceConfig.departments.map((dept) => (
+                {allowedDepartments.map((dept) => (
                   <option key={dept} value={dept}>
                     {dept}
                   </option>

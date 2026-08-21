@@ -114,6 +114,32 @@ export async function PUT(
       return NextResponse.json({ success: false, error: 'Usuário não encontrado' }, { status: 404 });
     }
 
+    const effectiveRole = body.role !== undefined ? normalizeRole(body.role) : normalizeRole(existing.role);
+
+    // Validation: 1 Gestor per Department constraint check
+    if (effectiveRole === 'gestor' && Array.isArray(body.managedDepartments) && body.managedDepartments.length > 0) {
+      for (const deptName of body.managedDepartments) {
+        if (!deptName) continue;
+        const existingManager = await prisma.managerDepartment.findFirst({
+          where: {
+            department: { name: deptName },
+            userId: { not: id },
+          },
+          include: { user: true, department: true },
+        });
+
+        if (existingManager && existingManager.user) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `O departamento "${deptName}" já possui o gestor "${existingManager.user.name || existingManager.user.email}" vinculado. Um departamento só pode ter um gestor por vez.`,
+            },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     const updateData: any = {};
     if (body.name !== undefined) updateData.name = body.name?.trim();
     if (body.role !== undefined) updateData.role = normalizeRole(body.role);
@@ -134,16 +160,18 @@ export async function PUT(
     if (Array.isArray(body.managedDepartments)) {
       // Clear old and assign new
       await prisma.managerDepartment.deleteMany({ where: { userId: id } });
-      for (const deptName of body.managedDepartments) {
-        if (!deptName) continue;
-        const dept = await prisma.department.upsert({
-          where: { name: deptName },
-          update: {},
-          create: { name: deptName },
-        });
-        await prisma.managerDepartment.create({
-          data: { userId: id, departmentId: dept.id },
-        }).catch(() => {});
+      if (effectiveRole === 'gestor') {
+        for (const deptName of body.managedDepartments) {
+          if (!deptName) continue;
+          const dept = await prisma.department.upsert({
+            where: { name: deptName },
+            update: {},
+            create: { name: deptName },
+          });
+          await prisma.managerDepartment.create({
+            data: { userId: id, departmentId: dept.id },
+          }).catch(() => {});
+        }
       }
     }
 

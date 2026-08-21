@@ -85,11 +85,10 @@ model ManagerDepartment {
   id           String     @id @default(cuid())
   userId       String
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  departmentId String
+  departmentId String     @unique
   department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   createdAt    DateTime   @default(now())
 
-  @@unique([userId, departmentId])
   @@index([userId])
   @@index([departmentId])
 }

@@ -115,10 +115,14 @@ export async function GET(req: NextRequest) {
     const managedDepts = Array.from(
       new Set(
         [
-          ...(user?.managedDepartments?.map((md: any) => md.department.name) || []),
-          user?.role === 'gestor' && user?.department ? user.department : null,
+          ...(user?.managedDepartments?.map((md: any) => md.department?.name || md.department) || []),
+          user?.role === 'gestor' && user?.department && (!user?.managedDepartments || user.managedDepartments.length === 0)
+            ? user.department
+            : null,
           isMasterAccount ? 'RH/DP' : null,
           isMasterAccount ? 'Operações' : null,
+          isMasterAccount ? 'TI / Tecnologia' : null,
+          isMasterAccount ? 'Financeiro / Controladoria' : null,
         ].filter(Boolean) as string[]
       )
     );
@@ -126,9 +130,8 @@ export async function GET(req: NextRequest) {
     const memberDepts = Array.from(
       new Set(
         [
-          ...(user?.memberDepartments?.map((md: any) => md.department.name) || []),
+          ...(user?.memberDepartments?.map((md: any) => md.department?.name || md.department) || []),
           user?.department ? user.department : null,
-          'RH/DP',
         ].filter(Boolean) as string[]
       )
     );
@@ -146,13 +149,13 @@ export async function GET(req: NextRequest) {
           avatarUrl: user?.avatarUrl || payload.avatarUrl,
           role: finalRole,
           status: finalStatus,
-          department: user?.department || payload.department || 'RH/DP',
-          jobTitle: user?.jobTitle || payload.jobTitle || (isMasterAccount ? 'Gerente de Compliance' : 'Gestor 5W2H'),
+          department: user?.department || payload.department || null,
+          jobTitle: user?.jobTitle || payload.jobTitle || null,
           provider: user?.provider || 'local',
           managedDepartments: managedDepts,
-          managedTeams: user?.managedTeams?.map((mt: any) => mt.team.name) || [],
+          managedTeams: user?.managedTeams?.map((mt: any) => mt.team?.name || mt.team) || [],
           memberDepartments: memberDepts,
-          memberTeams: user?.memberTeams?.map((mt: any) => mt.team.name) || [],
+          memberTeams: user?.memberTeams?.map((mt: any) => mt.team?.name || mt.team) || [],
           impersonatedFrom: payload.impersonatedFrom || null,
         },
       },
@@ -173,11 +176,11 @@ export async function GET(req: NextRequest) {
           avatarUrl: payload.avatarUrl,
           role: finalRole,
           status: finalStatus,
-          department: payload.department || 'RH/DP',
-          jobTitle: payload.jobTitle || (isMasterAccount ? 'Gerente de Compliance' : 'Gestor 5W2H'),
-          managedDepartments: payload.managedDepartments || ['RH/DP', 'Operações', 'Financeiro', 'TI'],
+          department: payload.department || null,
+          jobTitle: payload.jobTitle || null,
+          managedDepartments: isMasterAccount ? ['RH/DP', 'Operações', 'Financeiro / Controladoria', 'TI / Tecnologia'] : (payload.managedDepartments || []),
           managedTeams: payload.managedTeams || [],
-          memberDepartments: payload.memberDepartments || ['RH/DP'],
+          memberDepartments: payload.memberDepartments || (payload.department ? [payload.department] : []),
           memberTeams: payload.memberTeams || [],
           impersonatedFrom: payload.impersonatedFrom || null,
           provider: 'local',

@@ -39,60 +39,94 @@ export async function GET(req: NextRequest) {
 
     // 1. RBAC Scoping Filter
     if (userRole === 'membro') {
-      // Membro can ONLY see their own tasks
-      whereClause.OR = [
-        ...(userId ? [{ assignedUserId: userId }] : []),
-        ...(userName ? [{ who: userName }] : []),
+      // Membro can ONLY see their own tasks OR shared lists tasks where they are accepted members
+      whereClause.AND = [
+        {
+          OR: [
+            ...(userId ? [{ assignedUserId: userId }] : []),
+            ...(userId ? [{ createdById: userId }] : []),
+            ...(userName ? [{ who: userName }] : []),
+            ...(session?.email ? [{ who: session.email }] : []),
+            ...(userId ? [{ listRel: { members: { some: { userId } } } }] : []),
+            ...(userId ? [{ listRel: { ownerId: userId } }] : []),
+          ],
+        },
       ];
-    } else if (userRole === 'gestor') {
-      if (scope === 'team') {
-        // Gestor team monitoring scope
-        // Get managed departments for this gestor
-        const managedDeptRecords = userId
-          ? await prisma.managerDepartment.findMany({
-              where: { userId },
-              include: { department: true },
-            })
-          : [];
-        
-        const managedDeptNames = Array.from(
-          new Set([
-            ...managedDeptRecords.map((m) => m.department.name),
-            session?.department ? session.department : null,
-          ].filter(Boolean) as string[])
-        );
 
-        if (departmentParam && departmentParam !== 'all') {
-          // If gestor specifically requested a department, verify they manage it
-          if (managedDeptNames.includes(departmentParam)) {
-            whereClause.department = departmentParam;
+      // If department filter requested, apply it within their own tasks
+      if (departmentParam && departmentParam !== 'all' && departmentParam !== 'Todos') {
+        whereClause.department = departmentParam;
+      }
+    } else if (userRole === 'gestor') {
+      // Get managed departments for this gestor
+      const managedDeptRecords = userId
+        ? await prisma.managerDepartment.findMany({
+            where: { userId },
+            include: { department: true },
+          })
+        : [];
+      
+      const managedDeptNames = Array.from(
+        new Set([
+          ...managedDeptRecords.map((m) => m.department.name),
+          session?.department ? session.department : null,
+        ].filter(Boolean) as string[])
+      );
+
+      if (scope === 'personal') {
+        // Gestor personal view: only their own tasks
+        whereClause.AND = [
+          {
+            OR: [
+              ...(userId ? [{ assignedUserId: userId }] : []),
+              ...(userId ? [{ createdById: userId }] : []),
+              ...(userName ? [{ who: userName }] : []),
+              ...(session?.email ? [{ who: session.email }] : []),
+            ],
+          },
+        ];
+      } else {
+        // Gestor team/workspace scope: STRICTLY restricted to their managed departments
+        if (managedDeptNames.length === 0) {
+          // If no managed departments assigned, Gestor only sees their own tasks
+          whereClause.AND = [
+            {
+              OR: [
+                ...(userId ? [{ assignedUserId: userId }] : []),
+                ...(userId ? [{ createdById: userId }] : []),
+                ...(userName ? [{ who: userName }] : []),
+                ...(session?.email ? [{ who: session.email }] : []),
+              ],
+            },
+          ];
+        } else {
+          if (departmentParam && departmentParam !== 'all' && departmentParam !== 'Todos') {
+            // If gestor requested a specific department, verify they manage it
+            if (managedDeptNames.includes(departmentParam)) {
+              whereClause.department = departmentParam;
+            } else {
+              // Not authorized for this department: restrict to managed departments only
+              whereClause.department = { in: managedDeptNames };
+            }
           } else {
             whereClause.department = { in: managedDeptNames };
           }
-        } else {
-          whereClause.department = { in: managedDeptNames };
-        }
 
-        if (assigneeIdParam && assigneeIdParam !== 'all') {
-          whereClause.assignedUserId = assigneeIdParam;
-        } else if (whoParam && whoParam !== 'all') {
-          whereClause.who = whoParam;
+          if (assigneeIdParam && assigneeIdParam !== 'all' && assigneeIdParam !== 'Todos') {
+            whereClause.assignedUserId = assigneeIdParam;
+          } else if (whoParam && whoParam !== 'all' && whoParam !== 'Todos') {
+            whereClause.who = whoParam;
+          }
         }
-      } else {
-        // Default Gestor personal view: only their own tasks
-        whereClause.OR = [
-          ...(userId ? [{ assignedUserId: userId }] : []),
-          ...(userName ? [{ who: userName }] : []),
-        ];
       }
     } else {
       // Admin: Global access, apply requested filters directly
-      if (departmentParam && departmentParam !== 'all') {
+      if (departmentParam && departmentParam !== 'all' && departmentParam !== 'Todos') {
         whereClause.department = departmentParam;
       }
-      if (assigneeIdParam && assigneeIdParam !== 'all') {
+      if (assigneeIdParam && assigneeIdParam !== 'all' && assigneeIdParam !== 'Todos') {
         whereClause.assignedUserId = assigneeIdParam;
-      } else if (whoParam && whoParam !== 'all') {
+      } else if (whoParam && whoParam !== 'all' && whoParam !== 'Todos') {
         whereClause.who = whoParam;
       }
     }
@@ -160,6 +194,59 @@ export async function POST(req: NextRequest) {
   try {
     const prisma = getPrisma();
     const body = await req.json();
+    const userRole = session ? normalizeRole(session.role) : 'admin';
+    const userId = session?.userId;
+
+    // Check permission for Gestor / Membro creating tasks in unauthorized departments
+    if (userRole === 'gestor' && userId) {
+      const managedDeptRecords = await prisma.managerDepartment.findMany({
+        where: { userId },
+        include: { department: true },
+      });
+      const managedDeptNames = Array.from(
+        new Set([
+          ...managedDeptRecords.map((m) => m.department.name),
+          session?.department ? session.department : null,
+        ].filter(Boolean) as string[])
+      );
+
+      const itemsToCheck = Array.isArray(body) ? body : [body];
+      for (const item of itemsToCheck) {
+        if (item.department && managedDeptNames.length > 0 && !managedDeptNames.includes(item.department)) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `Você não tem permissão para vincular tarefas ao departamento "${item.department}". Seus departamentos permitidos: ${managedDeptNames.join(', ')}.`,
+            },
+            { status: 403 }
+          );
+        }
+      }
+    } else if (userRole === 'membro' && userId) {
+      const memberDeptRecords = await prisma.memberDepartment.findMany({
+        where: { userId },
+        include: { department: true },
+      });
+      const memberDeptNames = Array.from(
+        new Set([
+          ...memberDeptRecords.map((m) => m.department.name),
+          session?.department ? session.department : null,
+        ].filter(Boolean) as string[])
+      );
+
+      const itemsToCheck = Array.isArray(body) ? body : [body];
+      for (const item of itemsToCheck) {
+        if (item.department && memberDeptNames.length > 0 && !memberDeptNames.includes(item.department)) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `Você não tem permissão para vincular tarefas ao departamento "${item.department}".`,
+            },
+            { status: 403 }
+          );
+        }
+      }
+    }
 
     const processItem = async (item: any) => {
       let assignedUserId = item.assignedUserId || null;

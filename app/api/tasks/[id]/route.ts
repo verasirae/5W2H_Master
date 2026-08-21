@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPrisma, isDatabaseConfigured } from '@/lib/prisma';
+import { verifySessionToken, SESSION_COOKIE_NAME, normalizeRole } from '@/lib/auth/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +49,9 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const session = token ? verifySessionToken(token) : null;
+
   if (!isDatabaseConfigured()) {
     return NextResponse.json(
       { success: false, error: 'Database not configured' },
@@ -59,6 +63,31 @@ export async function PUT(
     const { id } = await params;
     const body = await req.json();
     const prisma = getPrisma();
+    const userRole = session ? normalizeRole(session.role) : 'admin';
+    const userId = session?.userId;
+
+    if (userRole === 'gestor' && userId) {
+      const managedDeptRecords = await prisma.managerDepartment.findMany({
+        where: { userId },
+        include: { department: true },
+      });
+      const managedDeptNames = Array.from(
+        new Set([
+          ...managedDeptRecords.map((m) => m.department.name),
+          session?.department ? session.department : null,
+        ].filter(Boolean) as string[])
+      );
+
+      if (body.department && managedDeptNames.length > 0 && !managedDeptNames.includes(body.department)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Você não tem permissão para vincular tarefas ao departamento "${body.department}".`,
+          },
+          { status: 403 }
+        );
+      }
+    }
 
     // Check if task exists in database
     const existing = await prisma.task.findUnique({

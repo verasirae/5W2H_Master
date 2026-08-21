@@ -13,6 +13,7 @@ import {
   deduplicateTaskIds,
   calculateTaskDeadlineInfo,
 } from '@/lib/5w2h-utils';
+import { useAuth } from '@/lib/auth/auth-context';
 
 const STORAGE_KEY_TASKS = '5w2h_master_tasks_v1';
 const STORAGE_KEY_CONFIG = '5w2h_master_config_v1';
@@ -53,6 +54,8 @@ export interface AppUser {
 }
 
 export function use5W2H() {
+  const { user, isAdmin, isManager, isMember } = useAuth();
+
   // Real data only - starts empty and hydrates directly from database / persistent storage
   const [tasks, setTasks] = useState<Task5W2H[]>([]);
   const [workspaceConfig, setWorkspaceConfig] = useState<WorkspaceConfig>(DEFAULT_WORKSPACE_CONFIG);
@@ -460,21 +463,44 @@ export function use5W2H() {
     showToast('info', 'Dados Limpos', 'Todas as tarefas foram removidas.');
   }, [showToast]);
 
-  // Derived Filter Options - Real Data from DB/State
+  // Derived Filter Options - Real Data from DB/State strictly scoped by User Role
   const availableDepartments = useMemo(() => {
     const depsFromConfig = workspaceConfig.departments || [];
-    const depsFromTasks = Array.from(new Set(tasks.map((t) => t.department))).filter(Boolean);
-    return Array.from(new Set([...depsFromConfig, ...depsFromTasks])).sort();
-  }, [workspaceConfig.departments, tasks]);
+    if (isAdmin) {
+      const depsFromTasks = Array.from(new Set(tasks.map((t) => t.department))).filter(Boolean);
+      return Array.from(new Set([...depsFromConfig, ...depsFromTasks])).sort();
+    }
+    if (isManager) {
+      const managerDepts = user?.managedDepartments && user.managedDepartments.length > 0
+        ? user.managedDepartments
+        : user?.department ? [user.department] : [];
+      return Array.from(new Set(managerDepts)).sort();
+    }
+    if (isMember) {
+      const memberDepts = user?.memberDepartments && user.memberDepartments.length > 0
+        ? user.memberDepartments
+        : user?.department ? [user.department] : [];
+      return Array.from(new Set(memberDepts)).sort();
+    }
+    return depsFromConfig;
+  }, [isAdmin, isManager, isMember, user, workspaceConfig.departments, tasks]);
 
   const availableCategories = useMemo(() => {
     if (filters.department !== 'Todos' && workspaceConfig.categoriesByDepartment[filters.department]) {
       return workspaceConfig.categoriesByDepartment[filters.department];
     }
-    const catsFromConfig = Object.values(workspaceConfig.categoriesByDepartment || {}).flat();
-    const catsFromTasks = Array.from(new Set(tasks.map((t) => t.category))).filter(Boolean);
-    return Array.from(new Set([...catsFromConfig, ...catsFromTasks])).sort();
-  }, [filters.department, workspaceConfig.categoriesByDepartment, tasks]);
+    if (isAdmin) {
+      const catsFromConfig = Object.values(workspaceConfig.categoriesByDepartment || {}).flat();
+      const catsFromTasks = Array.from(new Set(tasks.map((t) => t.category))).filter(Boolean);
+      return Array.from(new Set([...catsFromConfig, ...catsFromTasks])).sort();
+    }
+    // For Gestor / Membro: only show categories of their allowed availableDepartments
+    const allowedCats = availableDepartments.flatMap((dept) => workspaceConfig.categoriesByDepartment[dept] || []);
+    const catsFromTasks = Array.from(
+      new Set(tasks.filter((t) => availableDepartments.includes(t.department)).map((t) => t.category))
+    ).filter(Boolean);
+    return Array.from(new Set([...allowedCats, ...catsFromTasks])).sort();
+  }, [filters.department, workspaceConfig.categoriesByDepartment, availableDepartments, isAdmin, tasks]);
 
   const availableCompetences = useMemo(() => {
     const list = Array.from(new Set(tasks.map((t) => t.competence))).filter(Boolean);

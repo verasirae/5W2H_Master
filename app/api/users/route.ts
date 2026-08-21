@@ -16,6 +16,9 @@ export async function GET(req: NextRequest) {
   const roleFilter = searchParams.get('role');
   const statusFilter = searchParams.get('status');
 
+  const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const session = token ? verifySessionToken(token) : null;
+
   if (!isDatabaseConfigured() || isDatabaseTemporarilyUnreachable()) {
     return NextResponse.json({
       success: true,
@@ -60,7 +63,7 @@ export async function GET(req: NextRequest) {
           jobTitle: 'Coordenador Operacional',
           status: 'ativo',
           provider: 'local',
-          managedDepartments: ['Operações', 'Logística'],
+          managedDepartments: ['Operações'],
           memberDepartments: ['Operações'],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -87,7 +90,33 @@ export async function GET(req: NextRequest) {
 
   try {
     const prisma = getPrisma();
+    const userRole = session ? normalizeRole(session.role) : 'admin';
+    const userId = session?.userId;
     const whereClause: any = {};
+
+    // Role-based scope filtering for users list
+    if (userRole === 'gestor' && userId) {
+      const managedDeptRecords = await prisma.managerDepartment.findMany({
+        where: { userId },
+        include: { department: true },
+      });
+      const managedDeptNames = Array.from(
+        new Set([
+          ...managedDeptRecords.map((m) => m.department.name),
+          session?.department ? session.department : null,
+        ].filter(Boolean) as string[])
+      );
+
+      if (managedDeptNames.length > 0) {
+        whereClause.OR = [
+          { id: userId },
+          { department: { in: managedDeptNames } },
+          { memberDepartments: { some: { department: { name: { in: managedDeptNames } } } } },
+        ];
+      } else {
+        whereClause.id = userId;
+      }
+    }
 
     if (roleFilter && roleFilter !== 'all') {
       whereClause.role = normalizeRole(roleFilter);
@@ -96,10 +125,15 @@ export async function GET(req: NextRequest) {
       whereClause.status = normalizeStatus(statusFilter);
     }
     if (departmentFilter && departmentFilter !== 'all') {
-      whereClause.OR = [
-        { department: departmentFilter },
-        { memberDepartments: { some: { department: { name: departmentFilter } } } },
-        { managedDepartments: { some: { department: { name: departmentFilter } } } },
+      whereClause.AND = [
+        ...(whereClause.AND || []),
+        {
+          OR: [
+            { department: departmentFilter },
+            { memberDepartments: { some: { department: { name: departmentFilter } } } },
+            { managedDepartments: { some: { department: { name: departmentFilter } } } },
+          ],
+        },
       ];
     }
 
@@ -201,7 +235,7 @@ export async function POST(req: NextRequest) {
           status,
           provider: 'local',
           managedDepartments: body.managedDepartments || [],
-          memberDepartments: body.department ? [body.department] : [],
+          memberDepartments: body.memberDepartments || (body.department ? [body.department] : []),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
@@ -216,6 +250,29 @@ export async function POST(req: NextRequest) {
 
     if (existing) {
       return NextResponse.json({ success: false, error: 'Este e-mail já está cadastrado no sistema.' }, { status: 400 });
+    }
+
+    // Validation: 1 Gestor per Department constraint check
+    if (role === 'gestor' && Array.isArray(body.managedDepartments) && body.managedDepartments.length > 0) {
+      for (const deptName of body.managedDepartments) {
+        if (!deptName) continue;
+        const existingManager = await prisma.managerDepartment.findFirst({
+          where: {
+            department: { name: deptName },
+          },
+          include: { user: true, department: true },
+        });
+
+        if (existingManager && existingManager.user) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `O departamento "${deptName}" já possui o gestor "${existingManager.user.name || existingManager.user.email}" vinculado. Um departamento só pode ter um gestor por vez.`,
+            },
+            { status: 400 }
+          );
+        }
+      }
     }
 
     const passwordHash = body.password ? hashPassword(body.password) : hashPassword('user123456');
@@ -234,7 +291,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Handle department associations
-    if (Array.isArray(body.managedDepartments) && body.managedDepartments.length > 0) {
+    if (role === 'gestor' && Array.isArray(body.managedDepartments) && body.managedDepartments.length > 0) {
       for (const deptName of body.managedDepartments) {
         if (!deptName) continue;
         const dept = await prisma.department.upsert({
@@ -242,10 +299,8 @@ export async function POST(req: NextRequest) {
           update: {},
           create: { name: deptName },
         });
-        await prisma.managerDepartment.upsert({
-          where: { userId_departmentId: { userId: newUser.id, departmentId: dept.id } },
-          update: {},
-          create: { userId: newUser.id, departmentId: dept.id },
+        await prisma.managerDepartment.create({
+          data: { userId: newUser.id, departmentId: dept.id },
         }).catch(() => {});
       }
     }
@@ -258,10 +313,8 @@ export async function POST(req: NextRequest) {
           update: {},
           create: { name: deptName },
         });
-        await prisma.memberDepartment.upsert({
-          where: { userId_departmentId: { userId: newUser.id, departmentId: dept.id } },
-          update: {},
-          create: { userId: newUser.id, departmentId: dept.id },
+        await prisma.memberDepartment.create({
+          data: { userId: newUser.id, departmentId: dept.id },
         }).catch(() => {});
       }
     }

@@ -70,8 +70,22 @@ CREATE TABLE IF NOT EXISTS "ManagerDepartment" (
   "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
   "departmentId" TEXT NOT NULL REFERENCES "Department"("id") ON DELETE CASCADE,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT "ManagerDepartment_userId_departmentId_key" UNIQUE ("userId", "departmentId")
+  CONSTRAINT "ManagerDepartment_departmentId_key" UNIQUE ("departmentId")
 );
+
+-- Ensure unique constraint on ManagerDepartment(departmentId) if table already existed with old composite key
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints 
+    WHERE constraint_name = 'ManagerDepartment_departmentId_key'
+  ) THEN
+    ALTER TABLE "ManagerDepartment" DROP CONSTRAINT IF EXISTS "ManagerDepartment_userId_departmentId_key";
+    ALTER TABLE "ManagerDepartment" ADD CONSTRAINT "ManagerDepartment_departmentId_key" UNIQUE ("departmentId");
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  NULL;
+END $$;
 
 CREATE INDEX IF NOT EXISTS "ManagerDepartment_userId_idx" ON "ManagerDepartment"("userId");
 CREATE INDEX IF NOT EXISTS "ManagerDepartment_departmentId_idx" ON "ManagerDepartment"("departmentId");
