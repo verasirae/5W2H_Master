@@ -389,7 +389,7 @@ export const TeamMonitoringView: React.FC<TeamMonitoringViewProps> = ({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto md:pt-4 md:pb-3">
+      <div className="flex-1 overflow-y-auto md:pt-4 md:pb-3 space-y-4">
         {/* KPI Cards Row */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           <div className="p-3.5 bg-card border border-border shadow-xs">

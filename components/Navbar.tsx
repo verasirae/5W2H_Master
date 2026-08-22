@@ -15,7 +15,7 @@ import {
   ChevronLeft,
   Users,
   UserCheck,
-  Building2,
+  Group,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 
@@ -40,15 +40,14 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'table' as ViewMode, label: 'Lista (Tabela)', icon: ListTodo },
     { id: 'kanban' as ViewMode, label: 'Quadro Kanban', icon: Kanban },
     { id: 'cards' as ViewMode, label: 'Matriz 5W2H', icon: LayoutGrid },
-    { id: 'groups' as ViewMode, label: 'Grupos & Listas', icon: FolderKanban, badge: 'GRUPO' },
+    { id: 'groups' as ViewMode, label: 'Grupos & Listas', icon: FolderKanban },
     // Minha Equipe is available for Gestor and Admin
     ...((isManager || isAdmin)
       ? [
           {
             id: 'team' as ViewMode,
             label: 'Minha Equipe',
-            icon: Building2,
-            badge: isManager ? 'GESTOR' : 'EQUIPES',
+            icon: Group,
           },
         ]
       : []),
@@ -95,7 +94,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Navigation Items */}
-      <nav className="flex-1 flex flex-col space-y-1 w-full px-0.5 overflow-y-auto no-scrollbar">
+      <nav className="flex-1 flex flex-col space-y-1 w-full px-0.5 overflow-x-hidden overflow-y-auto no-scrollbar">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentView === item.id;
