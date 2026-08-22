@@ -222,7 +222,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data truncate">
               Total de Tarefas
             </span>
-            <List className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground shrink-0" />
+            <List className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
           </div>
           <div className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold font-mono-data text-foreground truncate">
             {totalTasks.toLocaleString('pt-BR')}
@@ -238,19 +238,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data truncate">
               Concluídas
             </span>
-            <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
+            <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
           </div>
           <div className="flex items-baseline gap-1.5 truncate">
             <span className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold font-mono-data text-foreground">
               {completedTasks}
             </span>
             {totalTasks > 0 && (
-              <span className="text-[10px] sm:text-xs font-mono-data text-primary font-bold">
+              <span className="text-[10px] sm:text-xs font-mono-data text-emerald-600 dark:text-emerald-400 font-bold">
                 {Math.round((completedTasks / totalTasks) * 100)}%
               </span>
             )}
           </div>
-          <div className="text-[9px] sm:text-[10px] text-primary font-mono-data flex items-center gap-1 font-medium truncate">
+          <div className="text-[9px] sm:text-[10px] text-emerald-600 dark:text-emerald-400 font-mono-data flex items-center gap-1 font-medium truncate">
             <TrendingUp className="w-3 h-3 shrink-0" /> <span className="truncate">Metas alcançadas</span>
           </div>
         </div>
@@ -261,29 +261,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium uppercase tracking-wider font-mono-data truncate">
               Em Andamento
             </span>
-            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-info shrink-0" />
+            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-sky-600 dark:text-sky-400 shrink-0" />
           </div>
-          <div className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold font-mono-data text-foreground truncate">
+          <div className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold font-mono-data text-sky-600 dark:text-sky-400 truncate">
             {inProgressTasks}
           </div>
-          <div className="text-[9px] sm:text-[10px] text-info font-mono-data font-medium truncate">
+          <div className="text-[9px] sm:text-[10px] text-muted-foreground font-mono-data font-medium truncate">
             Em execução ativa
           </div>
         </div>
 
         {/* Overdue */}
-        <div className="bg-card border border-destructive/60 p-3 sm:p-3.5 lg:p-4 rounded-md flex flex-col justify-between min-h-[96px] md:min-h-[105px] h-auto relative overflow-hidden">
-          <div className="absolute inset-0 bg-destructive/10 pointer-events-none"></div>
+        <div className="bg-card border border-border p-3 sm:p-3.5 lg:p-4 rounded-md flex flex-col justify-between min-h-[96px] md:min-h-[105px] h-auto relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none"></div>
           <div className="flex justify-between items-start relative z-10">
-            <span className="text-[9px] sm:text-[10px] text-destructive font-bold uppercase tracking-wider font-mono-data truncate">
+            <span className="text-[9px] sm:text-[10px] text-muted-foreground font-bold uppercase tracking-wider font-mono-data truncate">
               Atrasadas
             </span>
-            <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-destructive shrink-0" />
+            <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-500 shrink-0" />
           </div>
-          <div className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold font-mono-data text-destructive relative z-10 truncate">
+          <div className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold font-mono-data text-rose-600 dark:text-rose-400 relative z-10 truncate">
             {overdueTasks}
           </div>
-          <div className="text-[9px] sm:text-[10px] text-destructive font-mono-data relative z-10 font-medium truncate">
+          <div className="text-[9px] sm:text-[10px] text-rose-600 dark:text-rose-400 font-mono-data relative z-10 font-medium truncate">
             Requer atenção imediata
           </div>
         </div>
