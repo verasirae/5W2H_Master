@@ -17,6 +17,7 @@ import {
   UserCheck,
   Group,
 } from 'lucide-react';
+import Image from 'next/image';
 import { useAuth } from '@/lib/auth/auth-context';
 
 interface NavbarProps {
@@ -77,8 +78,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         title="5W2H Master - Ir para Dashboard"
       >
         <div className={`flex items-center gap-2 overflow-hidden w-full ${isSidebarExpanded ? 'px-2 justify-start' : 'justify-center'}`}>
-          <div className="w-6 h-6 bg-background border border-border flex items-center justify-center shrink-0 font-bold text-xs text-foreground shadow-sm">
-            5
+          <div className="w-6 h-6 bg-transparent border-0 flex items-center justify-center shrink-0 font-bold text-xs text-foreground">
+            <Image src={logo} alt='Logo' />
           </div>
           {isSidebarExpanded && (
             <div className="transition-opacity duration-200 whitespace-nowrap overflow-hidden">
