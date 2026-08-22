@@ -406,7 +406,7 @@ export const TaskGroupsView: React.FC<TaskGroupsViewProps> = ({
       {/* LEVEL 1: ALL GROUPS DASHBOARD                                            */}
       {/* ========================================================================= */}
       {!selectedGroupId && (
-        <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <div className="flex-1 flex flex-col pl-2 pr-4 h-full overflow-hidden">
           {/* Top Control Header */}
           <div className="p-4 md:p-5 border-b border-border bg-card flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between shrink-0 shadow-xs">
             <div>
@@ -519,7 +519,7 @@ export const TaskGroupsView: React.FC<TaskGroupsViewProps> = ({
           </div>
 
           {/* Groups Grid */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-5">
+          <div className="flex-1 overflow-y-auto py-4 px-1 md:px-0 md:py-5">
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[1, 2, 3].map((n) => (

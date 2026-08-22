@@ -264,7 +264,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
   }, [users, statusFilter, roleFilter, departmentFilter, searchQuery]);
 
   return (
-    <div className="flex-1 flex flex-col h-full w-full overflow-hidden bg-background">
+    <div className="flex-1 flex flex-col pl-2 pr-4 h-full w-full overflow-hidden bg-background">
       {/* Header & Controls */}
       <div className="px-4 md:px-6 py-4 bg-card border-b border-border shrink-0 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -383,7 +383,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
       </div>
 
       {/* Main Table */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+      <div className="flex-1 overflow-y-auto py-4 md:py-6">
         <div className="bg-card border border-border shadow-xs">
           {filteredUsers.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground font-mono-data text-xs space-y-2">
