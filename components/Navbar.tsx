@@ -17,6 +17,7 @@ import {
   UserCheck,
   Group,
 } from 'lucide-react';
+import logo from '@/assets/images/Imagem1.png';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth/auth-context';
 
